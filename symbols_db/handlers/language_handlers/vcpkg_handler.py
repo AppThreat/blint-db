@@ -131,7 +131,7 @@ def exec_explorer(directory):
                 result = subprocess.run(
                     ["file", file_path], capture_output=True, check=False
                 )
-                if b"ELF" in result.stdout:
+                if b" ELF " in result.stdout:
                     executables.append(file_path)
                 if b"current ar archive" in result.stdout:
                     executables.append(file_path)

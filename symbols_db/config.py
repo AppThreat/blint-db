@@ -13,8 +13,8 @@ DELIMETER_BOM = "~~"
 DEBUG_MODE = True
 # constants
 CWD = Path.cwd()
-WRAPDB_LOCATION = CWD / "temp" / "wrapdb"
-VCPKG_LOCATION = CWD / "temp" / "vcpkg"
+WRAPDB_LOCATION = CWD/ ".." / "temp" / "wrapdb"
+VCPKG_LOCATION = CWD/ ".." / "temp" / "vcpkg"
 
 WRAPDB_URL = "https://github.com/mesonbuild/wrapdb.git"
 VCPKG_URL = "https://github.com/microsoft/vcpkg.git"
@@ -22,7 +22,7 @@ VCPKG_URL = "https://github.com/microsoft/vcpkg.git"
 WRAPDB_HASH = "90fdc28c75412d99900f2ff58006de57866c63ee"
 VCPKG_HASH = "e60236ee051183f1122066bee8c54a0b47c43a60"
 
-BOM_LOCATION = Path("./temp/boms")
+BOM_LOCATION = CWD / ".." / "temp" / "BOM"
 BLINTDB_LOCATION = "blint.db"
 CWD = Path(os.getcwd())
 
