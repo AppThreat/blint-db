@@ -60,6 +60,12 @@ def run_vcpkg_install_command():
         print(int_run.stdout)
         logger.debug(f"'vcpkg integrate install: {int_run.stdout.decode('ascii')}")
 
+def remove_vcpkg_project(project_name):
+    rem_cmd = ["./vcpkg", "remove", project_name]
+    rem_run = subprocess.run(
+        rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
+    )
+    subprocess_run_debug(rem_run, project_name)
 
 def get_vcpkg_projects():
     git_clone_vcpkg()
@@ -71,7 +77,7 @@ def get_vcpkg_projects():
 
 
 def vcpkg_build(project_name):
-    inst_cmd = f"./vcpkg install {project_name}".split(" ")
+    inst_cmd = ["./vcpkg", "install", project_name]
     inst_run = subprocess.run(
         inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )

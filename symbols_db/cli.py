@@ -4,7 +4,7 @@ from concurrent import futures
 
 from symbols_db import BLINTDB_LOCATION, COMMON_CONNECTION
 from symbols_db.handlers.language_handlers.vcpkg_handler import \
-    get_vcpkg_projects
+    get_vcpkg_projects, remove_vcpkg_project
 from symbols_db.handlers.language_handlers.wrapdb_handler import \
     get_wrapdb_projects
 from symbols_db.handlers.sqlite_handler import (clear_sqlite_database,
@@ -72,6 +72,8 @@ def reset_and_backup():
         os.remove(BLINTDB_LOCATION)
     COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
 
+
+
 def meson_add_blint_bom_process():
     projects_list = get_wrapdb_projects()
 
@@ -88,9 +90,10 @@ def meson_add_blint_bom_process():
 def vcpkg_add_blint_bom_process():
     projects_list = get_vcpkg_projects()
     count = 0
-    for project_name in projects_list[:1000]:
+    for project_name in projects_list:
         executables = mt_vcpkg_blint_db_build(project_name)
         print(f"Ran complete for {project_name} and we found {len(executables)}")
+        remove_vcpkg_project(project_name)
         count += 1
         if count == 100:
             reset_and_backup()
@@ -118,7 +121,7 @@ def main():
         vcpkg_add_blint_bom_process()
 
     if COMMON_CONNECTION:
-        COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
+        reset_and_backup()
 
 
 if __name__ == "__main__":
