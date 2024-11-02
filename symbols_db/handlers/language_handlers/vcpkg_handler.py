@@ -1,7 +1,8 @@
 import os
 import subprocess
 
-from symbols_db import VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL
+from symbols_db import (DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL,
+                        logger)
 from symbols_db.handlers.git_handler import git_checkout_commit, git_clone
 from symbols_db.handlers.language_handlers import BaseHandler
 from symbols_db.utils.utils import subprocess_run_debug
@@ -17,7 +18,9 @@ class VcpkgHandler(BaseHandler):
 
     def build(self, project_name):
         inst_cmd = f"./vcpkg install {project_name}".split(" ")
-        inst_run = subprocess.run(inst_cmd, cwd=VCPKG_LOCATION, capture_output=True)
+        inst_run = subprocess.run(
+            inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
+        )
         subprocess_run_debug(inst_run, project_name)
 
     def find_executables(self, project_name):
@@ -32,6 +35,7 @@ class VcpkgHandler(BaseHandler):
         ports_path = VCPKG_LOCATION / "ports"
         return os.listdir(ports_path)
 
+
 def git_clone_vcpkg():
     git_clone(VCPKG_URL, VCPKG_LOCATION)
 
@@ -39,11 +43,12 @@ def git_clone_vcpkg():
 def git_checkout_vcpkg_commit():
     git_checkout_commit(VCPKG_LOCATION, VCPKG_HASH)
 
+
 def run_vcpkg_install_command():
     # Linux command
     install_command = ["./bootstrap-vcpkg.sh"]
     install_run = subprocess.run(
-        install_command, cwd=VCPKG_LOCATION, capture_output=True
+        install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )
     if DEBUG_MODE:
         print(install_run.stdout)
@@ -55,6 +60,13 @@ def run_vcpkg_install_command():
         print(int_run.stdout)
         logger.debug(f"'vcpkg integrate install: {int_run.stdout.decode('ascii')}")
 
+def remove_vcpkg_project(project_name):
+    rem_cmd = ["./vcpkg", "remove", project_name]
+    rem_run = subprocess.run(
+        rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
+    )
+    subprocess_run_debug(rem_run, project_name)
+
 def get_vcpkg_projects():
     git_clone_vcpkg()
     git_checkout_vcpkg_commit()
@@ -65,9 +77,12 @@ def get_vcpkg_projects():
 
 
 def vcpkg_build(project_name):
-    inst_cmd = f"./vcpkg install {project_name}".split(" ")
-    inst_run = subprocess.run(inst_cmd, cwd=VCPKG_LOCATION, capture_output=True)
+    inst_cmd = ["./vcpkg", "install", project_name]
+    inst_run = subprocess.run(
+        inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
+    )
     subprocess_run_debug(inst_run, project_name)
+
 
 def find_vcpkg_executables(project_name):
     project_path = f"{project_name}_x64-linux"
@@ -90,7 +105,9 @@ def archive_explorer(directory):
         for file in files:
             file_path = os.path.join(root, file)
             try:
-                result = subprocess.run(["file", file_path], capture_output=True)
+                result = subprocess.run(
+                    ["file", file_path], capture_output=True, check=False
+                )
                 if b"archive" in result.stdout:
                     executables.append(file_path)
             # FileNotFoundError may be correct as `file` command executable is a file
@@ -117,10 +134,12 @@ def exec_explorer(directory):
         for file in files:
             file_path = os.path.join(root, file)
             try:
-                result = subprocess.run(["file", file_path], capture_output=True)
-                if b"ELF" in result.stdout:
+                result = subprocess.run(
+                    ["file", file_path], capture_output=True, check=False
+                )
+                if b" ELF " in result.stdout:
                     executables.append(file_path)
-                if b"archive" in result.stdout:
+                if b"current ar archive" in result.stdout:
                     executables.append(file_path)
             except FileNotFoundError:
                 print(

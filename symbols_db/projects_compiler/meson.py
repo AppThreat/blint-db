@@ -34,7 +34,7 @@ def add_project_meson_db(project_name):
         for func in if_list:
             add_binary_export(func, bid)
 
-    # delete project after done processing
+    # TODO: delete project after done processing
 
     return execs
 
@@ -43,6 +43,7 @@ def mt_meson_blint_db_build(project_name):
     logger.debug(f"Running {project_name}")
     try:
         execs = add_project_meson_db(project_name)
+        logger.info(f"Completed: {project_name} with execs:{len(execs)}")
     except OperationalError as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)

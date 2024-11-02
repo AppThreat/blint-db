@@ -16,7 +16,7 @@ def run_blint_on_file(file_path):
         "-i",
         file_path,
     ]
-    blint_output = subprocess.run(blint_command, cwd=WRAPDB_LOCATION)
+    blint_output = subprocess.run(blint_command, cwd=WRAPDB_LOCATION, check=False)
 
     if DEBUG_MODE:
         print(blint_output.stdout)

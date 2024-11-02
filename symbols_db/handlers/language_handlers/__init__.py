@@ -9,4 +9,4 @@ class BaseHandler:
     def strip_executables(self, file_path, loc=WRAPDB_LOCATION):
         if self.strip:
             strip_command = f"strip --strip-all {file_path}".split(" ")
-            subprocess.run(strip_command, cwd=loc)
+            subprocess.run(strip_command, cwd=loc, check=False)

@@ -25,14 +25,16 @@ def run_vcpkg_install_command():
     # Linux command
     install_command = ["./bootstrap-vcpkg.sh"]
     install_run = subprocess.run(
-        install_command, cwd=VCPKG_LOCATION, capture_output=True
+        install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )
     if DEBUG_MODE:
         print(install_run.stdout)
         logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout.decode('ascii')}")
 
     int_command = "./vcpkg integrate install".split(" ")
-    int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True)
+    int_run = subprocess.run(
+        int_command, cwd=VCPKG_LOCATION, capture_output=True, check=False
+    )
     if DEBUG_MODE:
         print(int_run.stdout)
         logger.debug(f"'vcpkg integrate install: {int_run.stdout.decode('ascii')}")
@@ -53,7 +55,9 @@ def exec_explorer(directory):
         for file in files:
             file_path = os.path.join(root, file)
             try:
-                result = subprocess.run(["file", file_path], capture_output=True)
+                result = subprocess.run(
+                    ["file", file_path], capture_output=True, check=False
+                )
                 if b"ELF" in result.stdout:
                     executables.append(file_path)
                 if b"archive" in result.stdout:
@@ -82,6 +86,7 @@ def mt_vcpkg_blint_db_build(project_name):
     logger.debug(f"Running {project_name}")
     try:
         execs = add_project_vcpkg_db(project_name)
+        logger.info(f"Completed: {project_name} with execs:{len(execs)}")
     except OperationalError as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)

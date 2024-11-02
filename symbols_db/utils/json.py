@@ -2,14 +2,11 @@ import json
 
 
 def get_key_in_json_list(key_search, key_name, property_list):
-    return_key = None
+    return_key = ""
     for i in property_list:
         if i[key_name] == key_search:
             return_key = i
-    if return_key:
-        return return_key
-    else:
-        raise KeyError("Spelling mistake probably")
+    return return_key if return_key else {"value": ""}
 
 
 def property_exists_get_property(component, property_name):
@@ -18,7 +15,7 @@ def property_exists_get_property(component, property_name):
         req_property = req_property["value"]
         return req_property
     else:
-        return []
+        return ""
 
 
 def get_properties_internal(property_name, file_name):
@@ -29,9 +26,9 @@ def get_properties_internal(property_name, file_name):
 
     if not (req_property := property_exists_get_property(component, property_name)):
         req_property_list = []
-        if components := component.get("components", {}):
+        if comp_list := component.get("components", {}):
             req_property_list.extend(
-                property_exists_get_property(comp, property_name) for comp in components
+                property_exists_get_property(comp, property_name) for comp in comp_list
             )
         req_property = "~~".join(req_property_list)
 
