@@ -1,4 +1,4 @@
-name: Build and Upload blint-db 0.1.0
+name: Build and Upload meson blint-db 0.1.0
 
 on:
   schedule:
@@ -10,7 +10,7 @@ env:
 
 jobs:
   builder:
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: self-hosted
     permissions:
       contents: write
       packages: write
