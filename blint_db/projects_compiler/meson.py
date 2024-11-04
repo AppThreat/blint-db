@@ -2,13 +2,13 @@ import shutil
 import traceback
 from sqlite3 import OperationalError
 
-from symbols_db import WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
-from symbols_db.handlers.blint_handler import get_blint_internal_functions_exe
-from symbols_db.handlers.git_handler import git_checkout_commit, git_clone
-from symbols_db.handlers.language_handlers.meson_handler import (
+from blint_db import WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
+from blint_db.handlers.blint_handler import get_blint_internal_functions_exe
+from blint_db.handlers.git_handler import git_checkout_commit, git_clone
+from blint_db.handlers.language_handlers.meson_handler import (
     find_meson_executables, meson_build, strip_executables)
-from symbols_db.handlers.sqlite_handler import (add_binary, add_binary_export,
-                                                add_projects)
+from blint_db.handlers.sqlite_handler import (add_binary, add_binary_export,
+                                              add_projects)
 
 
 def git_clone_wrapdb():

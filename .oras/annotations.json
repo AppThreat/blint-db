@@ -1,0 +1,8 @@
+{
+    "$config": {
+        "org.opencontainers.image.title": "blint-db",
+        "org.opencontainers.image.vendor": "appthreat",
+        "org.opencontainers.image.licenses": "Apache-2.0",
+        "org.opencontainers.image.description": "Binary database containing symbols from many open source packges for Appthreat/blint"
+    }
+}

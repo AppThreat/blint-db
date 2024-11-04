@@ -3,14 +3,14 @@ import subprocess
 import traceback
 from sqlite3 import OperationalError
 
-from symbols_db import (DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL,
-                        logger)
-from symbols_db.handlers.blint_handler import get_blint_internal_functions_exe
-from symbols_db.handlers.git_handler import git_checkout_commit, git_clone
-from symbols_db.handlers.language_handlers.vcpkg_handler import (
+from blint_db import (DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL,
+                      logger)
+from blint_db.handlers.blint_handler import get_blint_internal_functions_exe
+from blint_db.handlers.git_handler import git_checkout_commit, git_clone
+from blint_db.handlers.language_handlers.vcpkg_handler import (
     find_vcpkg_executables, vcpkg_build)
-from symbols_db.handlers.sqlite_handler import (add_binary, add_binary_export,
-                                                add_projects)
+from blint_db.handlers.sqlite_handler import (add_binary, add_binary_export,
+                                              add_projects)
 
 
 def git_clone_vcpkg():

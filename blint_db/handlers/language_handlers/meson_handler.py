@@ -3,10 +3,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from symbols_db import CWD, WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL
-from symbols_db.handlers.git_handler import git_checkout_commit, git_clone
-from symbols_db.handlers.language_handlers import BaseHandler
-from symbols_db.utils.utils import subprocess_run_debug
+from blint_db import CWD, WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL
+from blint_db.handlers.git_handler import git_checkout_commit, git_clone
+from blint_db.handlers.language_handlers import BaseHandler
+from blint_db.utils.utils import subprocess_run_debug
 
 
 class MesonHandler(BaseHandler):
