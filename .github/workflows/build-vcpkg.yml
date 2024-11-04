@@ -10,7 +10,7 @@ env:
 
 jobs:
   builder:
-    runs-on: self-hosted
+    runs-on: dev1-actions2
     permissions:
       contents: write
       packages: write
