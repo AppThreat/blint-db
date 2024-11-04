@@ -13,8 +13,9 @@ DELIMETER_BOM = "~~"
 DEBUG_MODE = True
 # constants
 CWD = Path.cwd()
-WRAPDB_LOCATION = CWD/ ".." / "temp" / "wrapdb"
-VCPKG_LOCATION = CWD/ ".." / "temp" / "vcpkg"
+TEMP_PATH = CWD / ".." / "temp"
+WRAPDB_LOCATION = TEMP_PATH / "wrapdb"
+VCPKG_LOCATION = TEMP_PATH / "vcpkg"
 
 WRAPDB_URL = "https://github.com/mesonbuild/wrapdb.git"
 VCPKG_URL = "https://github.com/microsoft/vcpkg.git"

@@ -1,8 +1,8 @@
 import subprocess
 from pathlib import Path
 
-from symbols_db import BOM_LOCATION, DEBUG_MODE, DELIMETER_BOM, WRAPDB_LOCATION
-from symbols_db.utils.json import get_properties_internal
+from blint_db import BOM_LOCATION, DEBUG_MODE, DELIMETER_BOM, WRAPDB_LOCATION
+from blint_db.utils.json import get_properties_internal
 
 
 def run_blint_on_file(file_path):

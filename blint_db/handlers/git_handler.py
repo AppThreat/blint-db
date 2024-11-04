@@ -1,6 +1,6 @@
 import subprocess
 
-from symbols_db import DEBUG_MODE
+from blint_db import DEBUG_MODE
 
 
 def git_clone(git_url, loc):

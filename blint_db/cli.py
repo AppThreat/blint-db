@@ -2,20 +2,20 @@ import os
 import argparse
 from concurrent import futures
 
-from symbols_db import BLINTDB_LOCATION, COMMON_CONNECTION
-from symbols_db.handlers.language_handlers.vcpkg_handler import \
+from blint_db import BLINTDB_LOCATION, COMMON_CONNECTION
+from blint_db.handlers.language_handlers.vcpkg_handler import \
     get_vcpkg_projects, remove_vcpkg_project
-from symbols_db.handlers.language_handlers.wrapdb_handler import \
+from blint_db.handlers.language_handlers.wrapdb_handler import \
     get_wrapdb_projects
-from symbols_db.handlers.sqlite_handler import (clear_sqlite_database,
-                                                create_database)
-from symbols_db.projects_compiler.meson import mt_meson_blint_db_build
-from symbols_db.projects_compiler.vcpkg import mt_vcpkg_blint_db_build
+from blint_db.handlers.sqlite_handler import (clear_sqlite_database,
+                                              create_database)
+from blint_db.projects_compiler.meson import mt_meson_blint_db_build
+from blint_db.projects_compiler.vcpkg import mt_vcpkg_blint_db_build
 
 
 def arguments_parser():
     parser = argparse.ArgumentParser(
-        prog="symbols_db", description="Stores Symbols for binaries"
+        prog="blint_db", description="Stores Symbols for binaries"
     )
     parser.add_argument(
         "-c",

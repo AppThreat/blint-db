@@ -1,11 +1,11 @@
 import os
 import subprocess
 
-from symbols_db import (DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL,
-                        logger)
-from symbols_db.handlers.git_handler import git_checkout_commit, git_clone
-from symbols_db.handlers.language_handlers import BaseHandler
-from symbols_db.utils.utils import subprocess_run_debug
+from blint_db import (DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL,
+                      logger)
+from blint_db.handlers.git_handler import git_checkout_commit, git_clone
+from blint_db.handlers.language_handlers import BaseHandler
+from blint_db.utils.utils import subprocess_run_debug
 
 
 class VcpkgHandler(BaseHandler):

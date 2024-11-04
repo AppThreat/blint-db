@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "symbols-db"
+name = "blint-db"
 version = "0.1.0"
 description = ""
 authors = ["Aryan Rajoria <aryanrajoria1003@gmail.com>"]
@@ -10,7 +10,7 @@ python = ">=3.10,<3.13"
 blint = "^2.2.3"
 
 [tool.poetry.scripts]
-symbols-db = 'symbols_db.cli:main'
+blint-db = 'blint_db.cli:main'
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"

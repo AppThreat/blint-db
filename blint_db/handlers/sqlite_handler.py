@@ -4,8 +4,8 @@ import sqlite3
 from contextlib import closing
 from pathlib import PurePath
 
-from symbols_db import (BLINTDB_LOCATION, COMMON_CONNECTION, DEBUG_MODE,
-                        SQLITE_TIMEOUT)
+from blint_db import (BLINTDB_LOCATION, COMMON_CONNECTION, DEBUG_MODE,
+                      SQLITE_TIMEOUT)
 
 
 def use_existing_connection(connection=None):  # Decorator now accepts connection

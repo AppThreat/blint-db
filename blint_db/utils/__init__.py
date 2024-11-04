@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from symbols_db import BOM_LOCATION, DEBUG_MODE, WRAPDB_LOCATION
+from blint_db import BOM_LOCATION, DEBUG_MODE, WRAPDB_LOCATION
 
 HOME_DIRECTORY = Path.home()
 

@@ -1,6 +1,6 @@
 import subprocess
 
-from symbols_db import WRAPDB_LOCATION
+from blint_db import WRAPDB_LOCATION
 
 
 class BaseHandler:
