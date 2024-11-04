@@ -34,7 +34,7 @@ jobs:
         python blint-db/blint_db/cli.py -Z1
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         cd blint-db
-        oras push ghcr.io/$IMAGE_NAME:v0.1 \
+        oras push ghcr.io/appthreat/blintdb-vcpkg:v0.1 \
           --config ../.oras/config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../.oras/annotations.json \
           ./blint.db:application/vnd.appthreat.vdb.layer.v1+tar \
