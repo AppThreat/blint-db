@@ -45,6 +45,7 @@ jobs:
         tar -zxf oras_1.2.0_*.tar.gz -C oras-install/
         sudo mv oras-install/oras /usr/local/bin/
         rm -rf oras_1.2.0_*.tar.gz oras-install/
+        sudo chmod +x /usr/local/bin/oras
     - name: Build and upload db
       run: |
         mkdir -p temp
