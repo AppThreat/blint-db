@@ -32,6 +32,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd blint-db && python -m pip install .
+        poetry install --with build
+        ls -al
+        ls -al ..
     - name: Install apt package
       run: |
         sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
