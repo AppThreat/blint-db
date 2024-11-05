@@ -32,19 +32,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd blint-db && python -m pip install .
-        poetry install --with build
-        ls -al
-        ls -ald ../*/
+        ls -ald ../temp/*/
     - name: Install apt package
       run: |
         sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
+    - name: Install ORAS
+      run: |
+        curl -LO "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
+        mkdir -p oras-install/
+        tar -zxf oras_1.2.0_*.tar.gz -C oras-install/
+        sudo mv oras-install/oras /usr/local/bin/
+        rm -rf oras_1.2.0_*.tar.gz oras-install/
     - name: Build and upload db
       run: |
         mkdir -p temp
         python blint-db/blint_db/cli.py -Z1
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         cd blint-db
-        oras push ghcr.io/appthreat/blintdb-vcpkg:v0.1 \
+        oras push ghcr.io/appthreat/blintdb-meson:v0.1 \
           --config ../.oras/config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../.oras/annotations.json \
           ./blint.db:application/vnd.appthreat.vdb.layer.v1+tar \
