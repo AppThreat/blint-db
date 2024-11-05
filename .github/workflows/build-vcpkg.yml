@@ -2,7 +2,7 @@ name: Build and Upload vcpkg blint-db 0.1.0
 
 on:
   schedule:
-  - cron: "0 */6 * * *"
+  - cron: "0 */12 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
@@ -10,7 +10,7 @@ env:
 
 jobs:
   builder:
-    runs-on: dev1-actions2
+    runs-on: [self-hosted, almalinux]
     permissions:
       contents: write
       packages: write
