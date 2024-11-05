@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: appthreat/blintdb
 
 jobs:
-  builder:
+  builder-vcpkg:
     runs-on: dev1-actions2
     permissions:
       contents: write
@@ -19,6 +19,10 @@ jobs:
       with:
         repository: AppThreat/blint-db
         path: blint-db
+    - name: Setup Ninja
+      uses: ashutoshvarma/setup-ninja@master
+      with:
+        version: 1.10.0
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

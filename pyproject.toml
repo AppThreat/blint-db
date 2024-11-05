@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 blint = "^2.2.3"
+meson = "^1.6.0"
 
 [tool.poetry.scripts]
 blint-db = 'blint_db.cli:main'
