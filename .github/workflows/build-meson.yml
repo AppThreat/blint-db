@@ -10,7 +10,8 @@ env:
 
 jobs:
   builder-meson:
-    runs-on: ['self-hosted', 'ubuntu', 'x64']
+    # runs-on: ['self-hosted', 'ubuntu', 'x64']
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
