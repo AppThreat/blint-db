@@ -37,7 +37,7 @@ jobs:
         sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev file -y
     - name: Build and upload db
       run: |
-        mkdir temp
+        mkdir -p temp
         python blint-db/blint_db/cli.py -Z1
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         cd blint-db
