@@ -19,10 +19,10 @@ jobs:
       with:
         repository: AppThreat/blint-db
         path: blint-db
-    - name: Setup Ninja
-      uses: ashutoshvarma/setup-ninja@master
-      with:
-        version: 1.10.0
+    # - name: Setup Ninja
+    #   uses: ashutoshvarma/setup-ninja@master
+    #   with:
+    #     version: 1.10.0
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -34,7 +34,7 @@ jobs:
         cd blint-db && python -m pip install .
     - name: Install apt package
       run: |
-        sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev file -y
+        sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
     - name: Build and upload db
       run: |
         mkdir -p temp
