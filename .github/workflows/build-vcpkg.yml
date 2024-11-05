@@ -10,7 +10,7 @@ env:
 
 jobs:
   builder-vcpkg:
-    runs-on: dev1-actions2
+    runs-on: self-hosted
     permissions:
       contents: write
       packages: write

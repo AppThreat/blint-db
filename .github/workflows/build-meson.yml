@@ -10,7 +10,7 @@ env:
 
 jobs:
   builder-meson:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: write
       packages: write
