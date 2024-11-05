@@ -32,10 +32,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd blint-db && python -m pip install .
-        ls -ald ../temp/*/
-        ls -ald ../temp/wrapdb/*/
+        echo $GITHUB_TOKEN | sha512sum
+        echo $GITHUB_USERNAME | sha512sum
     - name: Install apt package
       run: |
+        sudo apt update
         sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
     - name: Install ORAS
       run: |
