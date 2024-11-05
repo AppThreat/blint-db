@@ -10,7 +10,7 @@ env:
 
 jobs:
   builder-meson:
-    runs-on: ['self-hosted', 'arm64']
+    runs-on: ['self-hosted', 'ubuntu', 'arm64']
     permissions:
       contents: write
       packages: write
@@ -32,6 +32,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd blint-db && python -m pip install .
+    - name: Install apt package
+      run: |
+        apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev
     - name: Build and upload db
       run: |
         mkdir temp
