@@ -33,6 +33,7 @@ jobs:
         pip install setuptools wheel twine build
         cd blint-db && python -m pip install .
         ls -ald ../temp/*/
+        ls -ald ../temp/wrapdb/*/
     - name: Install apt package
       run: |
         sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
