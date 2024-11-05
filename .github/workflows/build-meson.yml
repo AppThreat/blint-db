@@ -34,7 +34,7 @@ jobs:
         cd blint-db && python -m pip install .
     - name: Install apt package
       run: |
-        apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev
+        apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev file
     - name: Build and upload db
       run: |
         mkdir temp
