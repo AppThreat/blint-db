@@ -1,0 +1,48 @@
+name: Build and Upload meson blint-db 0.1.0
+
+on:
+  schedule:
+  - cron: "0 */12 * * *"
+  workflow_dispatch:
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: appthreat/blintdb
+
+jobs:
+  builder-meson-tst:
+    runs-on: ['self-hosted', 'ubuntu', 'arm64']
+    permissions:
+      contents: write
+      packages: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: AppThreat/blint-db
+        path: blint-db
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine build
+        cd blint-db && python -m pip install .
+    - name: Install apt package
+      run: |
+        sudo apt clean && sudo apt update
+        sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
+    - name: Clean up previous
+      run: |
+        cd blint-db
+        rm -f info.log
+        rm -f blint.db
+    - name: Build and upload db
+      run: |
+        mkdir -p temp
+        cd blint-db/
+        python blint_db/cli.py -f -Z1
+        python ./.oras/orasclient.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_USERNAME: ${{ github.actor }}
