@@ -37,7 +37,7 @@ class MesonHandler(BaseHandler):
                 # what is the value of variable `root`
                 file_path = Path(root) / file
                 if os.access(file_path, os.X_OK):
-                    full_path = CWD / file_path
+                    full_path = file_path
                     file_output = subprocess.run(
                         ["file", full_path], capture_output=True, check=False
                     )
@@ -77,7 +77,7 @@ def find_meson_executables(project_name):
             # what is the value of variable `root`
             file_path = Path(root) / file
             if os.access(file_path, os.X_OK):
-                full_path = CWD / file_path
+                full_path = file_path
                 file_output = subprocess.run(
                     ["file", full_path], capture_output=True, check=False
                 )

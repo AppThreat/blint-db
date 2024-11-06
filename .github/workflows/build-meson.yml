@@ -40,6 +40,11 @@ jobs:
         sudo mv oras-install/oras /usr/local/bin/
         rm -rf oras_1.2.0_*.tar.gz oras-install/
         sudo chmod +x /usr/local/bin/oras
+    - name: Clean up previous
+      run: |
+        cd blint-db
+        rm info.log
+        rm blint.db
     - name: Build and upload db
       run: |
         mkdir -p temp
