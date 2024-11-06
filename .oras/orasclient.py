@@ -14,6 +14,6 @@ client.push(
     config_path="./.oras/config.json",
     annotation_file="./.oras/annotations.json",
     files=[
-        "./blint.db:application/vnd.appthreat.vdb.layer.v1+tar",
+        "./blint.db:application/vnd.appthreat.blintdb.layer.v1+tar",
     ],
 )
