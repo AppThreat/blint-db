@@ -3,11 +3,11 @@ import os
 
 client = oras.client.OrasClient()
 
-input_value = input().split(";;")
+token = os.getenv("GITHUB_USERNAME", "")
+username = os.getenv("GITHUB_USERNAME", "")
 
-client.login(password=input_value[1], username=input_value[0])
 
-print(os.getcwd())
+client.login(password=token, username=username)
 
 client.push(
     target="ghcr.io/appthreat/blintdb-meson:v0.1",
