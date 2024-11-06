@@ -42,7 +42,7 @@ jobs:
         source venv/bin/activate
         cd blint-db/
         pwd
-        python blint_db/cli.py -f -Z1
+        python blint_db/cli.py --clean-start -f -Z1
         python ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -36,7 +36,7 @@ jobs:
         mkdir -p temp
         source venv/bin/activate
         cd blint-db/
-        python blint_db/cli.py -Z1
+        python blint_db/cli.py --clean-start -Z1
         python ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
