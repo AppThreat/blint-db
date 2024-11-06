@@ -19,11 +19,15 @@ jobs:
       with:
         repository: AppThreat/blint-db
         path: blint-db
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
     - name: Install dependencies
       run: |
-        python3 -m pip3 install --upgrade pip3
-        pip3 install setuptools wheel twine build
-        cd blint-db && python3 -m pip3 install .
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine build
+        cd blint-db && python -m pip install .
     - name: Install apt package
       run: |
         sudo apt clean && sudo apt update
@@ -37,8 +41,8 @@ jobs:
       run: |
         mkdir -p temp
         cd blint-db
-        python3 blint_db/cli.py -Z1
-        python3 ./.oras/orasclient.py
+        python blint_db/cli.py -Z1
+        python ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
