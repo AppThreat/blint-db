@@ -43,8 +43,8 @@ jobs:
     - name: Clean up previous
       run: |
         cd blint-db
-        rm info.log
-        rm blint.db
+        rm -f info.log
+        rm -f blint.db
     - name: Build and upload db
       run: |
         mkdir -p temp
