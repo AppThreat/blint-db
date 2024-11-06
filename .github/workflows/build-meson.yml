@@ -10,7 +10,8 @@ env:
 
 jobs:
   builder-meson:
-    runs-on: ['self-hosted', 'ubuntu', 'arm64']
+    # runs-on: ['self-hosted', 'ubuntu', 'arm64']
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
@@ -43,8 +44,8 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p temp
-        python blint-db/blint_db/cli.py -Z1
         cd blint-db
+        python blint_db/cli.py -Z1
         echo "$GITHUB_USERNAME;;$GITHUB_TOKEN" | python ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

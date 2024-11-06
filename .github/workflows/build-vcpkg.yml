@@ -43,8 +43,8 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p temp
-        python blint-db/blint_db/cli.py -Z2
         cd blint-db/
+        python blint-db/blint_db/cli.py -Z2
         echo "$GITHUB_USERNAME;;$GITHUB_TOKEN" | python ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
