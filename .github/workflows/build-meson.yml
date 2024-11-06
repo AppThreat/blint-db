@@ -34,6 +34,7 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p temp
+        source venv/bin/activate
         cd blint-db/
         python blint_db/cli.py -Z1
         python ./.oras/orasclient.py
