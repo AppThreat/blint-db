@@ -22,6 +22,7 @@ jobs:
         path: blint-db
     - name: Install dependencies
       run: |
+        pwd
         [ -d venv ] || python3 -m venv venv
         source venv/bin/activate
         python -m pip install --upgrade pip
@@ -30,12 +31,14 @@ jobs:
         pwd
     - name: Clean up previous
       run: |
+        pwd
         cd blint-db
         pwd
         rm -f info.log
         rm -f blint.db
     - name: Build and upload db
       run: |
+        pwd
         mkdir -p temp
         source venv/bin/activate
         cd blint-db/
