@@ -69,7 +69,15 @@ def arguments_parser():
         "--few-packages",
         dest="test_mode",
         action="store_true",
-        help="Set meson to build fewer projects, helpful for debugging",
+        help="Set pkg managers to build fewer projects, helpful for debugging",
+    )
+
+    parser.add_argument(
+        "-R",
+        "--reuse-old-db",
+        dest="reuse",
+        action="store_true",
+        help="when set does not create a new database"
     )
 
     return parser.parse_args()
@@ -96,8 +104,10 @@ def meson_add_blint_bom_process(test_mode=False):
             print(f"Ran complete for {project_name} and we found {len(executables)}")
 
 
-def vcpkg_add_blint_bom_process():
+def vcpkg_add_blint_bom_process(test_mode=False):
     projects_list = get_vcpkg_projects()
+    if test_mode:
+        projects_list = projects_list[:10]
     count = 0
     for project_name in projects_list:
         executables = mt_vcpkg_blint_db_build(project_name)
@@ -119,6 +129,9 @@ def main():
 
     args = vars(arguments_parser())
 
+    if not args["reuse"]:
+        create_database()
+
     if args["clean"]:
         clear_sqlite_database()
         create_database()
@@ -127,7 +140,7 @@ def main():
         meson_add_blint_bom_process(args["test_mode"])
 
     if args["vcpkg"]:
-        vcpkg_add_blint_bom_process()
+        vcpkg_add_blint_bom_process(args["test_mode"])
 
     if COMMON_CONNECTION:
         reset_and_backup()

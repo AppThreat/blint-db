@@ -8,6 +8,7 @@ from blint_db import (BLINTDB_LOCATION, COMMON_CONNECTION, DEBUG_MODE,
                       SQLITE_TIMEOUT)
 
 
+
 def use_existing_connection(connection=None):  # Decorator now accepts connection
     """
     Decorator to use an existing connection when BLINTDB_LOCATION is ':memory:'.
@@ -18,7 +19,7 @@ def use_existing_connection(connection=None):  # Decorator now accepts connectio
         def wrapper(*args, **kwargs):
             if connection:
                 with closing(connection.cursor()) as c:
-                    if len(args) > 1:  # Statement and arguments provided
+                    if len(args) > 1:
                         c.execute(args[0], args[1])
                     else:
                         c.execute(args[0])
@@ -196,7 +197,3 @@ def add_binary_export(infunc, bid):
     execute_statement(
         "INSERT INTO BinariesExports (bid, eid) VALUES (?, ?)", (bid, eid)
     )
-
-
-if not os.path.exists(BLINTDB_LOCATION):
-    create_database()
