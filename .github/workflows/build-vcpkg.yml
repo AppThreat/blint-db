@@ -44,7 +44,6 @@ jobs:
       run: |
         mkdir -p temp
         python blint-db/blint_db/cli.py -Z2
-        echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         cd blint-db/
         echo "$GITHUB_USERNAME;;$GITHUB_TOKEN" | python ./.oras/orasclient.py
       env:
