@@ -3,7 +3,7 @@ import os
 
 client = oras.client.OrasClient()
 
-token = os.getenv("GITHUB_USERNAME", "")
+token = os.getenv("GITHUB_TOKEN", "")
 username = os.getenv("GITHUB_USERNAME", "")
 
 
