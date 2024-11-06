@@ -64,6 +64,13 @@ def arguments_parser():
         action="store_true",
         help="Resets the database before starting a new build",
     )
+    parser.add_argument(
+        "-f",
+        "--few-packages",
+        dest="test_mode",
+        action="store_true",
+        help="Set meson to build fewer projects, helpful for debugging",
+    )
 
     return parser.parse_args()
 
@@ -74,8 +81,10 @@ def reset_and_backup():
 
 
 
-def meson_add_blint_bom_process():
+def meson_add_blint_bom_process(test_mode=False):
     projects_list = get_wrapdb_projects()
+    if test_mode:
+        projects_list = projects_list[:10]
 
     # build the projects single threaded
     # st_meson_blint_db_build(projects_list)
@@ -115,7 +124,7 @@ def main():
         create_database()
 
     if args["meson"]:
-        meson_add_blint_bom_process()
+        meson_add_blint_bom_process(args["test_mode"])
 
     if args["vcpkg"]:
         vcpkg_add_blint_bom_process()

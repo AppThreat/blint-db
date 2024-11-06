@@ -9,8 +9,8 @@ env:
   IMAGE_NAME: appthreat/blintdb
 
 jobs:
-  builder:
-    runs-on: [self-hosted, almalinux]
+  builder-meson:
+    runs-on: ['self-hosted', 'ubuntu', 'arm64']
     permissions:
       contents: write
       packages: write
@@ -19,26 +19,22 @@ jobs:
       with:
         repository: AppThreat/blint-db
         path: blint-db
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd blint-db && python -m pip install .
+    - name: Clean up previous
+      run: |
+        cd blint-db
+        rm -f info.log
+        rm -f blint.db
     - name: Build and upload db
       run: |
-        mkdir temp
-        python blint-db/blint_db/cli.py -Z1
-        echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        cd blint-db
-        oras push ghcr.io/appthreat/blintdb-vcpkg:v0.1 \
-          --config ../.oras/config.json:application/vnd.oras.config.v1+json \
-          --annotation-file ../.oras/annotations.json \
-          ./blint.db:application/vnd.appthreat.vdb.layer.v1+tar \
-        
+        mkdir -p temp
+        cd blint-db/
+        python blint_db/cli.py -Z1
+        python ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}

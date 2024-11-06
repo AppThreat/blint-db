@@ -12,8 +12,7 @@ DELIMETER_BOM = "~~"
 # variables
 DEBUG_MODE = True
 # constants
-CWD = Path.cwd()
-TEMP_PATH = CWD / ".." / "temp"
+TEMP_PATH = Path.cwd() / "temp"
 WRAPDB_LOCATION = TEMP_PATH / "wrapdb"
 VCPKG_LOCATION = TEMP_PATH / "vcpkg"
 
@@ -23,7 +22,7 @@ VCPKG_URL = "https://github.com/microsoft/vcpkg.git"
 WRAPDB_HASH = "90fdc28c75412d99900f2ff58006de57866c63ee"
 VCPKG_HASH = "e60236ee051183f1122066bee8c54a0b47c43a60"
 
-BOM_LOCATION = CWD / ".." / "temp" / "BOM"
+BOM_LOCATION = TEMP_PATH / "BOM"
 BLINTDB_LOCATION = "blint.db"
 CWD = Path(os.getcwd())
 

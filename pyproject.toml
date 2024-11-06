@@ -8,6 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 blint = "^2.2.3"
+meson = "^1.6.0"
+oras = "^0.2.24"
 
 [tool.poetry.scripts]
 blint-db = 'blint_db.cli:main'
@@ -16,6 +18,9 @@ blint-db = 'blint_db.cli:main'
 isort = "^5.13.2"
 black = "^24.10.0"
 flake8 = "^7.1.1"
+
+[tool.poetry.group.build.dependencies]
+poetry = "^1.8.4"
 
 [build-system]
 requires = ["poetry-core"]
