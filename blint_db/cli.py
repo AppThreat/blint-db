@@ -61,7 +61,6 @@ def arguments_parser():
     parser.add_argument(
         "--clean-start",
         dest="clean",
-        default=False,
         action="store_true",
         help="Resets the database before starting a new build",
     )

@@ -118,7 +118,9 @@ def create_database():
 
 
 def clear_sqlite_database():
-    os.remove(BLINTDB_LOCATION)
+    if os.path.exists(BLINTDB_LOCATION):
+        if os.path.isfile(BLINTDB_LOCATION):
+            os.remove(BLINTDB_LOCATION)
 
 
 def store_sbom_in_sqlite(purl, sbom):
