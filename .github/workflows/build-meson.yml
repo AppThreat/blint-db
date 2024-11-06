@@ -10,8 +10,7 @@ env:
 
 jobs:
   builder-meson:
-    # runs-on: ['self-hosted', 'ubuntu', 'x64']
-    runs-on: ubuntu-latest
+    runs-on: ['self-hosted', 'ubuntu', 'arm64']
     permissions:
       contents: write
       packages: write
@@ -20,10 +19,6 @@ jobs:
       with:
         repository: AppThreat/blint-db
         path: blint-db
-    # - name: Setup Ninja
-    #   uses: ashutoshvarma/setup-ninja@master
-    #   with:
-    #     version: 1.10.0
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

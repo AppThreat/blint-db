@@ -19,10 +19,6 @@ jobs:
       with:
         repository: AppThreat/blint-db
         path: blint-db
-    - name: Setup Ninja
-      uses: ashutoshvarma/setup-ninja@master
-      with:
-        version: 1.10.0
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -32,9 +28,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd blint-db && python -m pip install .
+    - name: Install apt package
+      run: |
+        sudo apt clean && sudo apt update
+        sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
+    - name: Install ORAS
+      run: |
+        curl -LO "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
+        mkdir -p oras-install/
+        tar -zxf oras_1.2.0_*.tar.gz -C oras-install/
+        sudo mv oras-install/oras /usr/local/bin/
+        rm -rf oras_1.2.0_*.tar.gz oras-install/
+        sudo chmod +x /usr/local/bin/oras
     - name: Build and upload db
       run: |
-        mkdir temp
+        mkdir -p temp
         python blint-db/blint_db/cli.py -Z2
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         cd blint-db
