@@ -1,4 +1,5 @@
 import oras.client
+import os
 
 client = oras.client.OrasClient()
 
@@ -6,11 +7,13 @@ input_value = input().split(";;")
 
 client.login(password=input_value[1], username=input_value[0])
 
+print(os.getcwd())
+
 client.push(
     target="ghcr.io/appthreat/blintdb-meson:v0.1",
+    config_path="./.oras/config.json",
+    annotation_file="./.oras/annotations.json",
     files=[
-        ("./.oras/config.json", "application/vnd.oras.config.v1+json"),
-        ("./.oras/annotations.json", "application/vnd.oras.annotation.v1+json"),
-        ("./blint.db", "application/vnd.appthreat.vdb.layer.v1+tar"),
+        "./blint.db:application/vnd.appthreat.vdb.layer.v1+tar",
     ],
 )
