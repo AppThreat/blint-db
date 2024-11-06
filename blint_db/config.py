@@ -28,5 +28,5 @@ CWD = Path(os.getcwd())
 
 SQLITE_TIMEOUT = 20.0
 
-# COMMON_CONNECTION = None
-COMMON_CONNECTION = sqlite3.connect(":memory:")
+COMMON_CONNECTION = None
+# COMMON_CONNECTION = sqlite3.connect(":memory:")
