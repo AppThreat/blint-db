@@ -21,9 +21,11 @@ jobs:
         path: blint-db
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip
+        [ -d venv ] || python3 -m venv venv
+        source venv/bin/activate
+        python -m pip install --upgrade pip
         pip install setuptools wheel twine build
-        cd blint-db && python3 -m pip install .
+        cd blint-db && python -m pip install .
     - name: Clean up previous
       run: |
         cd blint-db
@@ -33,8 +35,8 @@ jobs:
       run: |
         mkdir -p temp
         cd blint-db/
-        python3 blint_db/cli.py -Z1
-        python3 ./.oras/orasclient.py
+        python blint_db/cli.py -Z1
+        python ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
