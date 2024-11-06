@@ -1,4 +1,4 @@
-name: Build and Upload vcpkg blint-db 0.1.0
+name: Build and Upload meson blint-db 0.1.0
 
 on:
   schedule:
@@ -9,8 +9,8 @@ env:
   IMAGE_NAME: appthreat/blintdb
 
 jobs:
-  builder-vcpkg:
-    runs-on: ['self-hosted', 'ubuntu', 'arm64']
+  builder-meson:
+    runs-on: ['self-hosted', 'almalinux']
     permissions:
       contents: write
       packages: write
@@ -30,8 +30,8 @@ jobs:
         cd blint-db && python -m pip install .
     - name: Install apt package
       run: |
-        sudo apt clean && sudo apt update
-        sudo apt install libzmq3-dev libx11-dev qtbase5-dev libgl1-mesa-dev ninja-build file -y
+        sudo dnf clean all && sudo dnf update
+        sudo dnf install zeromq-devel libX11-devel qt5-base-devel mesa-libGL-devel ninja-build file -y
     - name: Install ORAS
       run: |
         curl -LO "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
@@ -43,10 +43,13 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p temp
-        python blint-db/blint_db/cli.py -Z2
+        python blint-db/blint_db/cli.py -Z1
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        cd blint-db/
-        echo "$GITHUB_USERNAME;;$GITHUB_TOKEN" | python ./.oras/orasclient.py
+        cd blint-db
+        oras push ghcr.io/appthreat/blintdb-meson:v0.1 \
+          --config ../.oras/config.json:application/vnd.oras.config.v1+json \
+          --annotation-file ../.oras/annotations.json \
+          ./blint.db:application/vnd.appthreat.vdb.layer.v1+tar \
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
