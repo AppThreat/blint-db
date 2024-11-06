@@ -131,6 +131,7 @@ def main():
 
     if COMMON_CONNECTION:
         reset_and_backup()
+        print("Build Completed Saved Database")
 
 
 if __name__ == "__main__":
