@@ -33,6 +33,7 @@ jobs:
         rm -f blint.db
     - name: Build and upload db
       run: |
+        export VCPKG_FORCE_SYSTEM_BINARIES=arm
         mkdir -p temp
         source venv/bin/activate
         cd blint-db/

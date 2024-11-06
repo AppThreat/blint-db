@@ -30,3 +30,5 @@ SQLITE_TIMEOUT = 20.0
 
 COMMON_CONNECTION = None
 # COMMON_CONNECTION = sqlite3.connect(":memory:")
+
+ARCH_OS="arm64-linux"
