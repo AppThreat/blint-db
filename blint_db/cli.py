@@ -1,5 +1,6 @@
 import os
 import argparse
+import sqlite3
 from concurrent import futures
 
 from blint_db import BLINTDB_LOCATION, COMMON_CONNECTION
@@ -60,7 +61,6 @@ def arguments_parser():
     parser.add_argument(
         "--clean-start",
         dest="clean",
-        default=False,
         action="store_true",
         help="Resets the database before starting a new build",
     )
@@ -69,8 +69,16 @@ def arguments_parser():
         "--few-packages",
         dest="test_mode",
         action="store_true",
-        help="Set meson to build fewer projects, helpful for debugging",
+        help="Set pkg managers to build fewer projects, helpful for debugging",
     )
+
+    # parser.add_argument(
+    #     "-R",
+    #     "--reuse-old-db",
+    #     dest="reuse",
+    #     action="store_true",
+    #     help="when set does not create a new database"
+    # )
 
     return parser.parse_args()
 
@@ -96,8 +104,10 @@ def meson_add_blint_bom_process(test_mode=False):
             print(f"Ran complete for {project_name} and we found {len(executables)}")
 
 
-def vcpkg_add_blint_bom_process():
+def vcpkg_add_blint_bom_process(test_mode=False):
     projects_list = get_vcpkg_projects()
+    if test_mode:
+        projects_list = projects_list[:10]
     count = 0
     for project_name in projects_list:
         executables = mt_vcpkg_blint_db_build(project_name)
@@ -107,12 +117,6 @@ def vcpkg_add_blint_bom_process():
         if count == 100:
             reset_and_backup()
             count = 0
-
-    # with futures.ProcessPoolExecutor(max_workers=1) as executor:
-    #     for project_name, executables in zip(
-    #         projects_list, executor.map(mt_vcpkg_blint_db_build, projects_list)
-    #     ):
-    #         print(f"Ran complete for {project_name} and we found {len(executables)}")
 
 
 def main():
@@ -127,10 +131,11 @@ def main():
         meson_add_blint_bom_process(args["test_mode"])
 
     if args["vcpkg"]:
-        vcpkg_add_blint_bom_process()
+        vcpkg_add_blint_bom_process(args["test_mode"])
 
     if COMMON_CONNECTION:
         reset_and_backup()
+        print("Build Completed Saved Database")
 
 
 if __name__ == "__main__":

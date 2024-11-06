@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: appthreat/blintdb
 
 jobs:
-  builder-vcpkg:
+  builder-vcpkg-tst:
     runs-on: ['self-hosted', 'ubuntu', 'arm64']
     permissions:
       contents: write
@@ -36,7 +36,7 @@ jobs:
         mkdir -p temp
         source venv/bin/activate
         cd blint-db/
-        python3 blint-db/blint_db/cli.py --clean-start -Z2
+        python3 blint-db/blint_db/cli.py --clean-start -f -Z2
         python3 ./.oras/orasclient.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

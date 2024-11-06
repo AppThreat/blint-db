@@ -10,7 +10,7 @@ logging.basicConfig(
 
 DELIMETER_BOM = "~~"
 # variables
-DEBUG_MODE = True
+DEBUG_MODE = False
 # constants
 TEMP_PATH = Path.cwd() / "temp"
 WRAPDB_LOCATION = TEMP_PATH / "wrapdb"
@@ -28,5 +28,5 @@ CWD = Path(os.getcwd())
 
 SQLITE_TIMEOUT = 20.0
 
-# COMMON_CONNECTION = None
-COMMON_CONNECTION = sqlite3.connect(":memory:")
+COMMON_CONNECTION = None
+# COMMON_CONNECTION = sqlite3.connect(":memory:")

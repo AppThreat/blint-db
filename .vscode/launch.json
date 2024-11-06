@@ -19,7 +19,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/blint_db/cli.py",
             "console": "integratedTerminal",
-            "args": "-Z1"
+            // "preLaunchTask": "Run Cleanup Script",
+            "args": ["-f", "-Z1"]
         },
         {
             "name": "test nodejs sbom deep",
@@ -38,7 +39,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/blint_db/cli.py",
             "console": "integratedTerminal",
-            "preLaunchTask": "Run Cleanup Script",
+            // "preLaunchTask": "Run Cleanup Script",
             "args": "-Z2"
         }
     ]
