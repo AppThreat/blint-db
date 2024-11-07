@@ -86,7 +86,8 @@ def arguments_parser():
 def reset_and_backup():
     if os.path.exists(BLINTDB_LOCATION) and os.path.isfile(BLINTDB_LOCATION):
         os.remove(BLINTDB_LOCATION)
-    COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
+    if COMMON_CONNECTION:
+        COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
 
 
 
