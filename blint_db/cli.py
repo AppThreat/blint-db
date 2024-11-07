@@ -13,6 +13,8 @@ from blint_db.handlers.sqlite_handler import (clear_sqlite_database,
 from blint_db.projects_compiler.meson import mt_meson_blint_db_build
 from blint_db.projects_compiler.vcpkg import mt_vcpkg_blint_db_build
 
+from typing import List
+
 
 def arguments_parser():
     parser = argparse.ArgumentParser(
@@ -71,14 +73,13 @@ def arguments_parser():
         action="store_true",
         help="Set pkg managers to build fewer projects, helpful for debugging",
     )
-
-    # parser.add_argument(
-    #     "-R",
-    #     "--reuse-old-db",
-    #     dest="reuse",
-    #     action="store_true",
-    #     help="when set does not create a new database"
-    # )
+    parser.add_argument(
+        "-s",
+        "--select-project",
+        nargs="+",
+        dest="sel_project",
+        help="List of project you would like to compile helpful for debugging"
+    )
 
     return parser.parse_args()
 
@@ -89,10 +90,12 @@ def reset_and_backup():
 
 
 
-def meson_add_blint_bom_process(test_mode=False):
+def meson_add_blint_bom_process(test_mode=False, sel_project: List=None):
     projects_list = get_wrapdb_projects()
     if test_mode:
         projects_list = projects_list[:10]
+    if sel_project:
+        projects_list = sel_project
 
     # build the projects single threaded
     # st_meson_blint_db_build(projects_list)
@@ -104,10 +107,12 @@ def meson_add_blint_bom_process(test_mode=False):
             print(f"Ran complete for {project_name} and we found {len(executables)}")
 
 
-def vcpkg_add_blint_bom_process(test_mode=False):
+def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List=None):
     projects_list = get_vcpkg_projects()
     if test_mode:
         projects_list = projects_list[:10]
+    if sel_project:
+        projects_list = sel_project
     count = 0
     for project_name in projects_list:
         executables = mt_vcpkg_blint_db_build(project_name)
@@ -128,10 +133,10 @@ def main():
         create_database()
 
     if args["meson"]:
-        meson_add_blint_bom_process(args["test_mode"])
+        meson_add_blint_bom_process(args["test_mode"], args["sel_project"])
 
     if args["vcpkg"]:
-        vcpkg_add_blint_bom_process(args["test_mode"])
+        vcpkg_add_blint_bom_process(args["test_mode"], args["sel_project"])
 
     if COMMON_CONNECTION:
         reset_and_backup()

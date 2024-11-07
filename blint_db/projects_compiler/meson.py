@@ -28,14 +28,17 @@ def add_project_meson_db(project_name):
     meson_build(project_name)
     execs = find_meson_executables(project_name)
     for files in execs:
-        strip_executables(files)
-        bid = add_binary(files, pid)
-        if_list = get_blint_internal_functions_exe(files)
-        for func in if_list:
-            add_binary_export(func, bid)
-
-    # TODO: delete project after done processing
-
+        try:
+            strip_executables(files)
+            bid = add_binary(files, pid)
+            if_list = get_blint_internal_functions_exe(files)
+            for func in if_list:
+                add_binary_export(func, bid)
+            # TODO: delete project after done processing
+        except (RuntimeError, FileNotFoundError) as e:
+            logger.info(f"error encountered with {project_name}")
+            logger.error(e)
+            logger.error(traceback.format_exc())
     return execs
 
 
