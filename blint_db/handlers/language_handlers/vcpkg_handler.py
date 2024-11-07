@@ -98,7 +98,7 @@ def archive_explorer(directory):
       directory: The directory to search.
 
     Returns:
-      A list of executable file paths.
+      A list of archive file paths.
     """
     executables = []
     for root, _, files in os.walk(directory):
@@ -147,5 +147,5 @@ def exec_explorer(directory):
                 )
                 return (
                     []
-                )  # TODO: Do you really want to return early, or should you be going to the next file in the iteration with continue?
+                )
     return executables

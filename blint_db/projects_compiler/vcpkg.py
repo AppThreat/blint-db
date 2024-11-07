@@ -75,10 +75,15 @@ def add_project_vcpkg_db(project_name):
     vcpkg_build(project_name)
     execs = find_vcpkg_executables(project_name)
     for files in execs:
-        bid = add_binary(files, pid, split_word="packages/")
-        if_list = get_blint_internal_functions_exe(files)
-        for func in if_list:
-            add_binary_export(func, bid)
+        try:
+            bid = add_binary(files, pid, split_word="packages/")
+            if_list = get_blint_internal_functions_exe(files)
+            for func in if_list:
+                add_binary_export(func, bid)
+        except (RuntimeError, FileNotFoundError) as e:
+            logger.info(f"error encountered with {project_name}")
+            logger.error(e)
+            logger.error(traceback.format_exc())
     return execs
 
 
