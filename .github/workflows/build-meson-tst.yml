@@ -1,8 +1,6 @@
 name: Build and Upload meson blint-db 0.1.0
 
 on:
-  schedule:
-  - cron: "0 */12 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
