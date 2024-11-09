@@ -2,6 +2,8 @@ import os
 import argparse
 import sqlite3
 from concurrent import futures
+from pathlib import Path
+import shutil
 
 from blint_db import BLINTDB_LOCATION, COMMON_CONNECTION
 from blint_db.handlers.language_handlers.vcpkg_handler import \
@@ -107,6 +109,20 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List=None):
         ):
             print(f"Ran complete for {project_name} and we found {len(executables)}")
 
+def remove_temp_ar():
+    """
+    Removes `ar-temp-########` files created by blint extract-ar function,
+    after we have completed our tasks.
+    """
+
+    try:
+        for dirname in Path("/tmp").glob("ar-temp-*"):
+            try:
+                shutil.rmtree(dirname)
+            except OSError as e:
+                print(f"Error deleting file {dirname}: {e}")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
 
 def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List=None):
     projects_list = get_vcpkg_projects()
@@ -122,6 +138,7 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List=None):
         count += 1
         if count == 100:
             reset_and_backup()
+            remove_temp_ar()
             count = 0
 
 
