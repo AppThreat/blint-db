@@ -1,19 +1,20 @@
-import os
 import argparse
+import os
+import shutil
 import sqlite3
 from concurrent import futures
+from pathlib import Path
+from typing import List
 
 from blint_db import BLINTDB_LOCATION, COMMON_CONNECTION
-from blint_db.handlers.language_handlers.vcpkg_handler import \
-    get_vcpkg_projects, remove_vcpkg_project
+from blint_db.handlers.language_handlers.vcpkg_handler import (
+    get_vcpkg_projects, remove_vcpkg_project)
 from blint_db.handlers.language_handlers.wrapdb_handler import \
     get_wrapdb_projects
 from blint_db.handlers.sqlite_handler import (clear_sqlite_database,
                                               create_database)
 from blint_db.projects_compiler.meson import mt_meson_blint_db_build
 from blint_db.projects_compiler.vcpkg import mt_vcpkg_blint_db_build
-
-from typing import List
 
 
 def arguments_parser():
@@ -78,10 +79,11 @@ def arguments_parser():
         "--select-project",
         nargs="+",
         dest="sel_project",
-        help="List of project you would like to compile helpful for debugging"
+        help="List of project you would like to compile helpful for debugging",
     )
 
     return parser.parse_args()
+
 
 def reset_and_backup():
     if COMMON_CONNECTION:
@@ -90,8 +92,7 @@ def reset_and_backup():
         COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
 
 
-
-def meson_add_blint_bom_process(test_mode=False, sel_project: List=None):
+def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
     projects_list = get_wrapdb_projects()
     if test_mode:
         projects_list = projects_list[:10]
@@ -108,7 +109,23 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List=None):
             print(f"Ran complete for {project_name} and we found {len(executables)}")
 
 
-def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List=None):
+def remove_temp_ar():
+    """
+    Removes `ar-temp-########` files created by blint extract-ar function,
+    after we have completed our tasks.
+    """
+
+    try:
+        for dirname in Path("/tmp").glob("ar-temp-*"):
+            try:
+                shutil.rmtree(dirname)
+            except OSError as e:
+                print(f"Error deleting file {dirname}: {e}")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+
+
+def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
     projects_list = get_vcpkg_projects()
     if test_mode:
         projects_list = projects_list[:10]
@@ -122,6 +139,7 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List=None):
         count += 1
         if count == 100:
             reset_and_backup()
+            remove_temp_ar()
             count = 0
 
 
