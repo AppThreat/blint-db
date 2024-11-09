@@ -18,6 +18,26 @@ from blint_db.projects_compiler.vcpkg import mt_vcpkg_blint_db_build
 
 
 def arguments_parser():
+    """
+    Parse command-line arguments for the blint_db application.
+
+    This function sets up an argument parser that allows users to specify various options for managing symbols in binaries.
+    It provides flags for adding BOM files to the database, starting automatic builds, and configuring the build process.
+
+    Returns:
+        Namespace: An object containing the parsed command-line arguments.
+
+    Args:
+        -c, --cdxgen-bom: Path to the CDXGEN bom file (NOT IMPLEMENTED).
+        -cs, --add-cdxgen-db: Flag to add Cdxgen BOM to the database.
+        -b, --blint-sbom: Path to the Blint SBOM for a binary (NOT IMPLEMENTED).
+        -bs, --add-blint-db: Flag to add Blint SBOM to the database.
+        -Z1, --meson-blintdb: Flag to start automatic blintdb build using wrapdb packages.
+        -Z2, --vcpkg-blintdb: Flag to start automatic blintdb build using vcpkg packages.
+        --clean-start: Flag to reset the database before starting a new build.
+        -f, --few-packages: Flag to set package managers to build fewer projects, helpful for debugging.
+        -s, --select-project: List of projects to compile, helpful for debugging.
+    """
     parser = argparse.ArgumentParser(
         prog="blint_db", description="Stores Symbols for binaries"
     )
@@ -144,6 +164,18 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
 
 
 def main():
+    """
+    Main entry point for the blint_db application.
+
+    This function orchestrates the execution of the application based on the parsed command-line arguments.
+    It handles database management, initiates build processes, and performs cleanup as specified by the user.
+
+    Returns:
+        None
+
+    Args:
+        None
+    """
 
     args = vars(arguments_parser())
 
