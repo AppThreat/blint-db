@@ -198,3 +198,10 @@ def add_binary_export(infunc, bid):
     execute_statement(
         "INSERT INTO BinariesExports (bid, eid) VALUES (?, ?)", (bid, eid)
     )
+
+
+def reset_and_backup():
+    if COMMON_CONNECTION:
+        if os.path.exists(BLINTDB_LOCATION) and os.path.isfile(BLINTDB_LOCATION):
+            os.remove(BLINTDB_LOCATION)
+        COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
