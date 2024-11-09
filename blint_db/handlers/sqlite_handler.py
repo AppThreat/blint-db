@@ -8,7 +8,6 @@ from blint_db import (BLINTDB_LOCATION, COMMON_CONNECTION, DEBUG_MODE,
                       SQLITE_TIMEOUT)
 
 
-
 def use_existing_connection(connection=None):  # Decorator now accepts connection
     """
     Decorator to use an existing connection when BLINTDB_LOCATION is ':memory:'.

@@ -3,8 +3,7 @@ import subprocess
 import traceback
 from sqlite3 import OperationalError
 
-from blint_db import (DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL,
-                      logger)
+from blint_db import DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL, logger
 from blint_db.handlers.blint_handler import get_blint_internal_functions_exe
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers.vcpkg_handler import (

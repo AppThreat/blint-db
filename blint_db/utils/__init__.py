@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from blint_db import VCPKG_LOCATION, DEBUG_MODE, WRAPDB_LOCATION
+from blint_db import DEBUG_MODE, VCPKG_LOCATION, WRAPDB_LOCATION
 
 HOME_DIRECTORY = Path.home()
 
@@ -9,7 +9,7 @@ HOME_DIRECTORY = Path.home()
 def _create_python_dirs():
     wl = WRAPDB_LOCATION
     vl = VCPKG_LOCATION
-    
+
     os.makedirs(wl, exist_ok=True)
     os.makedirs(vl, exist_ok=True)
 

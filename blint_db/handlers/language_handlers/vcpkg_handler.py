@@ -1,8 +1,8 @@
 import os
 import subprocess
 
-from blint_db import (DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL, ARCH_OS,
-                      logger)
+from blint_db import (ARCH_OS, DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION,
+                      VCPKG_URL, logger)
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
 from blint_db.utils.utils import subprocess_run_debug
@@ -60,12 +60,14 @@ def run_vcpkg_install_command():
         print(int_run.stdout)
         logger.debug(f"'vcpkg integrate install: {int_run.stdout.decode('ascii')}")
 
+
 def remove_vcpkg_project(project_name):
     rem_cmd = ["./vcpkg", "remove", "--recurse", project_name]
     rem_run = subprocess.run(
         rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )
     subprocess_run_debug(rem_run, project_name)
+
 
 def get_vcpkg_projects():
     git_clone_vcpkg()
@@ -145,7 +147,5 @@ def exec_explorer(directory):
                 print(
                     "Error: 'file' command not found. Make sure it's installed and in your PATH."
                 )
-                return (
-                    []
-                )
+                return []
     return executables
