@@ -79,7 +79,7 @@ def get_vcpkg_projects():
 
 
 def vcpkg_build(project_name):
-    inst_cmd = ["./vcpkg", "install", project_name]
+    inst_cmd = ["./vcpkg", "install", "--clean-after-build", project_name]
     inst_run = subprocess.run(
         inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )
