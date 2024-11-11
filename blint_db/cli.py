@@ -13,11 +13,31 @@ from blint_db.handlers.language_handlers.wrapdb_handler import \
     get_wrapdb_projects
 from blint_db.handlers.sqlite_handler import (clear_sqlite_database,
                                               create_database)
-from blint_db.projects_compiler.meson import mt_meson_blint_db_build
-from blint_db.projects_compiler.vcpkg import mt_vcpkg_blint_db_build
+from blint_db.projects_compiler.meson import mt_meson_blint_db_build, meson_add_blint_bom_process
+from blint_db.projects_compiler.vcpkg import mt_vcpkg_blint_db_build, vcpkg_add_blint_bom_process
 
 
 def arguments_parser():
+    """
+    Parse command-line arguments for the blint_db application.
+
+    This function sets up an argument parser that allows users to specify various options for managing symbols in binaries.
+    It provides flags for adding BOM files to the database, starting automatic builds, and configuring the build process.
+
+    Returns:
+        Namespace: An object containing the parsed command-line arguments.
+
+    Args:
+        -c, --cdxgen-bom: Path to the CDXGEN bom file (NOT IMPLEMENTED).
+        -cs, --add-cdxgen-db: Flag to add Cdxgen BOM to the database.
+        -b, --blint-sbom: Path to the Blint SBOM for a binary (NOT IMPLEMENTED).
+        -bs, --add-blint-db: Flag to add Blint SBOM to the database.
+        -Z1, --meson-blintdb: Flag to start automatic blintdb build using wrapdb packages.
+        -Z2, --vcpkg-blintdb: Flag to start automatic blintdb build using vcpkg packages.
+        --clean-start: Flag to reset the database before starting a new build.
+        -f, --few-packages: Flag to set package managers to build fewer projects, helpful for debugging.
+        -s, --select-project: List of projects to compile, helpful for debugging.
+    """
     parser = argparse.ArgumentParser(
         prog="blint_db", description="Stores Symbols for binaries"
     )
@@ -92,58 +112,19 @@ def reset_and_backup():
         COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
 
 
-def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
-    projects_list = get_wrapdb_projects()
-    if test_mode:
-        projects_list = projects_list[:10]
-    if sel_project:
-        projects_list = sel_project
-
-    # build the projects single threaded
-    # st_meson_blint_db_build(projects_list)
-
-    with futures.ProcessPoolExecutor(max_workers=4) as executor:
-        for project_name, executables in zip(
-            projects_list, executor.map(mt_meson_blint_db_build, projects_list)
-        ):
-            print(f"Ran complete for {project_name} and we found {len(executables)}")
-
-
-def remove_temp_ar():
-    """
-    Removes `ar-temp-########` files created by blint extract-ar function,
-    after we have completed our tasks.
-    """
-
-    try:
-        for dirname in Path("/tmp").glob("ar-temp-*"):
-            try:
-                shutil.rmtree(dirname)
-            except OSError as e:
-                print(f"Error deleting file {dirname}: {e}")
-    except Exception as e:
-        print(f"Error during cleanup: {e}")
-
-
-def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
-    projects_list = get_vcpkg_projects()
-    if test_mode:
-        projects_list = projects_list[:10]
-    if sel_project:
-        projects_list = sel_project
-    count = 0
-    for project_name in projects_list:
-        executables = mt_vcpkg_blint_db_build(project_name)
-        print(f"Ran complete for {project_name} and we found {len(executables)}")
-        remove_vcpkg_project(project_name)
-        count += 1
-        if count == 100:
-            reset_and_backup()
-            remove_temp_ar()
-            count = 0
-
-
 def main():
+    """
+    Main entry point for the blint_db application.
+
+    This function orchestrates the execution of the application based on the parsed command-line arguments.
+    It handles database management, initiates build processes, and performs cleanup as specified by the user.
+
+    Returns:
+        None
+
+    Args:
+        None
+    """
 
     args = vars(arguments_parser())
 

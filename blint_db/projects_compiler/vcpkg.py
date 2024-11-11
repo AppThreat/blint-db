@@ -2,14 +2,17 @@ import os
 import subprocess
 import traceback
 from sqlite3 import OperationalError
+from typing import List
+from pathlib import Path
+import shutil
 
 from blint_db import DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL, logger
 from blint_db.handlers.blint_handler import get_blint_internal_functions_exe
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers.vcpkg_handler import (
-    find_vcpkg_executables, vcpkg_build)
+    find_vcpkg_executables, vcpkg_build, get_vcpkg_projects, remove_vcpkg_project)
 from blint_db.handlers.sqlite_handler import (add_binary, add_binary_export,
-                                              add_projects)
+                                              add_projects, reset_and_backup)
 
 
 def git_clone_vcpkg():
@@ -97,3 +100,35 @@ def mt_vcpkg_blint_db_build(project_name):
         logger.error(traceback.format_exc())
         return [False]
     return execs
+
+def remove_temp_ar():
+    """
+    Removes `ar-temp-########` files created by blint extract-ar function,
+    after we have completed our tasks.
+    """
+
+    try:
+        for dirname in Path("/tmp").glob("ar-temp-*"):
+            try:
+                shutil.rmtree(dirname)
+            except OSError as e:
+                print(f"Error deleting file {dirname}: {e}")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+
+def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
+    projects_list = get_vcpkg_projects()
+    if test_mode:
+        projects_list = projects_list[:10]
+    if sel_project:
+        projects_list = sel_project
+    count = 0
+    for project_name in projects_list:
+        executables = mt_vcpkg_blint_db_build(project_name)
+        print(f"Ran complete for {project_name} and we found {len(executables)}")
+        remove_vcpkg_project(project_name)
+        count += 1
+        if count == 100:
+            reset_and_backup()
+            remove_temp_ar()
+            count = 0
