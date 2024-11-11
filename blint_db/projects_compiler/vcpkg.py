@@ -3,6 +3,8 @@ import subprocess
 import traceback
 from sqlite3 import OperationalError
 from typing import List
+from pathlib import Path
+import shutil
 
 from blint_db import DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION, VCPKG_URL, logger
 from blint_db.handlers.blint_handler import get_blint_internal_functions_exe
@@ -99,8 +101,22 @@ def mt_vcpkg_blint_db_build(project_name):
         return [False]
     return execs
 
+def remove_temp_ar():
+    """
+    Removes `ar-temp-########` files created by blint extract-ar function,
+    after we have completed our tasks.
+    """
 
-def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List=None):
+    try:
+        for dirname in Path("/tmp").glob("ar-temp-*"):
+            try:
+                shutil.rmtree(dirname)
+            except OSError as e:
+                print(f"Error deleting file {dirname}: {e}")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+
+def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
     projects_list = get_vcpkg_projects()
     if test_mode:
         projects_list = projects_list[:10]
@@ -114,4 +130,5 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List=None):
         count += 1
         if count == 100:
             reset_and_backup()
+            remove_temp_ar()
             count = 0
