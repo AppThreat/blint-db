@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 AppThreat <cloud@appthreat.com>
+#
+# SPDX-License-Identifier: MIT
+
 import sqlite3
 from contextlib import closing
 from pathlib import Path

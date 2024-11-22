@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 AppThreat <cloud@appthreat.com>
+#
+# SPDX-License-Identifier: MIT
+
 import datetime
 import os
 import sqlite3

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 AppThreat <cloud@appthreat.com>
+#
+# SPDX-License-Identifier: MIT
+
 import json
 
 from tests.scripts.match_internal_functions_withdb import get_pname_bname

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 AppThreat <cloud@appthreat.com>
+#
+# SPDX-License-Identifier: MIT
+
 from blint_db import DEBUG_MODE, WRAPDB_LOCATION, logger
 
 
