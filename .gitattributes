@@ -1,2 +1,6 @@
+# SPDX-FileCopyrightText: 2024 AppThreat <cloud@appthreat.com>
+#
+# SPDX-License-Identifier: MIT
+
 # GitHub syntax highlighting
 pixi.lock linguist-language=YAML linguist-generated=true

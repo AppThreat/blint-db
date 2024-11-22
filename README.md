@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 AppThreat <cloud@appthreat.com>
+
+SPDX-License-Identifier: MIT
+-->
+
 # Symbols-db  
 
 Blint-db is a binary database powered by OWASP blint.
