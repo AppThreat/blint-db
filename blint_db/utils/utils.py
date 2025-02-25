@@ -13,4 +13,4 @@ def subprocess_run_debug(setup_run, project_name):
             logger.error(
                 f"{project_name} failed to SETUP {WRAPDB_LOCATION / 'build' / project_name}"
             )
-            logger.error(f"{project_name}: {setup_run.stdout.decode('ascii')}")
+            logger.error(f"{project_name}: {setup_run.stdout}")

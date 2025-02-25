@@ -26,21 +26,21 @@ def git_checkout_vcpkg_commit():
 
 def run_vcpkg_install_command():
     # Linux command
-    install_command = ["./bootstrap-vcpkg.sh"]
+    install_command = ["bash", "bootstrap-vcpkg.sh"]
     install_run = subprocess.run(
-        install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False
+        install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     if DEBUG_MODE:
         print(install_run.stdout)
-        logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout.decode('ascii')}")
+        logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout}")
 
     int_command = "./vcpkg integrate install".split(" ")
     int_run = subprocess.run(
-        int_command, cwd=VCPKG_LOCATION, capture_output=True, check=False
+        int_command, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     if DEBUG_MODE:
         print(int_run.stdout)
-        logger.debug(f"'vcpkg integrate install: {int_run.stdout.decode('ascii')}")
+        logger.debug(f"'vcpkg integrate install: {int_run.stdout}")
 
 
 def exec_explorer(directory):
@@ -57,19 +57,7 @@ def exec_explorer(directory):
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
-            try:
-                result = subprocess.run(
-                    ["file", file_path], capture_output=True, check=False
-                )
-                if b"ELF" in result.stdout:
-                    executables.append(file_path)
-                if b"archive" in result.stdout:
-                    executables.append(file_path)
-            except FileNotFoundError:
-                print(
-                    "Error: 'file' command not found. Make sure it's installed and in your PATH."
-                )
-                return []
+            executables.append(file_path)
     return executables
 
 
