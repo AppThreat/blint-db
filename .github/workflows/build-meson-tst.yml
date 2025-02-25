@@ -1,4 +1,4 @@
-name: Build and Upload meson blint-db
+name: Test - Build and Upload meson blint-db
 
 on:
   workflow_dispatch:

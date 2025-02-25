@@ -1,4 +1,4 @@
-name: Build and Upload meson blint-db
+name: Build and Upload vcpkg blint-db
 
 on:
   workflow_dispatch:
