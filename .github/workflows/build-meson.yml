@@ -27,13 +27,13 @@ jobs:
         uv sync --all-extras --dev
     - name: Clean up previous
       run: |
-        rm -f info.log
-        rm -f blint.db
+        rm -rf ${BLINT_DB_TEMP}
     - name: Build and upload db
       run: |
-        mkdir -p temp
+        mkdir -p ${BLINT_DB_TEMP}
         uv run blint-db --clean-start -Z1
         python ./.oras/orasclient.py -p meson
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
+        BLINT_DB_TEMP: ${{ runner.temp }}/blint-db-temp
