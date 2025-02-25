@@ -1,8 +1,4 @@
-# SPDX-FileCopyrightText: AppThreat <cloud@appthreat.com>
-#
-# SPDX-License-Identifier: MIT
-
-name: Build and Upload meson blint-db 0.1.0
+name: Build and Upload meson blint-db
 
 on:
   workflow_dispatch:
@@ -18,27 +14,25 @@ jobs:
       packages: write
     steps:
     - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        repository: AppThreat/blint-db
-        path: blint-db
+        python-version: '3.13'
     - name: Install dependencies
       run: |
-        [ -d venv ] || python3 -m venv venv
-        source venv/bin/activate
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine build
-        cd blint-db && python -m pip install .
+        uv venv -p 3.13
+        source .venv/bin/activate
+        uv sync --all-extras --dev
     - name: Clean up previous
       run: |
-        cd blint-db
         rm -f info.log
         rm -f blint.db
     - name: Build and upload db
       run: |
         mkdir -p temp
-        source venv/bin/activate
-        cd blint-db/
-        python blint_db/cli.py --clean-start -f -Z1
+        uv run blint-db --clean-start -f -Z1
         python ./.oras/orasclient.py -p meson-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

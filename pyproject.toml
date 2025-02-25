@@ -1,31 +1,49 @@
-# SPDX-FileCopyrightText: AppThreat <cloud@appthreat.com>
-#
-# SPDX-License-Identifier: MIT
-
-[tool.poetry]
+[project]
 name = "blint-db"
-version = "0.1.0"
-description = ""
-authors = ["Aryan Rajoria <aryanrajoria1003@gmail.com>"]
+version = "0.2.0"
+description = "Symbols database for OWASP blint"
+authors = [
+  {name= "Team AppThreat", email = "cloud@appthreat.com"},
+]
+dependencies = [
+    "blint",
+    "meson>=1.7.0",
+    "oras>=0.2.25",
+]
+requires-python = ">=3.10"
 readme = "README.md"
+keywords = ["linter", "binary", "security", "sast"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: Utilities",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-blint = "^2.2.3"
-meson = "^1.6.0"
-oras = "^0.2.24"
+[project.urls]
+Homepage = "https://github.com/AppThreat/blint-db"
+Bug-Tracker = "https://github.com/AppThreat/blint-db/issues"
 
-[tool.poetry.scripts]
+
+[project.scripts]
 blint-db = 'blint_db.cli:main'
 
-[tool.poetry.group.dev.dependencies]
-isort = "^5.13.2"
-black = "^24.10.0"
-flake8 = "^7.1.1"
-
-[tool.poetry.group.build.dependencies]
-poetry = "^1.8.4"
+[project.optional-dependencies]
+dev = [
+    "isort>=6.0.0",
+    "black>=25.1.0",
+    "flake8>=7.1.2",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv.sources]
+blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "c01bb31e4a5e31c70a694d56090223419a3871e7" }
