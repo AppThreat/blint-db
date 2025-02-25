@@ -22,29 +22,6 @@ class MesonHandler(BaseHandler):
         git_clone(WRAPDB_URL, WRAPDB_LOCATION)
         git_checkout_commit(WRAPDB_LOCATION, WRAPDB_HASH)
 
-    def build(self, project_name):
-        setup_command = (
-            f"meson setup build/{project_name} -Dwraps={project_name}".split(" ")
-        )
-        meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
-        subprocess_run_debug(meson_setup, project_name)
-        compile_command = f"meson compile -C build/{project_name}".split(" ")
-        meson_compile = subprocess.run(
-            compile_command, cwd=WRAPDB_LOCATION, check=False
-        )
-        subprocess_run_debug(meson_compile, project_name)
-
-    def find_executables(self, project_name):
-        full_project_dir = WRAPDB_LOCATION / "build" / project_name / "subprojects"
-        executable_list = []
-        for root, dir, files in os.walk(full_project_dir):
-            for file in files:
-                # what is the value of variable `root`
-                file_path = Path(root) / file
-                if os.access(file_path, os.X_OK) or ".so" in file_path.absolute():
-                    executable_list.append(file_path)
-        return executable_list
-
     def delete_project_files(self, project_name):
         pass
 
@@ -59,13 +36,11 @@ class MesonHandler(BaseHandler):
 
 
 def meson_build(project_name):
-    setup_command = f"meson setup build/{project_name} -Dwraps={project_name}".split(
-        " "
-    )
-    meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
+    setup_command = f"meson setup -Dwraps={project_name}".split(" ")
+    meson_setup = subprocess.run(setup_command, cwd=os.path.join(WRAPDB_LOCATION, "build", project_name), check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
     subprocess_run_debug(meson_setup, project_name)
-    compile_command = f"meson compile -C build/{project_name}".split(" ")
-    meson_compile = subprocess.run(compile_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
+    compile_command = "meson compile".split(" ")
+    meson_compile = subprocess.run(compile_command, cwd=os.path.join(WRAPDB_LOCATION, "build", project_name), check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
     subprocess_run_debug(meson_compile, project_name)
 
 
@@ -76,7 +51,7 @@ def find_meson_executables(project_name):
         for file in files:
             # what is the value of variable `root`
             file_path = Path(root) / file
-            if os.access(file_path, os.X_OK) or ".so" in file_path.absolute():
+            if os.access(file_path, os.X_OK) or ".so" in str(file_path):
                 executable_list.append(file_path)
     return executable_list
 

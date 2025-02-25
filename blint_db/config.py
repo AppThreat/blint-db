@@ -16,7 +16,7 @@ DELIMETER_BOM = "~~"
 # variables
 DEBUG_MODE = False
 # constants
-TEMP_PATH = Path(os.getenv("BLINT_DB_TEMP", Path.cwd().absolute())) / "temp"
+TEMP_PATH = Path(os.getenv("BLINT_DB_TEMP", str(Path.cwd()))) / "temp"
 WRAPDB_LOCATION = TEMP_PATH / "wrapdb"
 VCPKG_LOCATION = TEMP_PATH / "vcpkg"
 
