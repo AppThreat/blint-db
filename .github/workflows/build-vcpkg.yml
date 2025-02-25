@@ -9,6 +9,7 @@ env:
 jobs:
   builder-vcpkg:
     runs-on: ['self-hosted', 'ubuntu', 'amd64']
+    timeout-minutes: 3600
     permissions:
       contents: write
       packages: write
