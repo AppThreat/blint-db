@@ -21,7 +21,7 @@ class VcpkgHandler(BaseHandler):
         run_vcpkg_install_command()
 
     def build(self, project_name):
-        inst_cmd = f"vcpkg install {project_name}".split(" ")
+        inst_cmd = f"./vcpkg install {project_name}".split(" ")
         inst_run = subprocess.run(
             inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
         )
@@ -58,7 +58,7 @@ def run_vcpkg_install_command():
         print(install_run.stdout)
         logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout}")
 
-    int_command = "vcpkg integrate install".split(" ")
+    int_command = "./vcpkg integrate install".split(" ")
     int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True, encoding="utf-8")
     if DEBUG_MODE:
         print(int_run.stdout)
@@ -66,7 +66,7 @@ def run_vcpkg_install_command():
 
 
 def remove_vcpkg_project(project_name):
-    rem_cmd = ["vcpkg", "remove", "--recurse", project_name]
+    rem_cmd = ["./vcpkg", "remove", "--recurse", project_name]
     rem_run = subprocess.run(
         rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
@@ -84,7 +84,7 @@ def get_vcpkg_projects():
 
 
 def vcpkg_build(project_name):
-    inst_cmd = ["vcpkg", "install", "--clean-after-build", project_name]
+    inst_cmd = ["./vcpkg", "install", "--clean-after-build", project_name]
     inst_run = subprocess.run(
         inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
