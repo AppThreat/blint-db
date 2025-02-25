@@ -23,8 +23,8 @@ VCPKG_LOCATION = TEMP_PATH / "vcpkg"
 WRAPDB_URL = "https://github.com/mesonbuild/wrapdb.git"
 VCPKG_URL = "https://github.com/microsoft/vcpkg.git"
 
-WRAPDB_HASH = "90fdc28c75412d99900f2ff58006de57866c63ee"
-VCPKG_HASH = "e60236ee051183f1122066bee8c54a0b47c43a60"
+WRAPDB_HASH = "dcb070e9bbb15ce72a7954fb92855a90d63669be"
+VCPKG_HASH = "e9eda77e971179c933d78a3aec546527687b10be"
 
 BOM_LOCATION = TEMP_PATH / "BOM"
 BLINTDB_LOCATION = "blint.db"

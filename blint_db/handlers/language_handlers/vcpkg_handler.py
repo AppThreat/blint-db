@@ -96,35 +96,6 @@ def find_vcpkg_executables(project_name):
     return exec_explorer(target_directory)
 
 
-def archive_explorer(directory):
-    """
-    Walks through a directory and identifies executable files using the `file` command.
-
-    Args:
-      directory: The directory to search.
-
-    Returns:
-      A list of archive file paths.
-    """
-    executables = []
-    for root, _, files in os.walk(directory):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                result = subprocess.run(
-                    ["file", file_path], capture_output=True, check=False
-                )
-                if b"archive" in result.stdout:
-                    executables.append(file_path)
-            # FileNotFoundError may be correct as `file` command executable is a file
-            except FileNotFoundError:
-                print(
-                    "Error: 'file' command not found. Make sure it's installed and in your PATH."
-                )
-                return []
-    return executables
-
-
 def exec_explorer(directory):
     """
     Walks through a directory and identifies executable files using the `file` command.
@@ -139,17 +110,5 @@ def exec_explorer(directory):
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
-            try:
-                result = subprocess.run(
-                    ["file", file_path], capture_output=True, check=False
-                )
-                if b" ELF " in result.stdout:
-                    executables.append(file_path)
-                if b"current ar archive" in result.stdout:
-                    executables.append(file_path)
-            except FileNotFoundError:
-                print(
-                    "Error: 'file' command not found. Make sure it's installed and in your PATH."
-                )
-                return []
+            executables.append(file_path)
     return executables
