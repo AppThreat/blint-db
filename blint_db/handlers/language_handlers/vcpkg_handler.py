@@ -5,7 +5,7 @@
 import os
 import subprocess
 
-from blint_db import (ARCH_OS, DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION,
+from blint_db import (VCPKG_ARCH_OS, DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION,
                       VCPKG_URL, logger)
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
@@ -95,7 +95,7 @@ def vcpkg_build(project_name):
 
 
 def find_vcpkg_executables(project_name):
-    project_path = f"{project_name}_{ARCH_OS}"
+    project_path = f"{project_name}_{VCPKG_ARCH_OS}"
     target_directory = VCPKG_LOCATION / "packages" / project_path
     return exec_explorer(target_directory)
 
