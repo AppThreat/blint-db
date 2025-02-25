@@ -5,6 +5,7 @@
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from blint_db import CWD, WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL
@@ -25,7 +26,7 @@ class MesonHandler(BaseHandler):
         setup_command = (
             f"meson setup build/{project_name} -Dwraps={project_name}".split(" ")
         )
-        meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False)
+        meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
         subprocess_run_debug(meson_setup, project_name)
         compile_command = f"meson compile -C build/{project_name}".split(" ")
         meson_compile = subprocess.run(
@@ -43,7 +44,7 @@ class MesonHandler(BaseHandler):
                 if os.access(file_path, os.X_OK):
                     full_path = file_path
                     file_output = subprocess.run(
-                        ["file", full_path], capture_output=True, check=False
+                        ["file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
                     )
                     if b"ELF" in file_output.stdout:
                         executable_list.append(full_path)
@@ -66,10 +67,10 @@ def meson_build(project_name):
     setup_command = f"meson setup build/{project_name} -Dwraps={project_name}".split(
         " "
     )
-    meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False)
+    meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
     subprocess_run_debug(meson_setup, project_name)
     compile_command = f"meson compile -C build/{project_name}".split(" ")
-    meson_compile = subprocess.run(compile_command, cwd=WRAPDB_LOCATION, check=False)
+    meson_compile = subprocess.run(compile_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
     subprocess_run_debug(meson_compile, project_name)
 
 
@@ -83,7 +84,7 @@ def find_meson_executables(project_name):
             if os.access(file_path, os.X_OK):
                 full_path = file_path
                 file_output = subprocess.run(
-                    ["file", full_path], capture_output=True, check=False
+                    ["file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
                 )
                 if b"ELF" in file_output.stdout:
                     executable_list.append(full_path)
@@ -92,4 +93,4 @@ def find_meson_executables(project_name):
 
 def strip_executables(file_path, loc=WRAPDB_LOCATION):
     strip_command = f"strip --strip-all {file_path}".split(" ")
-    subprocess.run(strip_command, cwd=loc, check=False)
+    subprocess.run(strip_command, cwd=loc, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
