@@ -45,7 +45,7 @@ class MesonHandler(BaseHandler):
                     full_path = file_path
                     print ("Executing file", full_path)
                     file_output = subprocess.run(
-                        ["file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
+                        ["/usr/bin/file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
                     )
                     if "ELF" in file_output.stdout:
                         executable_list.append(full_path)
@@ -86,7 +86,7 @@ def find_meson_executables(project_name):
                 full_path = file_path
                 print ("Executing file", full_path)
                 file_output = subprocess.run(
-                    ["file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
+                    ["/usr/bin/file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
                 )
                 if "ELF" in file_output.stdout:
                     executable_list.append(full_path)
@@ -94,5 +94,5 @@ def find_meson_executables(project_name):
 
 
 def strip_executables(file_path, loc=WRAPDB_LOCATION):
-    strip_command = f"strip --strip-all {file_path}".split(" ")
+    strip_command = f"/usr/local/opt/binutils/bin/strip --strip-all {file_path}".split(" ")
     subprocess.run(strip_command, cwd=loc, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
