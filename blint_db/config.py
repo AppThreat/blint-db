@@ -14,7 +14,7 @@ logging.basicConfig(
 
 DELIMETER_BOM = "~~"
 # variables
-DEBUG_MODE = False
+DEBUG_MODE = True
 # constants
 TEMP_PATH = Path(os.getenv("BLINT_DB_TEMP", str(Path.cwd()))) / "temp"
 WRAPDB_LOCATION = TEMP_PATH / "wrapdb"

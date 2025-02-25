@@ -50,7 +50,7 @@ def git_checkout_vcpkg_commit():
 
 def run_vcpkg_install_command():
     # Linux command
-    install_command = ["./bootstrap-vcpkg.sh"]
+    install_command = ["bash", "bootstrap-vcpkg.sh"]
     install_run = subprocess.run(
         install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )
@@ -58,7 +58,7 @@ def run_vcpkg_install_command():
         print(install_run.stdout)
         logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout.decode('ascii')}")
 
-    int_command = "./vcpkg integrate install".split(" ")
+    int_command = "vcpkg integrate install".split(" ")
     int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True)
     if DEBUG_MODE:
         print(int_run.stdout)
@@ -66,7 +66,7 @@ def run_vcpkg_install_command():
 
 
 def remove_vcpkg_project(project_name):
-    rem_cmd = ["./vcpkg", "remove", "--recurse", project_name]
+    rem_cmd = ["vcpkg", "remove", "--recurse", project_name]
     rem_run = subprocess.run(
         rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )
@@ -83,7 +83,7 @@ def get_vcpkg_projects():
 
 
 def vcpkg_build(project_name):
-    inst_cmd = ["./vcpkg", "install", "--clean-after-build", project_name]
+    inst_cmd = ["vcpkg", "install", "--clean-after-build", project_name]
     inst_run = subprocess.run(
         inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
     )

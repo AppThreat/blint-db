@@ -39,3 +39,4 @@ jobs:
         GITHUB_USERNAME: ${{ github.actor }}
         VCPKG_FORCE_SYSTEM_BINARIES: arm
         BLINT_DB_TEMP: ${{ runner.temp }}/blint-db-temp
+        VCPKG_DISABLE_METRICS: true
