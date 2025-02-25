@@ -106,7 +106,7 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
     # build the projects single threaded
     # st_meson_blint_db_build(projects_list)
 
-    with futures.ProcessPoolExecutor(max_workers=4) as executor:
+    with futures.ProcessPoolExecutor(max_workers=1) as executor:
         for project_name, executables in zip(
             projects_list, executor.map(mt_meson_blint_db_build, projects_list)
         ):

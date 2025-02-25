@@ -65,7 +65,7 @@ def main():
                 if bin_names:
                     print(print_string)
         else:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
                 for func_name, bin_names in zip(
                     if_strings, executor.map(get_bnames_ename, if_strings)
                 ):
