@@ -46,5 +46,9 @@ dev = [
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+include-package-data = false
+packages = ["blint_db", "blint_db.projects_compiler", "blint_db.utils", "blint_db.handlers", "blint_db.handlers.language_handlers"]
+
 [tool.uv.sources]
 blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "c01bb31e4a5e31c70a694d56090223419a3871e7" }
