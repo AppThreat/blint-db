@@ -31,8 +31,9 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p ${BLINT_DB_TEMP}
+        source .venv/bin/activate
         uv run blint-db --clean-start -Z2
-        python ./.oras/orasclient.py -p vcpkg
+        python .oras/orasclient.py -p vcpkg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}

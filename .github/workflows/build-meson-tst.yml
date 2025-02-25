@@ -31,8 +31,9 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p ${BLINT_DB_TEMP}
+        source .venv/bin/activate
         uv run blint-db --clean-start -f -Z1
-        python ./.oras/orasclient.py -p meson-tst
+        python .oras/orasclient.py -p meson-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
