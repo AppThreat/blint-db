@@ -23,7 +23,7 @@ class VcpkgHandler(BaseHandler):
     def build(self, project_name):
         inst_cmd = f"vcpkg install {project_name}".split(" ")
         inst_run = subprocess.run(
-            inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
+            inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
         )
         subprocess_run_debug(inst_run, project_name)
 
@@ -52,30 +52,31 @@ def run_vcpkg_install_command():
     # Linux command
     install_command = ["bash", "bootstrap-vcpkg.sh"]
     install_run = subprocess.run(
-        install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False
+        install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     if DEBUG_MODE:
         print(install_run.stdout)
-        logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout.decode('ascii')}")
+        logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout}")
 
     int_command = "vcpkg integrate install".split(" ")
-    int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True)
+    int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True, encoding="utf-8")
     if DEBUG_MODE:
         print(int_run.stdout)
-        logger.debug(f"'vcpkg integrate install: {int_run.stdout.decode('ascii')}")
+        logger.debug(f"'vcpkg integrate install: {int_run.stdout}")
 
 
 def remove_vcpkg_project(project_name):
     rem_cmd = ["vcpkg", "remove", "--recurse", project_name]
     rem_run = subprocess.run(
-        rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
+        rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     subprocess_run_debug(rem_run, project_name)
 
 
 def get_vcpkg_projects():
-    git_clone_vcpkg()
-    git_checkout_vcpkg_commit()
+    if not os.path.exists(VCPKG_LOCATION):
+        git_clone_vcpkg()
+        git_checkout_vcpkg_commit()
     run_vcpkg_install_command()
 
     ports_path = VCPKG_LOCATION / "ports"
@@ -85,7 +86,7 @@ def get_vcpkg_projects():
 def vcpkg_build(project_name):
     inst_cmd = ["vcpkg", "install", "--clean-after-build", project_name]
     inst_run = subprocess.run(
-        inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
+        inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     subprocess_run_debug(inst_run, project_name)
 
