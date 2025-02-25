@@ -41,14 +41,8 @@ class MesonHandler(BaseHandler):
             for file in files:
                 # what is the value of variable `root`
                 file_path = Path(root) / file
-                if os.access(file_path, os.X_OK):
-                    full_path = file_path
-                    print ("Executing file", full_path)
-                    file_output = subprocess.run(
-                        ["/usr/bin/file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
-                    )
-                    if "ELF" in file_output.stdout:
-                        executable_list.append(full_path)
+                if os.access(file_path, os.X_OK) or ".so" in file_path.absolute():
+                    executable_list.append(file_path)
         return executable_list
 
     def delete_project_files(self, project_name):
@@ -82,14 +76,8 @@ def find_meson_executables(project_name):
         for file in files:
             # what is the value of variable `root`
             file_path = Path(root) / file
-            if os.access(file_path, os.X_OK):
-                full_path = file_path
-                print ("Executing file", full_path)
-                file_output = subprocess.run(
-                    ["/usr/bin/file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
-                )
-                if "ELF" in file_output.stdout:
-                    executable_list.append(full_path)
+            if os.access(file_path, os.X_OK) or ".so" in file_path.absolute():
+                executable_list.append(file_path)
     return executable_list
 
 
