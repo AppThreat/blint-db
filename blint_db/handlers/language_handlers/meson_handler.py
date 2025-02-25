@@ -43,10 +43,11 @@ class MesonHandler(BaseHandler):
                 file_path = Path(root) / file
                 if os.access(file_path, os.X_OK):
                     full_path = file_path
+                    print ("Executing file", full_path)
                     file_output = subprocess.run(
                         ["file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
                     )
-                    if b"ELF" in file_output.stdout:
+                    if "ELF" in file_output.stdout:
                         executable_list.append(full_path)
         return executable_list
 
@@ -83,10 +84,11 @@ def find_meson_executables(project_name):
             file_path = Path(root) / file
             if os.access(file_path, os.X_OK):
                 full_path = file_path
+                print ("Executing file", full_path)
                 file_output = subprocess.run(
                     ["file", full_path], capture_output=True, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8"
                 )
-                if b"ELF" in file_output.stdout:
+                if "ELF" in file_output.stdout:
                     executable_list.append(full_path)
     return executable_list
 
