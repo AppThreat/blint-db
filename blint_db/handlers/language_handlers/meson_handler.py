@@ -36,8 +36,8 @@ class MesonHandler(BaseHandler):
 
 
 def meson_build(project_name):
-    setup_command = f"meson setup -Dwraps={project_name}".split(" ")
-    meson_setup = subprocess.run(setup_command, cwd=os.path.join(WRAPDB_LOCATION, "build", project_name), check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
+    setup_command = f"meson setup build/{project_name} -Dwraps={project_name}".split(" ")
+    meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
     subprocess_run_debug(meson_setup, project_name)
     compile_command = "meson compile".split(" ")
     meson_compile = subprocess.run(compile_command, cwd=os.path.join(WRAPDB_LOCATION, "build", project_name), check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
