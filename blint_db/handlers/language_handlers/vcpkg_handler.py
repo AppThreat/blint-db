@@ -58,6 +58,10 @@ def run_vcpkg_install_command():
         print(install_run.stdout)
         logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout}")
 
+    if os.path.exists(os.path.join(VCPKG_LOCATION, "vcpkg")):
+        print ("vcpkg is available")
+    else:
+        print ("vcpkg is not available")
     int_command = "./vcpkg integrate install".split(" ")
     int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True, encoding="utf-8")
     if DEBUG_MODE:
@@ -74,9 +78,8 @@ def remove_vcpkg_project(project_name):
 
 
 def get_vcpkg_projects():
-    if not os.path.exists(VCPKG_LOCATION):
-        git_clone_vcpkg()
-        git_checkout_vcpkg_commit()
+    git_clone_vcpkg()
+    git_checkout_vcpkg_commit()
     run_vcpkg_install_command()
 
     ports_path = VCPKG_LOCATION / "ports"
