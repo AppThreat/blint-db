@@ -21,7 +21,7 @@ class VcpkgHandler(BaseHandler):
         run_vcpkg_install_command()
 
     def build(self, project_name):
-        inst_cmd = f"./vcpkg install {project_name}".split(" ")
+        inst_cmd = f"vcpkg install {project_name}".split(" ")
         inst_run = subprocess.run(
             inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False
         )
