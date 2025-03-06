@@ -102,7 +102,7 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
         for project_name_tuple, executables in zip(
             projects_list, executor.map(mt_meson_blint_db_build, projects_list)
         ):
-            print(f"Ran complete for {project_name_tuple[0]} and we found {len(executables)}")
+            print(f"Ran complete for {project_name_tuple[0]} and we found {len(executables)} binaries.")
 
 
 def remove_temp_ar():
@@ -131,7 +131,7 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
     for project_name in projects_list:
         vcpkg_json = VCPKG_LOCATION / "ports" / project_name / "vcpkg.json"
         executables = mt_vcpkg_blint_db_build(project_name, vcpkg_json)
-        print(f"Ran complete for {project_name} and we found {len(executables)}")
+        print(f"Ran complete for {project_name} and we found {len(executables)} binaries.")
         remove_vcpkg_project(project_name)
         count += 1
         if count == 100:
