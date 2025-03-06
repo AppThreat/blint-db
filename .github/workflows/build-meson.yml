@@ -8,7 +8,7 @@ env:
 
 jobs:
   builder-meson:
-    runs-on: ['self-hosted', 'ubuntu', 'arm64']
+    runs-on: ['self-hosted', 'ubuntu', 'amd64']
     permissions:
       contents: write
       packages: write
