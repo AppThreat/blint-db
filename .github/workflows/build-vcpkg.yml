@@ -28,15 +28,15 @@ jobs:
         uv sync --all-extras --dev
     - name: Clean up previous
       run: |
-        rm -rf ${BLINT_DB_TEMP}
+        rm -rf ${BLINT_DB_BOOTSTRAP_PATH}
     - name: Build and upload db
       run: |
-        mkdir -p ${BLINT_DB_TEMP}
+        mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
         source .venv/bin/activate
         uv run blint-db --clean-start -Z2
         python .oras/orasclient.py -p vcpkg
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
-        BLINT_DB_TEMP: ${{ runner.temp }}/blint-db-temp
+        BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
         VCPKG_DISABLE_METRICS: true

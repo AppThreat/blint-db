@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: AppThreat <cloud@appthreat.com>
 #
 # SPDX-License-Identifier: MIT
-
+import configparser
+import os
 import shutil
 import traceback
 from sqlite3 import OperationalError
@@ -27,13 +28,22 @@ def ensure_meson_installed():
     return shutil.which("meson") is not None
 
 
-def add_project_meson_db(project_name):
-    pid = add_projects(project_name)
+def add_project_meson_db(project_name, wrap_file):
+    purl = None
+    metadata = None
+    if wrap_file and os.path.exists(wrap_file):
+        config = configparser.ConfigParser()
+        config.read(wrap_file)
+        source_hash = config["wrap-file"]["source_hash"]
+        directory = config["wrap-file"]["directory"]
+        purl = f"pkg:generic/{directory}@{source_hash}"
+        metadata = {"source_url": config["wrap-file"]["source_url"]}
+    pid = add_projects(project_name, purl=purl, metadata=metadata)
     meson_build(project_name)
     execs = find_meson_executables(project_name)
     for files in execs:
         try:
-            strip_executables(files)
+            # strip_executables(files)
             bid = add_binary(files, pid)
             if_list = get_blint_internal_functions_exe(files)
             for func in if_list:
@@ -46,10 +56,11 @@ def add_project_meson_db(project_name):
     return execs
 
 
-def mt_meson_blint_db_build(project_name):
+def mt_meson_blint_db_build(project_name_wrap_tuple):
+    project_name, wrap_file = project_name_wrap_tuple
     logger.debug(f"Running {project_name}")
     try:
-        execs = add_project_meson_db(project_name)
+        execs = add_project_meson_db(project_name, wrap_file)
         logger.info(f"Completed: {project_name} with execs:{len(execs)}")
     except OperationalError as e:
         logger.info(f"error encountered with {project_name}")

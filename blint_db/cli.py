@@ -5,12 +5,11 @@
 import argparse
 import os
 import shutil
-import sqlite3
 from concurrent import futures
 from pathlib import Path
 from typing import List
 
-from blint_db import BLINTDB_LOCATION, COMMON_CONNECTION
+from blint_db import BLINT_DB_FILE, COMMON_CONNECTION, VCPKG_LOCATION
 from blint_db.handlers.language_handlers.vcpkg_handler import (
     get_vcpkg_projects, remove_vcpkg_project)
 from blint_db.handlers.language_handlers.wrapdb_handler import \
@@ -89,13 +88,6 @@ def arguments_parser():
     return parser.parse_args()
 
 
-def reset_and_backup():
-    if COMMON_CONNECTION:
-        if os.path.exists(BLINTDB_LOCATION) and os.path.isfile(BLINTDB_LOCATION):
-            os.remove(BLINTDB_LOCATION)
-        COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
-
-
 def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
     projects_list = get_wrapdb_projects()
     if test_mode:
@@ -107,10 +99,10 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
     # st_meson_blint_db_build(projects_list)
 
     with futures.ProcessPoolExecutor(max_workers=1) as executor:
-        for project_name, executables in zip(
+        for project_name_tuple, executables in zip(
             projects_list, executor.map(mt_meson_blint_db_build, projects_list)
         ):
-            print(f"Ran complete for {project_name} and we found {len(executables)}")
+            print(f"Ran complete for {project_name_tuple[0]} and we found {len(executables)} binaries.")
 
 
 def remove_temp_ar():
@@ -137,12 +129,12 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
         projects_list = sel_project
     count = 0
     for project_name in projects_list:
-        executables = mt_vcpkg_blint_db_build(project_name)
-        print(f"Ran complete for {project_name} and we found {len(executables)}")
+        vcpkg_json = VCPKG_LOCATION / "ports" / project_name / "vcpkg.json"
+        executables = mt_vcpkg_blint_db_build(project_name, vcpkg_json)
+        print(f"Ran complete for {project_name} and we found {len(executables)} binaries.")
         remove_vcpkg_project(project_name)
         count += 1
         if count == 100:
-            reset_and_backup()
             remove_temp_ar()
             count = 0
 
@@ -160,10 +152,6 @@ def main():
 
     if args["vcpkg"]:
         vcpkg_add_blint_bom_process(args["test_mode"], args["sel_project"])
-
-    if COMMON_CONNECTION:
-        reset_and_backup()
-        print("Build Completed Saved Database")
 
 
 if __name__ == "__main__":

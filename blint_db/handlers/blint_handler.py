@@ -22,10 +22,6 @@ def run_blint_on_file(file_path):
     ]
     blint_output = subprocess.run(blint_command, cwd=WRAPDB_LOCATION, check=False)
 
-    if DEBUG_MODE:
-        print(blint_output.stdout)
-        print(blint_output.stderr)
-
 
 def get_blint_file(project_name):
     # run after blint was running

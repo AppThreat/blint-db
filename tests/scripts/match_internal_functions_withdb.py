@@ -6,11 +6,11 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-BLINTDB_LOCATION = Path.cwd() / "build" / "blint_working.db"
+BLINT_DB_FILE = Path.cwd() / "build" / "blint_working.db"
 
 
 def get_export_id(export_name):
-    with closing(sqlite3.connect(BLINTDB_LOCATION)) as connection:
+    with closing(sqlite3.connect(BLINT_DB_FILE)) as connection:
         with closing(connection.cursor()) as c:
             c.execute("SELECT rowid from Exports where infunc=?", (export_name,))
             res = c.fetchall()
@@ -22,7 +22,7 @@ def get_export_id(export_name):
 
 
 def get_bid_using_fid(eid):
-    with closing(sqlite3.connect(BLINTDB_LOCATION)) as connection:
+    with closing(sqlite3.connect(BLINT_DB_FILE)) as connection:
         with closing(connection.cursor()) as c:
             c.execute("SELECT bid from BinariesExports where eid=?", (eid,))
             res = c.fetchall()
@@ -34,7 +34,7 @@ def get_bid_using_fid(eid):
 
 
 def get_bname(bid):
-    with closing(sqlite3.connect(BLINTDB_LOCATION)) as connection:
+    with closing(sqlite3.connect(BLINT_DB_FILE)) as connection:
         with closing(connection.cursor()) as c:
             c.execute("SELECT bname from Binaries where bid=?", (bid,))
             res = c.fetchall()
@@ -46,7 +46,7 @@ def get_bname(bid):
 
 
 def get_pname(bid):
-    with closing(sqlite3.connect(BLINTDB_LOCATION)) as connection:
+    with closing(sqlite3.connect(BLINT_DB_FILE)) as connection:
         with closing(connection.cursor()) as c:
             c.execute("SELECT pid from Binaries where bid=?", (bid,))
             res = c.fetchall()
@@ -62,7 +62,7 @@ def get_pname(bid):
 
 
 def get_pname_bname(bname):
-    with closing(sqlite3.connect(BLINTDB_LOCATION)) as connection:
+    with closing(sqlite3.connect(BLINT_DB_FILE)) as connection:
         with closing(connection.cursor()) as c:
             c.execute("SELECT pid from Binaries where bname=?", (bname,))
             res = c.fetchall()

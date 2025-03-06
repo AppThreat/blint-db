@@ -1,20 +1,20 @@
 # SPDX-FileCopyrightText: AppThreat <cloud@appthreat.com>
 #
 # SPDX-License-Identifier: MIT
-
+import json
 import datetime
 import os
 import sqlite3
 from contextlib import closing
 from pathlib import PurePath
 
-from blint_db import (BLINTDB_LOCATION, COMMON_CONNECTION, DEBUG_MODE,
+from blint_db import (BLINT_DB_FILE, COMMON_CONNECTION, DEBUG_MODE,
                       SQLITE_TIMEOUT)
 
 
 def use_existing_connection(connection=None):  # Decorator now accepts connection
     """
-    Decorator to use an existing connection when BLINTDB_LOCATION is ':memory:'.
+    Decorator to use an existing connection when BLINT_DB_FILE is ':memory:'.
     The connection should be passed as an argument to the decorator itself.
     """
 
@@ -39,7 +39,7 @@ def use_existing_connection(connection=None):  # Decorator now accepts connectio
 @use_existing_connection(connection=COMMON_CONNECTION)
 def execute_statement(statement, arguments=False):
     with closing(
-        sqlite3.connect(BLINTDB_LOCATION, timeout=SQLITE_TIMEOUT)
+        sqlite3.connect(BLINT_DB_FILE, timeout=SQLITE_TIMEOUT)
     ) as connection:
         with closing(connection.cursor()) as c:
             if arguments:
@@ -52,8 +52,6 @@ def execute_statement(statement, arguments=False):
 
 
 def create_database():
-    # TODO: make purl unique
-
     pragma_sync = execute_statement("PRAGMA synchronous = 'OFF';")
     pragma_jm = execute_statement("PRAGMA journal_mode = 'MEMORY';")
     pragma_ts = execute_statement("PRAGMA temp_store = 'MEMORY';")
@@ -63,8 +61,9 @@ def create_database():
         CREATE TABLE IF NOT EXISTS Projects (
             pid     INTEGER PRIMARY KEY AUTOINCREMENT,
             pname   VARCHAR(255) UNIQUE,
-            purl    VARCHAR(255),
-            cbom    BLOB
+            purl    TEXT UNIQUE,
+            metadata      BLOB,
+            source_sbom    BLOB
         );
         """
     )
@@ -121,23 +120,23 @@ def create_database():
 
 
 def clear_sqlite_database():
-    if os.path.exists(BLINTDB_LOCATION):
-        if os.path.isfile(BLINTDB_LOCATION):
-            os.remove(BLINTDB_LOCATION)
+    if os.path.exists(BLINT_DB_FILE):
+        if os.path.isfile(BLINT_DB_FILE):
+            os.remove(BLINT_DB_FILE)
 
 
 def store_sbom_in_sqlite(purl, sbom):
     execute_statement(
         "INSERT INTO blintsboms VALUES (?, ?, jsonb(?))",
-        (purl, datetime.datetime.now(), sbom),
+        (purl, datetime.datetime.now(), json.dumps(sbom)),
     )
 
 
 # add project
-def add_projects(project_name, purl=None, cbom=None):
+def add_projects(project_name, purl=None, metadata=None, source_sbom=None):
     execute_statement(
-        "INSERT INTO Projects (pname, purl, cbom) VALUES (?, ?, ?)",
-        (project_name, purl, cbom),
+        "INSERT INTO Projects (pname, purl, metadata, source_sbom) VALUES (?, ?, jsonb(?), jsonb(?))",
+        (project_name, purl, json.dumps(metadata), json.dumps(source_sbom)),
     )
 
     # retrieve pid
@@ -179,6 +178,7 @@ def add_binary_export(infunc, bid):
         if res:
             res = res[0][0]
             return res == bid
+        return 0
 
     def _fetch_infunc_row(infunc):
         res = execute_statement("SELECT rowid FROM Exports WHERE infunc=?", (infunc,))
@@ -202,3 +202,4 @@ def add_binary_export(infunc, bid):
     execute_statement(
         "INSERT INTO BinariesExports (bid, eid) VALUES (?, ?)", (bid, eid)
     )
+    return 0
