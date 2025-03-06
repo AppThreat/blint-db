@@ -135,7 +135,7 @@ def store_sbom_in_sqlite(purl, sbom):
 # add project
 def add_projects(project_name, purl=None, metadata=None, source_sbom=None):
     execute_statement(
-        "INSERT INTO Projects (pname, purl, jsonb(metadata), jsonb(source_sbom)) VALUES (?, ?, ?, ?)",
+        "INSERT INTO Projects (pname, purl, metadata, source_sbom) VALUES (?, ?, jsonb(?), jsonb(?))",
         (project_name, purl, metadata, source_sbom),
     )
 

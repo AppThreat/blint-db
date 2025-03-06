@@ -66,7 +66,7 @@ def add_project_vcpkg_db(project_name, vcpkg_json):
         with open(vcpkg_json, encoding="utf-8") as fp:
             try:
                 vcpkg_metadata = json.load(fp)
-                purl = f"pkg:generic/{vcpkg_metadata['name']}@{vcpkg_metadata['version']}"
+                purl = f"pkg:generic/{vcpkg_metadata['name']}@{vcpkg_metadata['version']}" if vcpkg_metadata.get("version") else f"pkg:generic/{vcpkg_metadata['name']}"
                 description = vcpkg_metadata.get("description")
                 metadata = {"description": description, "dependencies": vcpkg_metadata.get("dependencies")}
             except json.JSONDecodeError as e:

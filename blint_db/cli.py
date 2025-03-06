@@ -106,10 +106,10 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
     # st_meson_blint_db_build(projects_list)
 
     with futures.ProcessPoolExecutor(max_workers=1) as executor:
-        for project_name, executables in zip(
+        for project_name_tuple, executables in zip(
             projects_list, executor.map(mt_meson_blint_db_build, projects_list)
         ):
-            print(f"Ran complete for {project_name} and we found {len(executables)}")
+            print(f"Ran complete for {project_name_tuple[0]} and we found {len(executables)}")
 
 
 def remove_temp_ar():

@@ -184,3 +184,4 @@ cython_debug/
 # python environment
 venv
 .venv
+blint.db
