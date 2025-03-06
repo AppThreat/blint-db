@@ -39,7 +39,10 @@ def add_project_meson_db(project_name, wrap_file):
             directory = config["wrap-file"]["directory"]
             purl = f"pkg:generic/{directory}@{source_hash}"
             metadata = {"source_url": config["wrap-file"]["source_url"]}
-        except (configparser.NoSectionError, configparser.NoOptionError):
+        except (configparser.NoSectionError, configparser.NoOptionError, configparser.InterpolationSyntaxError):
+            logger.info(f"Unable to parse {wrap_file}")
+            pass
+        except Exception:
             pass
     pid = add_projects(project_name, purl=purl, metadata=metadata)
     meson_build(project_name)
