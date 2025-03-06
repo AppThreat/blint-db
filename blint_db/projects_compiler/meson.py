@@ -33,11 +33,14 @@ def add_project_meson_db(project_name, wrap_file):
     metadata = None
     if wrap_file and os.path.exists(wrap_file):
         config = configparser.ConfigParser()
-        config.read(wrap_file)
-        source_hash = config["wrap-file"]["source_hash"]
-        directory = config["wrap-file"]["directory"]
-        purl = f"pkg:generic/{directory}@{source_hash}"
-        metadata = {"source_url": config["wrap-file"]["source_url"]}
+        try:
+            config.read(wrap_file)
+            source_hash = config["wrap-file"]["source_hash"]
+            directory = config["wrap-file"]["directory"]
+            purl = f"pkg:generic/{directory}@{source_hash}"
+            metadata = {"source_url": config["wrap-file"]["source_url"]}
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            pass
     pid = add_projects(project_name, purl=purl, metadata=metadata)
     meson_build(project_name)
     execs = find_meson_executables(project_name)

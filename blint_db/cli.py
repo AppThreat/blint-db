@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
-import os
+import tempfile
 import shutil
 from concurrent import futures
 from pathlib import Path
@@ -94,15 +94,9 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
         projects_list = projects_list[:10]
     if sel_project:
         projects_list = sel_project
-
-    # build the projects single threaded
-    # st_meson_blint_db_build(projects_list)
-
-    with futures.ProcessPoolExecutor(max_workers=1) as executor:
-        for project_name_tuple, executables in zip(
-            projects_list, executor.map(mt_meson_blint_db_build, projects_list)
-        ):
-            print(f"Ran complete for {project_name_tuple[0]} and we found {len(executables)} binaries.")
+    for project_name_tuple in projects_list:
+        executables = mt_meson_blint_db_build(project_name_tuple)
+        print(f"Ran complete for {project_name_tuple[0]} and we found {len(executables)} binaries.")
 
 
 def remove_temp_ar():
@@ -112,7 +106,7 @@ def remove_temp_ar():
     """
 
     try:
-        for dirname in Path("/tmp").glob("ar-temp-*"):
+        for dirname in Path(tempfile.gettempdir()).glob("ar-temp-*"):
             try:
                 shutil.rmtree(dirname)
             except OSError as e:
