@@ -9,7 +9,7 @@ env:
 jobs:
   builder-vcpkg:
     runs-on: ['self-hosted', 'ubuntu', 'amd64']
-    timeout-minutes: 3600
+    timeout-minutes: 7200
     permissions:
       contents: write
       packages: write
@@ -39,7 +39,7 @@ jobs:
 
   builder-arm64-vcpkg:
     runs-on: ['self-hosted', 'ubuntu', 'arm64']
-    timeout-minutes: 3600
+    timeout-minutes: 7200
     permissions:
       contents: write
       packages: write

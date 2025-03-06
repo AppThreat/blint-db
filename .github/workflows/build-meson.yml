@@ -9,6 +9,7 @@ env:
 jobs:
   builder-meson:
     runs-on: ['self-hosted', 'ubuntu', 'amd64']
+    timeout-minutes: 7200
     permissions:
       contents: write
       packages: write
@@ -37,6 +38,7 @@ jobs:
 
   builder-arm64-meson:
     runs-on: ['self-hosted', 'ubuntu', 'arm64']
+    timeout-minutes: 7200
     permissions:
       contents: write
       packages: write
