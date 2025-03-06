@@ -88,13 +88,6 @@ def arguments_parser():
     return parser.parse_args()
 
 
-def reset_and_backup():
-    if COMMON_CONNECTION:
-        if os.path.exists(BLINT_DB_FILE) and os.path.isfile(BLINT_DB_FILE):
-            os.remove(BLINT_DB_FILE)
-        COMMON_CONNECTION.execute(f"vacuum main into '{BLINT_DB_FILE}'")
-
-
 def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
     projects_list = get_wrapdb_projects()
     if test_mode:
@@ -142,7 +135,6 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
         remove_vcpkg_project(project_name)
         count += 1
         if count == 100:
-            reset_and_backup()
             remove_temp_ar()
             count = 0
 
@@ -160,10 +152,6 @@ def main():
 
     if args["vcpkg"]:
         vcpkg_add_blint_bom_process(args["test_mode"], args["sel_project"])
-
-    if COMMON_CONNECTION:
-        reset_and_backup()
-        print("Build Completed Saved Database")
 
 
 if __name__ == "__main__":
