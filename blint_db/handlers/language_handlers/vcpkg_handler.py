@@ -10,7 +10,7 @@ from blint_db import (VCPKG_ARCH_OS, DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION,
                       VCPKG_URL, logger)
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
-from blint_db.utils.utils import subprocess_run_debug
+from blint_db.utils.utils import subprocess_run_debug, is_exe
 
 
 class VcpkgHandler(BaseHandler):
@@ -60,7 +60,6 @@ def run_vcpkg_install_command():
     vcpkg_bin_file = os.path.join(VCPKG_LOCATION, "vcpkg")
     if os.path.exists(vcpkg_bin_file):
         logger.info("vcpkg is available")
-        os.chmod(vcpkg_bin_file, stat.S_IRUSR | stat.S_IEXEC)
     else:
         logger.info("vcpkg is not available")
         return
@@ -89,7 +88,7 @@ def get_vcpkg_projects():
 
 
 def vcpkg_build(project_name):
-    inst_cmd = ["./vcpkg", "install", "--clean-after-build", project_name]
+    inst_cmd = ["./vcpkg", "install", "--clean-downloads-after-build", project_name]
     inst_run = subprocess.run(
         inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
@@ -116,5 +115,6 @@ def exec_explorer(directory):
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
-            executables.append(file_path)
+            if is_exe(file_path):
+                executables.append(file_path)
     return executables

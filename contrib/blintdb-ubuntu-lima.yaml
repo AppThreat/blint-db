@@ -10,7 +10,7 @@ images:
 - location: "https://cloud-images.ubuntu.com/releases/24.10/release/ubuntu-24.10-server-cloudimg-arm64.img"
   arch: "aarch64"
 mounts:
-- location: "/tmp/cdxgen"
+- location: "/tmp/blintdb"
   writable: true
 containerd:
   system: false
@@ -27,6 +27,7 @@ env:
   SBT_CMD: /.sdkman/candidates/sbt/current/bin/sbt
   SDKMAN_DIR: /.sdkman
   SDKMAN_CANDIDATES_DIR: /.sdkman/candidates
+  VCPKG_DISABLE_METRICS: true
 provision:
 - mode: dependency
   skipDefaultDependencyResolution: false

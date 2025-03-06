@@ -22,7 +22,7 @@ sudo tar -C /usr/local -xf lima-0.22.0-Linux-x86_64.tar.gz
 For ubuntu, use the below command.
 
 ```shell
-limactl start --name=blintdb contrib/blintdb-ubuntu-lima.yaml --tty=false
+limactl start --name=blintdb contrib/blintdb-ubuntu-lima.yaml --tty=false --mount-type virtiofs --vm-type vz --memory 16 --disk 200
 ```
 
 To open a shell to the VM:

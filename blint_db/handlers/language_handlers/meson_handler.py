@@ -11,7 +11,7 @@ from pathlib import Path
 from blint_db import CWD, WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
-from blint_db.utils.utils import subprocess_run_debug
+from blint_db.utils.utils import subprocess_run_debug, is_exe
 
 
 class MesonHandler(BaseHandler):
@@ -51,7 +51,7 @@ def find_meson_executables(project_name):
         for file in files:
             # what is the value of variable `root`
             file_path = Path(root) / file
-            if os.access(file_path, os.X_OK) or ".so" in str(file_path):
+            if is_exe(str(file_path)):
                 executable_list.append(file_path)
     return executable_list
 
