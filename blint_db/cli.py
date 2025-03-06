@@ -5,12 +5,11 @@
 import argparse
 import os
 import shutil
-import sqlite3
 from concurrent import futures
 from pathlib import Path
 from typing import List
 
-from blint_db import BLINTDB_LOCATION, COMMON_CONNECTION
+from blint_db import BLINT_DB_FILE, COMMON_CONNECTION, VCPKG_LOCATION
 from blint_db.handlers.language_handlers.vcpkg_handler import (
     get_vcpkg_projects, remove_vcpkg_project)
 from blint_db.handlers.language_handlers.wrapdb_handler import \
@@ -91,9 +90,9 @@ def arguments_parser():
 
 def reset_and_backup():
     if COMMON_CONNECTION:
-        if os.path.exists(BLINTDB_LOCATION) and os.path.isfile(BLINTDB_LOCATION):
-            os.remove(BLINTDB_LOCATION)
-        COMMON_CONNECTION.execute(f"vacuum main into '{BLINTDB_LOCATION}'")
+        if os.path.exists(BLINT_DB_FILE) and os.path.isfile(BLINT_DB_FILE):
+            os.remove(BLINT_DB_FILE)
+        COMMON_CONNECTION.execute(f"vacuum main into '{BLINT_DB_FILE}'")
 
 
 def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
@@ -137,7 +136,8 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
         projects_list = sel_project
     count = 0
     for project_name in projects_list:
-        executables = mt_vcpkg_blint_db_build(project_name)
+        vcpkg_json = VCPKG_LOCATION / "ports" / project_name / "vcpkg.json"
+        executables = mt_vcpkg_blint_db_build(project_name, vcpkg_json)
         print(f"Ran complete for {project_name} and we found {len(executables)}")
         remove_vcpkg_project(project_name)
         count += 1

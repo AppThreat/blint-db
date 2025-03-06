@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: AppThreat <cloud@appthreat.com>
 #
 # SPDX-License-Identifier: MIT
-
+import json
 import os
 import subprocess
 import traceback
@@ -31,7 +31,6 @@ def run_vcpkg_install_command():
         install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     if DEBUG_MODE:
-        print(install_run.stdout)
         logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout}")
 
     int_command = "./vcpkg integrate install".split(" ")
@@ -39,7 +38,6 @@ def run_vcpkg_install_command():
         int_command, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     if DEBUG_MODE:
-        print(int_run.stdout)
         logger.debug(f"'vcpkg integrate install: {int_run.stdout}")
 
 
@@ -61,8 +59,19 @@ def exec_explorer(directory):
     return executables
 
 
-def add_project_vcpkg_db(project_name):
-    pid = add_projects(project_name)
+def add_project_vcpkg_db(project_name, vcpkg_json):
+    purl = None
+    metadata = None
+    if vcpkg_json and os.path.exists(vcpkg_json):
+        with open(vcpkg_json, encoding="utf-8") as fp:
+            try:
+                vcpkg_metadata = json.load(fp)
+                purl = f"pkg:generic/{vcpkg_metadata['name']}@{vcpkg_metadata['version']}"
+                description = vcpkg_metadata.get("description")
+                metadata = {"description": description, "dependencies": vcpkg_metadata.get("dependencies")}
+            except json.JSONDecodeError as e:
+                logger.error(e)
+    pid = add_projects(project_name, purl=purl, metadata=metadata)
     vcpkg_build(project_name)
     execs = find_vcpkg_executables(project_name)
     for files in execs:
@@ -78,14 +87,14 @@ def add_project_vcpkg_db(project_name):
     return execs
 
 
-def mt_vcpkg_blint_db_build(project_name):
-    logger.debug(f"Running {project_name}")
+def mt_vcpkg_blint_db_build(project_name, vcpkg_json):
+    logger.debug(f"Running {project_name} with vcpkg {vcpkg_json}")
     try:
-        execs = add_project_vcpkg_db(project_name)
+        execs = add_project_vcpkg_db(project_name, vcpkg_json)
         logger.info(f"Completed: {project_name} with execs:{len(execs)}")
+        return execs
     except OperationalError as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
         logger.error(traceback.format_exc())
-        return [False]
-    return execs
+        return []

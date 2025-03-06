@@ -17,9 +17,5 @@ def _create_python_dirs():
     os.makedirs(wl, exist_ok=True)
     os.makedirs(vl, exist_ok=True)
 
-    if DEBUG_MODE:
-        print(f"{wl} created")
-        print(f"{vl} created")
-
 
 _create_python_dirs()

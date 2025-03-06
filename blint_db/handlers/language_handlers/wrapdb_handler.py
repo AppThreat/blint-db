@@ -18,5 +18,5 @@ def get_wrapdb_projects():
     for file in subproject_filenames:
         project_path = Path(file)
         if project_path.suffix == ".wrap":
-            projects_list.append(project_path.stem)
+            projects_list.append((project_path.stem, project_path))
     return projects_list

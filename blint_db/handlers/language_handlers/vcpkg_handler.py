@@ -4,6 +4,7 @@
 
 import os
 import subprocess
+import stat
 
 from blint_db import (VCPKG_ARCH_OS, DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION,
                       VCPKG_URL, logger)
@@ -55,17 +56,17 @@ def run_vcpkg_install_command():
         install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
     )
     if DEBUG_MODE:
-        print(install_run.stdout)
         logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout}")
-
-    if os.path.exists(os.path.join(VCPKG_LOCATION, "vcpkg")):
-        print ("vcpkg is available")
+    vcpkg_bin_file = os.path.join(VCPKG_LOCATION, "vcpkg")
+    if os.path.exists(vcpkg_bin_file):
+        logger.info("vcpkg is available")
+        os.chmod(vcpkg_bin_file, stat.S_IRUSR | stat.S_IEXEC)
     else:
-        print ("vcpkg is not available")
+        logger.info("vcpkg is not available")
+        return
     int_command = "./vcpkg integrate install".split(" ")
     int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True, encoding="utf-8")
     if DEBUG_MODE:
-        print(int_run.stdout)
         logger.debug(f"'vcpkg integrate install: {int_run.stdout}")
 
 
@@ -78,11 +79,12 @@ def remove_vcpkg_project(project_name):
 
 
 def get_vcpkg_projects():
-    git_clone_vcpkg()
-    git_checkout_vcpkg_commit()
+    ports_path = VCPKG_LOCATION / "ports"
+    if not os.path.exists(ports_path):
+        git_clone_vcpkg()
+        git_checkout_vcpkg_commit()
     run_vcpkg_install_command()
 
-    ports_path = VCPKG_LOCATION / "ports"
     return os.listdir(ports_path)
 
 
