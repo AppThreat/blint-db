@@ -34,16 +34,16 @@ def add_project_meson_db(project_name, wrap_file):
     if wrap_file and os.path.exists(wrap_file):
         config = configparser.ConfigParser()
         config.read(wrap_file)
-        source_hash = config.get("wrap-file", {}).get("source_hash")
-        directory = config.get("wrap-file", {}).get("directory")
+        source_hash = config["wrap-file"]["source_hash"]
+        directory = config["wrap-file"]["directory"]
         purl = f"pkg:generic/{directory}@{source_hash}"
-        metadata = {"source_url", config.get("wrap-file", {}).get("source_url")}
+        metadata = {"source_url": config["wrap-file"]["source_url"]}
     pid = add_projects(project_name, purl=purl, metadata=metadata)
     meson_build(project_name)
     execs = find_meson_executables(project_name)
     for files in execs:
         try:
-            strip_executables(files)
+            # strip_executables(files)
             bid = add_binary(files, pid)
             if_list = get_blint_internal_functions_exe(files)
             for func in if_list:

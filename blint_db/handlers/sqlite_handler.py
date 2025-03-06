@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: AppThreat <cloud@appthreat.com>
 #
 # SPDX-License-Identifier: MIT
-
+import json
 import datetime
 import os
 import sqlite3
@@ -128,7 +128,7 @@ def clear_sqlite_database():
 def store_sbom_in_sqlite(purl, sbom):
     execute_statement(
         "INSERT INTO blintsboms VALUES (?, ?, jsonb(?))",
-        (purl, datetime.datetime.now(), sbom),
+        (purl, datetime.datetime.now(), json.dumps(sbom)),
     )
 
 
@@ -136,7 +136,7 @@ def store_sbom_in_sqlite(purl, sbom):
 def add_projects(project_name, purl=None, metadata=None, source_sbom=None):
     execute_statement(
         "INSERT INTO Projects (pname, purl, metadata, source_sbom) VALUES (?, ?, jsonb(?), jsonb(?))",
-        (project_name, purl, metadata, source_sbom),
+        (project_name, purl, json.dumps(metadata), json.dumps(source_sbom)),
     )
 
     # retrieve pid

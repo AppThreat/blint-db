@@ -17,7 +17,7 @@ def get_wrapdb_projects():
     subproject_filenames = os.listdir(WRAPDB_LOCATION / "subprojects")
     projects_list = []
     for file in subproject_filenames:
-        project_path = Path(file)
+        project_path = Path(WRAPDB_LOCATION / "subprojects" / file)
         if project_path.suffix == ".wrap":
             projects_list.append((project_path.stem, project_path))
     return projects_list
