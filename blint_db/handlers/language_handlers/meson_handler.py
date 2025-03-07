@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from blint_db import CWD, WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL
+from blint_db import DEBUG_MODE, WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
 from blint_db.utils.utils import subprocess_run_debug, is_exe
@@ -36,11 +36,16 @@ class MesonHandler(BaseHandler):
 
 
 def meson_build(project_name):
+    logger.info(f"Building {project_name}")
     setup_command = f"meson setup build/{project_name} -Dwraps={project_name}".split(" ")
-    meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
+    meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, stdout=subprocess.DEVNULL, check=False,
+                                 env=os.environ.copy(), capture_output=DEBUG_MODE, shell=sys.platform == "win32",
+                                 encoding="utf-8")
     subprocess_run_debug(meson_setup, project_name)
     compile_command = "meson compile".split(" ")
-    meson_compile = subprocess.run(compile_command, cwd=os.path.join(WRAPDB_LOCATION, "build", project_name), check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
+    meson_compile = subprocess.run(compile_command, cwd=os.path.join(WRAPDB_LOCATION, "build", project_name),
+                                   stdout=subprocess.DEVNULL, check=False, env=os.environ.copy(),
+                                   capture_output=DEBUG_MODE, shell=sys.platform == "win32", encoding="utf-8")
     subprocess_run_debug(meson_compile, project_name)
 
 
@@ -58,4 +63,5 @@ def find_meson_executables(project_name):
 
 def strip_executables(file_path, loc=WRAPDB_LOCATION):
     strip_command = f"/usr/local/opt/binutils/bin/strip --strip-all {file_path}".split(" ")
-    subprocess.run(strip_command, cwd=loc, check=False, env=os.environ.copy(), shell=sys.platform == "win32", encoding="utf-8")
+    subprocess.run(strip_command, cwd=loc, check=False, env=os.environ.copy(), shell=sys.platform == "win32",
+                   encoding="utf-8")

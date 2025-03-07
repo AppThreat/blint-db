@@ -9,7 +9,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    filename="info.log", format="cli.py:%(levelname)s:%(message)s", level=logging.DEBUG
+    format="%(levelname)s: %(message)s", level=logging.INFO
 )
 
 DELIMETER_BOM = "~~"

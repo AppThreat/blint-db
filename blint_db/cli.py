@@ -13,7 +13,7 @@ from blint_db import BLINT_DB_FILE, COMMON_CONNECTION, VCPKG_LOCATION
 from blint_db.handlers.language_handlers.vcpkg_handler import (
     get_vcpkg_projects, remove_vcpkg_project)
 from blint_db.handlers.language_handlers.wrapdb_handler import \
-    get_wrapdb_projects
+    get_wrapdb_projects, remove_wrapdb_project
 from blint_db.handlers.sqlite_handler import (clear_sqlite_database,
                                               create_database)
 from blint_db.projects_compiler.meson import mt_meson_blint_db_build
@@ -97,6 +97,7 @@ def meson_add_blint_bom_process(test_mode=False, sel_project: List = None):
     for project_name_tuple in projects_list:
         executables = mt_meson_blint_db_build(project_name_tuple)
         print(f"Ran complete for {project_name_tuple[0]} and we found {len(executables)} binaries.")
+        remove_wrapdb_project(project_name_tuple[0])
 
 
 def remove_temp_ar():
@@ -108,7 +109,7 @@ def remove_temp_ar():
     try:
         for dirname in Path(tempfile.gettempdir()).glob("ar-temp-*"):
             try:
-                shutil.rmtree(dirname)
+                shutil.rmtree(dirname, ignore_errors=True)
             except OSError as e:
                 print(f"Error deleting file {dirname}: {e}")
     except Exception as e:
@@ -134,7 +135,6 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
 
 
 def main():
-
     args = vars(arguments_parser())
 
     if args["clean"]:

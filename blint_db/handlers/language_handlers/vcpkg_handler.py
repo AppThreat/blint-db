@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 import os
+import shutil
 import subprocess
-import stat
 
 from blint_db import (VCPKG_ARCH_OS, DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION,
                       VCPKG_URL, logger)
@@ -24,7 +24,7 @@ class VcpkgHandler(BaseHandler):
     def build(self, project_name):
         inst_cmd = f"./vcpkg install {project_name}".split(" ")
         inst_run = subprocess.run(
-            inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
+            inst_cmd, cwd=VCPKG_LOCATION, stdout=subprocess.DEVNULL, capture_output=DEBUG_MODE, check=False, encoding="utf-8"
         )
         subprocess_run_debug(inst_run, project_name)
 
@@ -53,7 +53,7 @@ def run_vcpkg_install_command():
     # Linux command
     install_command = ["bash", "bootstrap-vcpkg.sh"]
     install_run = subprocess.run(
-        install_command, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
+        install_command, cwd=VCPKG_LOCATION, stdout=subprocess.DEVNULL, capture_output=DEBUG_MODE, check=False, encoding="utf-8"
     )
     if DEBUG_MODE:
         logger.debug(f"'bootstrap-vcpkg.sh: {install_run.stdout}")
@@ -64,17 +64,16 @@ def run_vcpkg_install_command():
         logger.info("vcpkg is not available")
         return
     int_command = "./vcpkg integrate install".split(" ")
-    int_run = subprocess.run(int_command, cwd=VCPKG_LOCATION, capture_output=True, encoding="utf-8")
-    if DEBUG_MODE:
-        logger.debug(f"'vcpkg integrate install: {int_run.stdout}")
+    subprocess.run(int_command, cwd=VCPKG_LOCATION, stdout=subprocess.DEVNULL, capture_output=DEBUG_MODE, check=False, encoding="utf-8")
 
 
 def remove_vcpkg_project(project_name):
     rem_cmd = ["./vcpkg", "remove", "--recurse", project_name]
     rem_run = subprocess.run(
-        rem_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
+        rem_cmd, cwd=VCPKG_LOCATION, capture_output=DEBUG_MODE, check=False, encoding="utf-8"
     )
     subprocess_run_debug(rem_run, project_name)
+    shutil.rmtree(VCPKG_LOCATION / "ports" / project_name, ignore_errors=True)
 
 
 def get_vcpkg_projects():
@@ -88,9 +87,10 @@ def get_vcpkg_projects():
 
 
 def vcpkg_build(project_name):
+    logger.info(f"Building {project_name}")
     inst_cmd = ["./vcpkg", "install", "--clean-downloads-after-build", project_name]
     inst_run = subprocess.run(
-        inst_cmd, cwd=VCPKG_LOCATION, capture_output=True, check=False, encoding="utf-8"
+        inst_cmd, cwd=VCPKG_LOCATION, stdout=subprocess.DEVNULL, capture_output=DEBUG_MODE, check=False, encoding="utf-8"
     )
     subprocess_run_debug(inst_run, project_name)
 
