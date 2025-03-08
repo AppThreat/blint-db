@@ -53,6 +53,8 @@ def find_meson_executables(project_name):
     full_project_dir = WRAPDB_LOCATION / "build" / project_name / "subprojects"
     executable_list = []
     for root, dir, files in os.walk(full_project_dir):
+        if "__pycache__" in root:
+            continue
         for file in files:
             # what is the value of variable `root`
             file_path = Path(root) / file

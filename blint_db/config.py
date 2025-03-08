@@ -9,7 +9,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    format="%(levelname)s: %(message)s", level=logging.INFO
+    format="%(message)s", level=logging.INFO
 )
 
 DELIMETER_BOM = "~~"
@@ -39,3 +39,7 @@ if ARCH == "x86_64":
 if SYSTEM == "darwin":
     SYSTEM = "osx"
 VCPKG_ARCH_OS = f"{ARCH}-{SYSTEM}"
+
+for log_name, log_obj in logging.Logger.manager.loggerDict.items():
+    if log_name != __name__:
+        log_obj.disabled = True

@@ -113,6 +113,8 @@ def exec_explorer(directory):
     """
     executables = []
     for root, _, files in os.walk(directory):
+        if "__pycache__" in root:
+            continue
         for file in files:
             file_path = os.path.join(root, file)
             if is_exe(file_path):
