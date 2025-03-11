@@ -73,7 +73,7 @@ def remove_vcpkg_project(project_name):
         rem_cmd, cwd=VCPKG_LOCATION, capture_output=DEBUG_MODE, check=False, encoding="utf-8"
     )
     subprocess_run_debug(rem_run, project_name)
-    shutil.rmtree(VCPKG_LOCATION / "ports" / project_name, ignore_errors=True)
+    # shutil.rmtree(VCPKG_LOCATION / "ports" / project_name, ignore_errors=True)
 
 
 def get_vcpkg_projects():
