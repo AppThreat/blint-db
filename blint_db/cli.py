@@ -128,7 +128,7 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
         print(f"Ran complete for {project_name} and we found {len(executables)} binaries.")
         remove_vcpkg_project(project_name)
         count += 1
-        if count == 100:
+        if count == 10:
             remove_temp_ar()
             count = 0
 
