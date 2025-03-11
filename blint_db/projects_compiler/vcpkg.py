@@ -91,7 +91,6 @@ def mt_vcpkg_blint_db_build(project_name, vcpkg_json):
     logger.debug(f"Running {project_name} with vcpkg {vcpkg_json}")
     try:
         execs = add_project_vcpkg_db(project_name, vcpkg_json)
-        logger.info(f"Completed: {project_name} with binaries:{len(execs)}")
         return execs
     except OperationalError as e:
         logger.info(f"error encountered with {project_name}")

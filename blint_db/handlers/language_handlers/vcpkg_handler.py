@@ -88,7 +88,7 @@ def get_vcpkg_projects():
 
 def vcpkg_build(project_name):
     logger.info(f"Building {project_name}")
-    inst_cmd = ["./vcpkg", "install", "--clean-downloads-after-build", project_name]
+    inst_cmd = ["./vcpkg", "install", "--keep-going", "--clean-downloads-after-build", project_name]
     inst_run = subprocess.run(
         inst_cmd, cwd=VCPKG_LOCATION, stdout=subprocess.DEVNULL, capture_output=DEBUG_MODE, check=False, encoding="utf-8"
     )
@@ -98,7 +98,18 @@ def vcpkg_build(project_name):
 def find_vcpkg_executables(project_name):
     project_path = f"{project_name}_{VCPKG_ARCH_OS}"
     target_directory = VCPKG_LOCATION / "packages" / project_path
-    return exec_explorer(target_directory)
+    # If the package generates multiple binaries then the target directory could be empty
+    exes = exec_explorer(target_directory)
+    if not exes:
+        project_dirs = []
+        for f in os.listdir(VCPKG_LOCATION / "packages"):
+            if os.path.isdir(f) and f.startswith(project_name.split("-")[0]):
+                project_dirs.append(f)
+        if project_dirs:
+            print(project_name, "has multiple packages", project_dirs)
+            for d in project_dirs:
+                exes = exes + exec_explorer(d)
+    return exes
 
 
 def exec_explorer(directory):
@@ -111,6 +122,8 @@ def exec_explorer(directory):
     Returns:
       A list of executable file paths.
     """
+    if not os.path.exists(directory):
+        return []
     executables = []
     for root, _, files in os.walk(directory):
         if "__pycache__" in root:
