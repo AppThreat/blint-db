@@ -37,6 +37,7 @@ def get_blint_internal_functions_exe(file_path):
 
     run_blint_on_file(file_path)
     blint_file = Path(f"{str(file_path)}.json")
-
+    if not blint_file.exists():
+        return []
     if_string = get_properties_internal("internal:functions", blint_file)
     return if_string.split(DELIMETER_BOM)
