@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 from typing import List
 
-from blint_db import BLINT_DB_FILE, COMMON_CONNECTION, VCPKG_LOCATION
+from blint_db import VCPKG_LOCATION
 from blint_db.handlers.language_handlers.vcpkg_handler import (
     get_vcpkg_projects, remove_vcpkg_project)
 from blint_db.handlers.language_handlers.wrapdb_handler import \
