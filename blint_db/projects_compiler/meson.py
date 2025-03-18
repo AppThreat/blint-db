@@ -67,7 +67,6 @@ def mt_meson_blint_db_build(project_name_wrap_tuple):
     logger.debug(f"Running {project_name}")
     try:
         execs = add_project_meson_db(project_name, wrap_file)
-        logger.info(f"Completed: {project_name} with binaries: {len(execs)}")
     except OperationalError as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
