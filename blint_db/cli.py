@@ -123,7 +123,7 @@ def vcpkg_add_blint_bom_process(test_mode=False, sel_project: List = None):
     if sel_project:
         projects_list = sel_project
     count = 0
-    os.environ["VCPKG_MAX_CONCURRENCY"]=str(os.cpu_count())
+    os.environ["VCPKG_MAX_CONCURRENCY"] = str(os.cpu_count())
     for project_name in projects_list:
         vcpkg_json = VCPKG_LOCATION / "ports" / project_name / "vcpkg.json"
         executables = mt_vcpkg_blint_db_build(project_name, vcpkg_json)

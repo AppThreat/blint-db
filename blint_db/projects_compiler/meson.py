@@ -11,7 +11,7 @@ from blint_db import WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
 from blint_db.handlers.blint_handler import get_blint_internal_functions_exe
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers.meson_handler import (
-    find_meson_executables, meson_build, strip_executables)
+    find_meson_executables, meson_build)
 from blint_db.handlers.sqlite_handler import (add_binary, add_binary_export,
                                               add_projects)
 
@@ -71,15 +71,5 @@ def mt_meson_blint_db_build(project_name_wrap_tuple):
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
         logger.error(traceback.format_exc())
-        return [False]
+        return []
     return execs
-
-
-def st_meson_blint_db_build(project_list):
-    # returns executables list so we can run blint on them
-    executables_list = []
-    for project_name in project_list:
-        execs = add_project_meson_db(project_name)
-
-        executables_list.extend(execs)
-    return executables_list
