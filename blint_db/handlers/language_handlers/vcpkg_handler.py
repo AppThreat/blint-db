@@ -100,7 +100,7 @@ def find_vcpkg_executables(project_name):
     target_directory = VCPKG_LOCATION / "packages" / project_path
     # If the package generates multiple binaries then the target directory could be empty
     exes = exec_explorer(target_directory)
-    if not exes:
+    if not exes and os.path.exists(VCPKG_LOCATION / "packages"):
         project_dirs = []
         for f in os.listdir(VCPKG_LOCATION / "packages"):
             if os.path.isdir(f) and f.startswith(project_name.split("-")[0]):

@@ -37,6 +37,6 @@ def is_exe(src):
             with open(src, "rb") as f:
                 data = f.read(1024)
             return is_binary_string(data)
-        except (TypeError, OverflowError, ValueError, OSError) as e:
+        except (TypeError, OverflowError, ValueError, OSError):
             return False
     return False
