@@ -39,7 +39,7 @@ class MesonHandler(BaseHandler):
 
 def meson_build(project_name):
     logger.info(f"Building {project_name}")
-    setup_command = f"meson setup build/{project_name} -Dwraps={project_name} -Dbuildtype=debug -Ddefault_library=shared -Dstrip=true -Dparallel-level={cpu_count}".split(" ")
+    setup_command = f"meson setup build/{project_name} -Dwraps={project_name} -Dbuildtype=debug -Ddefault_library=shared -Dstrip=true -Dc_thread_count={cpu_count} -Dcpp_thread_count={cpu_count}".split(" ")
     meson_setup = subprocess.run(setup_command, cwd=WRAPDB_LOCATION, stdout=subprocess.DEVNULL, check=False,
                                  env=os.environ.copy(), capture_output=DEBUG_MODE, shell=sys.platform == "win32",
                                  encoding="utf-8")
