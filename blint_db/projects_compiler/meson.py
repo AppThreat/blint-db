@@ -37,7 +37,15 @@ def add_project_meson_db(project_name, wrap_file):
             config.read(wrap_file)
             source_hash = config["wrap-file"]["source_hash"]
             directory = config["wrap-file"]["directory"]
-            purl = f"pkg:generic/{directory}@{source_hash}"
+            name = directory
+            version = None
+            if "-" in name:
+                tmp_a = name.split("-")
+                if len(tmp_a) >= 2:
+                    version = tmp_a[-1]
+                    name = name.replace(f"-{version}", "")
+            name_with_version = f"{name}@{version}" if version else name
+            purl = f"pkg:generic/{name_with_version}?source_hash={source_hash}"
             metadata = {"source_url": config["wrap-file"]["source_url"]}
         except (configparser.NoSectionError, configparser.NoOptionError, configparser.InterpolationSyntaxError):
             logger.info(f"Unable to parse {wrap_file}")
