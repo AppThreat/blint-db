@@ -22,6 +22,10 @@ jobs:
         uv venv -p 3.12
         source .venv/bin/activate
         uv sync --all-extras --dev
+        curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+        chmod a+x ppkg
+        mv ppkg /usr/local/bin/
+        ppkg setup
     - name: Clean up previous
       run: |
         rm -rf ${BLINT_DB_BOOTSTRAP_PATH}

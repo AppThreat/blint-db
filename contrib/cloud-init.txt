@@ -20,6 +20,12 @@ packages:
   - curl
   - tar
   - libc6-dev
+  - ninja-build
+  - libgit2-dev
+  - libarchive-dev
+  - libyaml-dev
+  - libjansson-dev
+  - libcurl4
   - libcurl4-openssl-dev
   - libedit2
   - libgcc-13-dev

@@ -22,6 +22,7 @@ jobs:
         uv venv -p 3.12
         source .venv/bin/activate
         uv sync --all-extras --dev
+        brew install --HEAD leleliu008/fpliu/ppkg
     - name: Clean up previous
       run: |
         rm -rf ${BLINT_DB_BOOTSTRAP_PATH}
