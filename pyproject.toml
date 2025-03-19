@@ -51,4 +51,4 @@ include-package-data = false
 packages = ["blint_db", "blint_db.projects_compiler", "blint_db.utils", "blint_db.handlers", "blint_db.handlers.language_handlers"]
 
 [tool.uv.sources]
-blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "4a0d17355cf95e9f61cad9021dd9c7983602e430" }
+blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "930681f15b736d9dff1a0ad064a702f7862f5721" }
