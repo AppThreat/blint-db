@@ -40,7 +40,6 @@ jobs:
   builder-arm64-vcpkg:
     runs-on: ['self-hosted', 'ubuntu', 'arm64']
     timeout-minutes: 7200
-    if: false
     permissions:
       contents: write
       packages: write
