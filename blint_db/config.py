@@ -36,6 +36,8 @@ ARCH = platform.machine()
 SYSTEM = platform.system().lower()
 if ARCH == "x86_64":
     ARCH = "x64"
+if ARCH == "aarch64":
+    ARCH = "arm64"
 if SYSTEM == "darwin":
     SYSTEM = "osx"
 VCPKG_ARCH_OS = f"{ARCH}-{SYSTEM}"
