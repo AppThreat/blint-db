@@ -88,7 +88,7 @@ def get_vcpkg_projects():
 
 def vcpkg_build(project_name):
     logger.info(f"Building {project_name}")
-    inst_cmd = ["./vcpkg", "install", "--keep-going", "--clean-downloads-after-build", project_name]
+    inst_cmd = ["./vcpkg", "install", "--keep-going", project_name]
     inst_run = subprocess.run(
         inst_cmd, cwd=VCPKG_LOCATION, stdout=subprocess.DEVNULL, capture_output=DEBUG_MODE, check=False, encoding="utf-8"
     )
