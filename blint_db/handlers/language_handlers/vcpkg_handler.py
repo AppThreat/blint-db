@@ -29,7 +29,7 @@ class VcpkgHandler(BaseHandler):
         subprocess_run_debug(inst_run, project_name)
 
     def find_executables(self, project_name):
-        project_path = f"{project_name}_x64-linux"
+        project_path = f"{project_name}_{VCPKG_ARCH_OS}"
         target_directory = VCPKG_LOCATION / "packages" / project_path
         return exec_explorer(target_directory)
 
@@ -109,6 +109,8 @@ def find_vcpkg_executables(project_name):
             print(project_name, "has multiple packages", project_dirs)
             for d in project_dirs:
                 exes = exes + exec_explorer(d)
+    if not exes:
+        print ("Unable to find any binaries for", project_name, target_directory)
     return exes
 
 
