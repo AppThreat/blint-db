@@ -1,0 +1,41 @@
+images:
+- location: "https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/cloud/nocloud_alpine-3.21.2-x86_64-uefi-cloudinit-r0.qcow2"
+  arch: "x86_64"
+  digest: "sha512:1aaf22b4a584e69e228e6aa38a295159c0143d9ccebe7ad4928e92b414714066af3bfe5f9e0ca4d4d64a70ca9fea09033af90258a6f2344130d70b660151127a"
+- location: "https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/cloud/nocloud_alpine-3.21.2-aarch64-uefi-cloudinit-r0.qcow2"
+  arch: "aarch64"
+  digest: "sha512:08d340126b222abae651a20aa63c3ee3dc601d703de7879d2a6bc1fe82a3664d058a2c55ad0cf8a874327f7535e3af8a9384ce438217d6f32200cad1462a5b32"
+mounts:
+- location: "/tmp/blintdb"
+  writable: true
+containerd:
+  system: false
+  user: false
+env:
+  VCPKG_DISABLE_METRICS: true
+provision:
+- mode: dependency
+  skipDefaultDependencyResolution: false
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    apk --no-cache --update add tar zip unzip make ninja build-base cmake gcc g++ musl-dev binutils autoconf automake libtool pkgconfig check-dev file patch python3 py3-pip python3-dev openjdk21-jdk rust cargo git gnupg nodejs npm nodejs-dev ninja-build libgit2-dev sqlite sqlite-libs sqlite-dev libarchive-dev yaml yaml-cpp yaml-dev jansson-dev
+    python3 -m pip install --no-cache-dir --upgrade pip virtualenv --break-system-packages
+    python3 -m pip install --no-cache-dir poetry uv --break-system-packages
+- mode: system
+  script: |
+    #!/bin/bash
+    set -e -o pipefail
+    npm install -g node-gyp @cyclonedx/cdxgen --omit=dev
+    npx node-gyp install
+    node -v
+    npm -v
+    gcc --version
+    cdxgen --version
+    git clone --depth=1 --branch=c https://github.com/leleliu008/ppkg
+    cd ppkg
+    cmake -S . -B   build.d -G Ninja -DCMAKE_INSTALL_PREFIX=/usr/local
+    cmake --build   build.d
+    cmake --install build.d
+    cd ..
+    rm -rf ppkg

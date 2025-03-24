@@ -16,17 +16,6 @@ containerd:
   system: false
   user: true
 env:
-  MAVEN_VERSION: 3.9.9
-  SBT_VERSION: 1.10.5
-  GRADLE_VERSION: 8.11
-  MAVEN_HOME: /.sdkman/candidates/maven/current
-  MAVEN_CMD: /.sdkman/candidates/maven/current/bin/mvn
-  GRADLE_HOME: /.sdkman/candidates/gradle/current
-  GRADLE_CMD: /.sdkman/candidates/gradle/current/bin/gradle
-  SBT_HOME: /.sdkman/candidates/sbt/current
-  SBT_CMD: /.sdkman/candidates/sbt/current/bin/sbt
-  SDKMAN_DIR: /.sdkman
-  SDKMAN_CANDIDATES_DIR: /.sdkman/candidates
   VCPKG_DISABLE_METRICS: true
 provision:
 - mode: dependency
@@ -35,29 +24,14 @@ provision:
     #!/bin/bash
     set -eux -o pipefail
     apt update -y
-    apt install -y autoconf libtool cmake zip unzip wget binutils git gnupg2 curl tar libc6-dev libcurl4 libcurl4-openssl-dev libedit2 libgcc-13-dev libpython3-dev libsqlite3-0 libstdc++-13-dev libxml2-dev libncurses-dev libz3-dev pkg-config tzdata zlib1g-dev python3.12 python3.12-venv python3.12-dev openjdk-21-jdk-headless gcc-13 build-essential cargo-1.81 rust-1.81-all golang-1.23 software-properties-common ruby-full ruby-bundler docker.io docker-buildx docker-compose-v2 podman android-sdk android-sdk-build-tools android-sdk-platform-23 android-sdk-platform-tools
+    apt install -y autoconf libtool cmake zip unzip wget binutils git gnupg2 curl tar libc6-dev libcurl4 libcurl4-openssl-dev libedit2 libgcc-13-dev libpython3-dev libsqlite3-0 libstdc++-13-dev libxml2-dev libncurses-dev libz3-dev pkg-config tzdata zlib1g-dev python3.12 python3.12-venv python3.12-dev openjdk-21-jdk-headless gcc-13 build-essential cargo-1.81 rust-1.81-all software-properties-common docker.io docker-buildx docker-compose-v2 podman
     apt install -y ninja-build libgit2-dev libarchive-dev libyaml-dev libjansson-dev
     python3 -m pip install --no-cache-dir --upgrade pip virtualenv
-    python3 -m pip install --no-cache-dir poetry pipenv blint custom-json-diff owasp-depscan uv
+    python3 -m pip install --no-cache-dir poetry uv
 - mode: system
   script: |
     #!/bin/bash
     set -e -o pipefail
-    export MAVEN_VERSION=3.9.9
-    export SBT_VERSION=1.10.7
-    export GRADLE_VERSION=8.12.1
-    export MAVEN_HOME="/.sdkman/candidates/maven/${MAVEN_VERSION}"
-    export GRADLE_HOME="/.sdkman/candidates/gradle/${GRADLE_VERSION}"
-    export SBT_HOME="/.sdkman/candidates/sbt/${SBT_VERSION}"
-    export SDKMAN_DIR=/.sdkman
-    export SDKMAN_CANDIDATES_DIR=/.sdkman/candidates
-    export PATH=${PATH}:${MAVEN_HOME}/bin:${GRADLE_HOME}/bin:${SBT_HOME}/bin:/usr/local/bin:
-    curl -s "https://get.sdkman.io" | bash
-    echo -e "sdkman_auto_answer=true\nsdkman_selfupdate_feature=false\nsdkman_auto_env=true\nsdkman_curl_connect_timeout=60\nsdkman_curl_max_time=0" >> /.sdkman/etc/config
-    source "/.sdkman/bin/sdkman-init.sh"
-    sdk install maven $MAVEN_VERSION || true
-    sdk install gradle $GRADLE_VERSION || true
-    sdk install sbt $SBT_VERSION || true
     curl -fsSL https://deb.nodesource.com/setup_23.x -o nodesource_setup.sh
     bash nodesource_setup.sh
     apt install -y nodejs
@@ -68,31 +42,6 @@ provision:
     npm -v
     gcc --version
     cdxgen --version
-    export SWIFT_SIGNING_KEY=52BB7E3DE28A71BE22EC05FFEF80A866B47A981F
-    export SWIFT_PLATFORM=ubuntu24.04
-    export SWIFT_BRANCH=swift-6.0.3-release
-    export SWIFT_VERSION=swift-6.0.3-RELEASE
-    export SWIFT_WEBROOT=https://download.swift.org
-    OS_ARCH_SUFFIX=''
-    ARCH_NAME="$(dpkg --print-architecture)";
-    case "${ARCH_NAME##*-}" in
-        'amd64')
-            OS_ARCH_SUFFIX='';
-            ;;
-        'arm64')
-            OS_ARCH_SUFFIX='-aarch64';
-            ;;
-        *) echo >&2 "error: unsupported architecture: '$ARCH_NAME'"; exit 1 ;;
-    esac;
-    export SWIFT_WEBDIR="$SWIFT_WEBROOT/$SWIFT_BRANCH/$(echo $SWIFT_PLATFORM | tr -d .)$OS_ARCH_SUFFIX"
-    SWIFT_BIN_URL="$SWIFT_WEBDIR/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz"
-    SWIFT_SIG_URL="$SWIFT_BIN_URL.sig"
-    GNUPGHOME="$(mktemp -d)"
-    curl -fsSL "$SWIFT_BIN_URL" -o swift.tar.gz "$SWIFT_SIG_URL" -o swift.tar.gz.sig
-    gpg --batch --quiet --keyserver keyserver.ubuntu.com --recv-keys "$SWIFT_SIGNING_KEY"
-    gpg --batch --verify swift.tar.gz.sig swift.tar.gz
-    tar -xzf swift.tar.gz --directory / --strip-components=1
-    chmod -R o+r /usr/lib/swift
     git clone --depth=1 --branch=c https://github.com/leleliu008/ppkg
     cd ppkg
     cmake -S . -B   build.d -G Ninja -DCMAKE_INSTALL_PREFIX=/usr/local

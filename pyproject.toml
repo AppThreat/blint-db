@@ -7,6 +7,7 @@ authors = [
 ]
 dependencies = [
     "blint",
+    "huggingface-hub>=0.29.3",
     "meson>=1.7.0",
     "ninja>=1.11.1.3",
     "oras>=0.2.25",
@@ -51,4 +52,4 @@ include-package-data = false
 packages = ["blint_db", "blint_db.projects_compiler", "blint_db.utils", "blint_db.handlers", "blint_db.handlers.language_handlers"]
 
 [tool.uv.sources]
-blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "8c74d0162c33c951729d2f6f580ff40fcb3c0691" }
+blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "8fdca162ed4f8f3955202f259f5e580690db6410" }
