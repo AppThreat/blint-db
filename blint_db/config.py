@@ -22,8 +22,8 @@ VCPKG_LOCATION = BLINT_DB_BOOTSTRAP_PATH / "vcpkg"
 WRAPDB_URL = "https://github.com/mesonbuild/wrapdb.git"
 VCPKG_URL = "https://github.com/microsoft/vcpkg.git"
 
-WRAPDB_HASH = "1815cbe397fdc8cb0a245236899dfd499903eb7d"
-VCPKG_HASH = "478939b61bfc6aa9faf4ab18b5e2495f18ac1fea"
+WRAPDB_COMMIT_HASH = "43207fb8c0423b18173eeb37de8056e071d72fa7"
+VCPKG_COMMIT_HASH = "a76b33254af4092ff45f08ec5adcd9fd06468b43"
 
 BOM_LOCATION = BLINT_DB_BOOTSTRAP_PATH / "BOM"
 BLINT_DB_FILE = "blint.db"

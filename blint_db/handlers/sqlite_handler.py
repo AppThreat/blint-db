@@ -60,7 +60,7 @@ def create_database():
         """
         CREATE TABLE IF NOT EXISTS Projects (
             pid     INTEGER PRIMARY KEY AUTOINCREMENT,
-            pname   VARCHAR(255) UNIQUE,
+            pname   VARCHAR(1024) UNIQUE,
             purl    TEXT UNIQUE,
             metadata      BLOB,
             source_sbom    BLOB
@@ -83,7 +83,7 @@ def create_database():
     exports_table = execute_statement(
         """
         CREATE TABLE IF NOT EXISTS Exports (
-            infunc  VARCHAR(255) PRIMARY KEY
+            infunc  VARCHAR(4096) PRIMARY KEY
         );
         """
     )

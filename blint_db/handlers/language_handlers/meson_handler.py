@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from blint_db import DEBUG_MODE, WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
+from blint_db import DEBUG_MODE, WRAPDB_COMMIT_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
 from blint_db.utils.utils import subprocess_run_debug, is_exe
@@ -22,7 +22,7 @@ class MesonHandler(BaseHandler):
         if not shutil.which("meson"):
             raise ModuleNotFoundError("Meson was not found")
         git_clone(WRAPDB_URL, WRAPDB_LOCATION)
-        git_checkout_commit(WRAPDB_LOCATION, WRAPDB_HASH)
+        git_checkout_commit(WRAPDB_LOCATION, WRAPDB_COMMIT_HASH)
 
     def delete_project_files(self, project_name):
         pass

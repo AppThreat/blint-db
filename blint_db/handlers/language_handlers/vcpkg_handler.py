@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 
-from blint_db import (VCPKG_ARCH_OS, DEBUG_MODE, VCPKG_HASH, VCPKG_LOCATION,
+from blint_db import (VCPKG_ARCH_OS, DEBUG_MODE, VCPKG_COMMIT_HASH, VCPKG_LOCATION,
                       VCPKG_URL, logger)
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
@@ -18,7 +18,7 @@ class VcpkgHandler(BaseHandler):
 
     def __init__(self):
         git_clone(VCPKG_URL, VCPKG_LOCATION)
-        git_checkout_commit(VCPKG_LOCATION, VCPKG_HASH)
+        git_checkout_commit(VCPKG_LOCATION, VCPKG_COMMIT_HASH)
         run_vcpkg_install_command()
 
     def build(self, project_name):
@@ -46,7 +46,7 @@ def git_clone_vcpkg():
 
 
 def git_checkout_vcpkg_commit():
-    git_checkout_commit(VCPKG_LOCATION, VCPKG_HASH)
+    git_checkout_commit(VCPKG_LOCATION, VCPKG_COMMIT_HASH)
 
 
 def run_vcpkg_install_command():

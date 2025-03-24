@@ -7,7 +7,7 @@ import shutil
 import traceback
 from sqlite3 import OperationalError
 
-from blint_db import WRAPDB_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
+from blint_db import WRAPDB_COMMIT_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
 from blint_db.handlers.blint_handler import get_blint_internal_functions_exe
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers.meson_handler import (
@@ -21,7 +21,7 @@ def git_clone_wrapdb():
 
 
 def git_checkout_wrapdb_commit():
-    git_checkout_commit(WRAPDB_LOCATION, WRAPDB_HASH)
+    git_checkout_commit(WRAPDB_LOCATION, WRAPDB_COMMIT_HASH)
 
 
 def ensure_meson_installed():

@@ -123,7 +123,7 @@ wheels = [
 [[package]]
 name = "blint"
 version = "2.4.0"
-source = { git = "https://github.com/owasp-dep-scan/blint?rev=930681f15b736d9dff1a0ad064a702f7862f5721#930681f15b736d9dff1a0ad064a702f7862f5721" }
+source = { git = "https://github.com/owasp-dep-scan/blint?rev=8c74d0162c33c951729d2f6f580ff40fcb3c0691#8c74d0162c33c951729d2f6f580ff40fcb3c0691" }
 dependencies = [
     { name = "appdirs" },
     { name = "apsw" },
@@ -160,7 +160,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=25.1.0" },
-    { name = "blint", git = "https://github.com/owasp-dep-scan/blint?rev=930681f15b736d9dff1a0ad064a702f7862f5721" },
+    { name = "blint", git = "https://github.com/owasp-dep-scan/blint?rev=8c74d0162c33c951729d2f6f580ff40fcb3c0691" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.1.2" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "meson", specifier = ">=1.7.0" },
