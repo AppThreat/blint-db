@@ -19,7 +19,7 @@ provision:
   script: |
     #!/bin/bash
     set -eux -o pipefail
-    apk --no-cache --update add tar zip unzip make ninja build-base cmake gcc g++ musl-dev binutils autoconf automake libtool pkgconfig check-dev file patch python3 py3-pip python3-dev openjdk21-jdk rust cargo git gnupg nodejs npm nodejs-dev ninja-build libgit2-dev sqlite sqlite-libs sqlite-dev libarchive-dev yaml yaml-cpp yaml-dev jansson-dev
+    apk --no-cache --update add linux-headers curl tar zip unzip bash make ninja build-base cmake gcompat gcc g++ musl-dev binutils autoconf automake libtool pkgconfig check-dev file patch python3 py3-pip python3-dev openjdk21-jdk rust cargo git gnupg nodejs npm nodejs-dev ninja-build libgit2-dev sqlite sqlite-libs sqlite-dev libarchive-dev yaml yaml-cpp yaml-dev jansson-dev
     python3 -m pip install --no-cache-dir --upgrade pip virtualenv --break-system-packages
     python3 -m pip install --no-cache-dir poetry uv --break-system-packages
 - mode: system
