@@ -27,7 +27,7 @@ Native binaries vary based on several factors, such as configuration, build tool
 
 The schema design is not currently stable and is likely to change as we add more build pipelines.
 
-[<img src="./docs/schema.png" alt="Blint DB schema" width="400" />](Database Schema)
+<img src="./docs/schema.png" alt="Blint DB schema" width="400" />
 
 ### Table: Exports
 
