@@ -10,7 +10,7 @@ from blint_db import (VCPKG_ARCH_OS, DEBUG_MODE, VCPKG_COMMIT_HASH, VCPKG_LOCATI
                       VCPKG_URL, logger)
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
-from blint_db.utils.utils import subprocess_run_debug, is_exe
+from blint_db.utils import subprocess_run_debug, get_executables
 
 
 class VcpkgHandler(BaseHandler):
@@ -99,7 +99,7 @@ def find_vcpkg_executables(project_name):
     project_path = f"{project_name}_{VCPKG_ARCH_OS}"
     target_directory = VCPKG_LOCATION / "packages" / project_path
     # If the package generates multiple binaries then the target directory could be empty
-    exes = exec_explorer(target_directory)
+    exes = get_executables(target_directory)
     if not exes and os.path.exists(VCPKG_LOCATION / "packages"):
         project_dirs = []
         for f in os.listdir(VCPKG_LOCATION / "packages"):
@@ -108,30 +108,7 @@ def find_vcpkg_executables(project_name):
         if project_dirs:
             print(project_name, "has multiple packages", project_dirs)
             for d in project_dirs:
-                exes = exes + exec_explorer(d)
+                exes = exes + get_executables(d)
     if not exes:
         print ("Unable to find any binaries for", project_name, target_directory)
     return exes
-
-
-def exec_explorer(directory):
-    """
-    Walks through a directory and identifies executable files using the `file` command.
-
-    Args:
-      directory: The directory to search.
-
-    Returns:
-      A list of executable file paths.
-    """
-    if not os.path.exists(directory):
-        return []
-    executables = []
-    for root, _, files in os.walk(directory):
-        if "__pycache__" in root:
-            continue
-        for file in files:
-            file_path = os.path.join(root, file)
-            if is_exe(file_path):
-                executables.append(file_path)
-    return executables

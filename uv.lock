@@ -123,7 +123,7 @@ wheels = [
 [[package]]
 name = "blint"
 version = "2.4.0"
-source = { git = "https://github.com/owasp-dep-scan/blint?rev=8fdca162ed4f8f3955202f259f5e580690db6410#8fdca162ed4f8f3955202f259f5e580690db6410" }
+source = { git = "https://github.com/owasp-dep-scan/blint?rev=f575550fa13c6ca718ee2416e4d85e061161d095#f575550fa13c6ca718ee2416e4d85e061161d095" }
 dependencies = [
     { name = "appdirs" },
     { name = "apsw" },
@@ -141,7 +141,7 @@ dependencies = [
 
 [[package]]
 name = "blint-db"
-version = "0.2.0"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "blint" },
@@ -161,7 +161,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=25.1.0" },
-    { name = "blint", git = "https://github.com/owasp-dep-scan/blint?rev=8fdca162ed4f8f3955202f259f5e580690db6410" },
+    { name = "blint", git = "https://github.com/owasp-dep-scan/blint?rev=f575550fa13c6ca718ee2416e4d85e061161d095" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.1.2" },
     { name = "huggingface-hub", specifier = ">=0.29.3" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=6.0.0" },

@@ -45,3 +45,35 @@ VCPKG_ARCH_OS = f"{ARCH}-{SYSTEM}"
 for log_name, log_obj in logging.Logger.manager.loggerDict.items():
     if log_name != __name__:
         log_obj.disabled = True
+
+IGNORE_DIRECTORIES = [
+    ".git",
+    ".svn",
+    ".mvn",
+    ".idea",
+    "dist",
+    "bin",
+    "obj",
+    "backup",
+    "docs",
+    "tests",
+    "test",
+    "testsuite"
+    "tmp",
+    "report",
+    "reports",
+    "node_modules",
+    ".terraform",
+    ".serverless",
+    "venv",
+    "examples",
+    "tutorials",
+    "samples",
+    "migrations",
+    "db_migrations",
+    "unittests",
+    "unittests_legacy",
+    "stubs",
+    "mock",
+    "mocks",
+]

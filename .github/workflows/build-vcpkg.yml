@@ -35,11 +35,13 @@ jobs:
         source .venv/bin/activate
         uv run blint-db --clean-start -Z2
         python .oras/orasclient.py -p vcpkg
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-vcpkg/blint.db
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
         VCPKG_DISABLE_METRICS: true
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
   builder-arm64-vcpkg:
     runs-on: ['self-hosted', 'ubuntu', 'arm64']
@@ -65,8 +67,10 @@ jobs:
         source .venv/bin/activate
         uv run blint-db --clean-start -Z2
         python .oras/orasclient.py -p vcpkg-arm64
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-vcpkg-arm64/blint.db
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
         VCPKG_DISABLE_METRICS: true
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}

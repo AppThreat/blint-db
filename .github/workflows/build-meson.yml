@@ -35,10 +35,12 @@ jobs:
         source .venv/bin/activate
         uv run blint-db --clean-start -Z1
         python .oras/orasclient.py -p meson
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-meson/blint.db
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
   builder-arm64-meson:
     runs-on: ['self-hosted', 'ubuntu', 'arm64']
@@ -64,7 +66,9 @@ jobs:
         source .venv/bin/activate
         uv run blint-db --clean-start -Z1
         python .oras/orasclient.py -p meson-arm64
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-meson-arm64/blint.db
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}

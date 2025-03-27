@@ -1,6 +1,6 @@
 [project]
 name = "blint-db"
-version = "0.2.0"
+version = "1.0.0"
 description = "Symbols database for OWASP blint"
 authors = [
   {name= "Team AppThreat", email = "cloud@appthreat.com"},
@@ -52,4 +52,4 @@ include-package-data = false
 packages = ["blint_db", "blint_db.projects_compiler", "blint_db.utils", "blint_db.handlers", "blint_db.handlers.language_handlers"]
 
 [tool.uv.sources]
-blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "8fdca162ed4f8f3955202f259f5e580690db6410" }
+blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "f575550fa13c6ca718ee2416e4d85e061161d095" }

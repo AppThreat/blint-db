@@ -11,7 +11,7 @@ from pathlib import Path
 from blint_db import DEBUG_MODE, WRAPDB_COMMIT_HASH, WRAPDB_LOCATION, WRAPDB_URL, logger
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers import BaseHandler
-from blint_db.utils.utils import subprocess_run_debug, is_exe
+from blint_db.utils import subprocess_run_debug, get_executables
 
 
 cpu_count = os.cpu_count()
@@ -53,15 +53,7 @@ def meson_build(project_name):
 
 def find_meson_executables(project_name):
     full_project_dir = WRAPDB_LOCATION / "build" / project_name / "subprojects"
-    executable_list = []
-    for root, dir, files in os.walk(full_project_dir):
-        if "__pycache__" in root:
-            continue
-        for file in files:
-            # what is the value of variable `root`
-            file_path = Path(root) / file
-            if is_exe(str(file_path)):
-                executable_list.append(file_path)
+    executable_list = get_executables(full_project_dir)
     return executable_list
 
 
