@@ -44,7 +44,7 @@ jobs:
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
         uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-homebrew
-        python .oras/orasclient.py -p homebrew-darwin-arm64-tst
+        uv run python .oras/orasclient.py -p homebrew-darwin-arm64-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}

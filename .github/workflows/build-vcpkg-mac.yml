@@ -45,7 +45,7 @@ jobs:
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
         uv run blint-db --clean-start --disassemble --db-file ./blint.db build-vcpkg
-        python .oras/orasclient.py -p vcpkg-darwin-arm64
+        uv run python .oras/orasclient.py -p vcpkg-darwin-arm64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}

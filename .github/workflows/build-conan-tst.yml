@@ -42,7 +42,7 @@ jobs:
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
         uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-conan
-        python .oras/orasclient.py -p conan-linux-tst
+        uv run python .oras/orasclient.py -p conan-linux-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
@@ -87,7 +87,7 @@ jobs:
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
         uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-conan
-        python .oras/orasclient.py -p conan-macos-tst
+        uv run python .oras/orasclient.py -p conan-macos-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
