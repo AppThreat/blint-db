@@ -22,13 +22,13 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config
-        echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
-        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
-        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> "$GITHUB_ENV"
-        echo "CC=clang-18" >> "$GITHUB_ENV"
-        echo "CXX=clang++-18" >> "$GITHUB_ENV"
-        echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        $LLVM_CONFIG --version
+        echo "/usr/lib/llvm-18/bin" >> $GITHUB_PATH
+        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> $GITHUB_ENV
+        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> $GITHUB_ENV
+        echo "CC=clang-18" >> $GITHUB_ENV
+        echo "CXX=clang++-18" >> $GITHUB_ENV
+        echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
+        llvm-config --version
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
@@ -64,14 +64,14 @@ jobs:
       run: |
         brew install llvm@18
         LLVM_PREFIX="$(brew --prefix llvm@18)"
-        echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
-        echo "$LLVM_PREFIX/bin" >> "$GITHUB_PATH"
-        echo "NYXSTONE_LLVM_PREFIX=$LLVM_PREFIX" >> "$GITHUB_ENV"
-        echo "LLVM_CONFIG=$LLVM_PREFIX/bin/llvm-config" >> "$GITHUB_ENV"
-        echo "CC=$LLVM_PREFIX/bin/clang" >> "$GITHUB_ENV"
-        echo "CXX=$LLVM_PREFIX/bin/clang++" >> "$GITHUB_ENV"
-        echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        echo "LDFLAGS=-L/opt/homebrew/lib -Wl,-rpath,/opt/homebrew/lib" >> "$GITHUB_ENV"
+        echo "/opt/homebrew/bin" >> $GITHUB_PATH
+        echo "$LLVM_PREFIX/bin" >> $GITHUB_PATH
+        echo "NYXSTONE_LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
+        echo "LLVM_CONFIG=$LLVM_PREFIX/bin/llvm-config" >> $GITHUB_ENV
+        echo "CC=$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
+        echo "CXX=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
+        echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
+        echo "LDFLAGS=-L/opt/homebrew/lib -Wl,-rpath,/opt/homebrew/lib" >> $GITHUB_ENV
         "$LLVM_PREFIX/bin/llvm-config" --version
     - name: Install dependencies
       run: |

@@ -23,13 +23,13 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config
-        echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
-        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
-        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> "$GITHUB_ENV"
-        echo "CC=clang-18" >> "$GITHUB_ENV"
-        echo "CXX=clang++-18" >> "$GITHUB_ENV"
-        echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        $LLVM_CONFIG --version
+        echo "/usr/lib/llvm-18/bin" >> $GITHUB_PATH
+        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> $GITHUB_ENV
+        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> $GITHUB_ENV
+        echo "CC=clang-18" >> $GITHUB_ENV
+        echo "CXX=clang++-18" >> $GITHUB_ENV
+        echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
+        llvm-config --version
         curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
         chmod a+x ppkg
         mv ppkg /usr/local/bin/
@@ -72,13 +72,13 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config
-        echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
-        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
-        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> "$GITHUB_ENV"
-        echo "CC=clang-18" >> "$GITHUB_ENV"
-        echo "CXX=clang++-18" >> "$GITHUB_ENV"
-        echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        $LLVM_CONFIG --version
+        echo "/usr/lib/llvm-18/bin" >> $GITHUB_PATH
+        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> $GITHUB_ENV
+        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> $GITHUB_ENV
+        echo "CC=clang-18" >> $GITHUB_ENV
+        echo "CXX=clang++-18" >> $GITHUB_ENV
+        echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
+        llvm-config --version
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
