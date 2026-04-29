@@ -78,7 +78,7 @@ def _default_curated_input_file(filename: str) -> Path:
     package_candidate = PACKAGE_ROOT / "inputs" / filename
     if package_candidate.exists():
         return package_candidate
-    return DEFAULT_REPO_ROOT / "docs" / filename
+    return DEFAULT_REPO_ROOT / "inputs" / filename
 
 
 HOMEBREW_CURATED_FORMULAS_FILE = Path(
