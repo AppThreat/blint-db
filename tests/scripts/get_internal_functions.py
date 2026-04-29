@@ -3,11 +3,10 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
-import concurrent
 import concurrent.futures
 import json
 
-from blint_db.handlers.blint_handler import get_properties_internal
+from blint_db.utils.json import load_json_file
 from tests.scripts.match_internal_functions_withdb import (
     get_bid_using_fid,
     get_bname,
@@ -36,8 +35,25 @@ def arguments_parser():
 
 
 def get_blint_internal_functions(file_name):
-    if_string = get_properties_internal("internal:functions", file_name).split("~~")
-    return if_string
+    raw_data = load_json_file(file_name)
+
+    # Support legacy CycloneDX properties and new blint metadata JSON payloads.
+    if isinstance(raw_data, dict):
+        metadata = raw_data.get("metadata") if isinstance(raw_data.get("metadata"), dict) else None
+        properties = []
+        if metadata and isinstance(metadata.get("properties"), list):
+            properties = metadata["properties"]
+        elif isinstance(raw_data.get("properties"), list):
+            properties = raw_data["properties"]
+        for prop in properties:
+            if prop.get("name") == "internal:functions":
+                return [name for name in str(prop.get("value", "")).split("~~") if name]
+
+        functions = raw_data.get("functions") or []
+        if isinstance(functions, list):
+            return [entry.get("name") for entry in functions if isinstance(entry, dict) and entry.get("name")]
+
+    return []
 
 
 def get_bnames_ename(i_func):

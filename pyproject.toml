@@ -2,7 +2,7 @@
 name = "blint-db"
 version = "2.0.0"
 description = "Symbols database for OWASP blint"
-license = "MIT"
+license = { file = "LICENSE" }
 authors = [
   {name= "Team AppThreat", email = "cloud@appthreat.com"},
 ]
