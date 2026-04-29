@@ -7,8 +7,10 @@ import shutil
 from pathlib import Path
 
 from blint_db import WRAPDB_LOCATION
-from blint_db.projects_compiler.meson import (git_checkout_wrapdb_commit,
-                                              git_clone_wrapdb)
+from blint_db.projects_compiler.meson import (
+    git_checkout_wrapdb_commit,
+    git_clone_wrapdb,
+)
 
 
 def get_wrapdb_projects():
@@ -21,8 +23,9 @@ def get_wrapdb_projects():
         project_path = Path(WRAPDB_LOCATION / "subprojects" / file)
         if project_path.suffix == ".wrap":
             projects_list.append((project_path.stem, project_path))
-    return projects_list
+    return sorted(projects_list, key=lambda entry: entry[0])
 
 
 def remove_wrapdb_project(project_name):
     shutil.rmtree(WRAPDB_LOCATION / "subprojects" / project_name, ignore_errors=True)
+    shutil.rmtree(WRAPDB_LOCATION / "build" / project_name, ignore_errors=True)

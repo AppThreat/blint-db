@@ -1,12 +1,14 @@
 [project]
 name = "blint-db"
-version = "1.0.1"
+version = "2.0.0"
 description = "Symbols database for OWASP blint"
+license = "MIT"
 authors = [
   {name= "Team AppThreat", email = "cloud@appthreat.com"},
 ]
 dependencies = [
     "blint",
+    "conan>=2.14.0",
     "huggingface-hub>=0.29.3",
     "meson>=1.7.0",
     "ninja>=1.11.1.3",
@@ -25,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
 ]
 
@@ -37,7 +40,11 @@ Bug-Tracker = "https://github.com/AppThreat/blint-db/issues"
 blint-db = 'blint_db.cli:main'
 
 [project.optional-dependencies]
+extended = [
+    "nyxstone>=0.1.1",
+]
 dev = [
+    "pytest>=9.0.0",
     "isort>=6.0.0",
     "black>=25.1.0",
     "flake8>=7.1.2",
@@ -51,5 +58,12 @@ build-backend = "setuptools.build_meta"
 include-package-data = false
 packages = ["blint_db", "blint_db.projects_compiler", "blint_db.utils", "blint_db.handlers", "blint_db.handlers.language_handlers"]
 
+[tool.setuptools.package-data]
+blint_db = ["inputs/*.csv"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
 [tool.uv.sources]
-blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "77cf6e0cf3d6d00f78ab3961cec055ca9ff21fd5" }
+blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "805e1df31eb7b0a4f7f97b0dc18ad4535fd0dbdf" }

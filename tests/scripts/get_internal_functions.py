@@ -8,9 +8,11 @@ import concurrent.futures
 import json
 
 from blint_db.handlers.blint_handler import get_properties_internal
-from tests.scripts.match_internal_functions_withdb import (get_bid_using_fid,
-                                                           get_bname,
-                                                           get_export_id)
+from tests.scripts.match_internal_functions_withdb import (
+    get_bid_using_fid,
+    get_bname,
+    get_export_id,
+)
 
 
 def arguments_parser():

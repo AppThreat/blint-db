@@ -1,0 +1,54 @@
+name: Build and Upload conan blint-db
+
+on:
+  workflow_dispatch:
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: appthreat/blintdb
+
+jobs:
+  builder-conan-linux:
+    runs-on: ['self-hosted', 'ubuntu', 'amd64']
+    timeout-minutes: 7200
+    permissions:
+      contents: write
+      packages: write
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        persist-credentials: false
+    - name: Install uv
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+    - name: Install LLVM 18 toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config build-essential ninja-build cmake
+        echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
+        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
+        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> "$GITHUB_ENV"
+        echo "CC=clang-18" >> "$GITHUB_ENV"
+        echo "CXX=clang++-18" >> "$GITHUB_ENV"
+        echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
+        llvm-config --version
+    - name: Install dependencies
+      run: |
+        uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
+    - name: Verify blint + conan + disassembly dependencies
+      run: |
+        uv run python -c "import blint, nyxstone, conan; print(blint.__file__)"
+    - name: Clean up previous
+      run: |
+        rm -rf ${BLINT_DB_BOOTSTRAP_PATH}
+    - name: Build and upload Linux conan db
+      run: |
+        mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-conan
+        python .oras/orasclient.py -p conan-linux-amd64
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-conan-linux-amd64/blint.db
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-conan-linux-amd64/blint.metadata.json
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_USERNAME: ${{ github.actor }}
+        BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
+        BLINT_DB_CONAN_REMOTE: conancenter
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
