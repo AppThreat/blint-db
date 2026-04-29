@@ -20,31 +20,37 @@ def add_project_cargo_db(
     db_file: str | None = None,
     disassemble: bool = False,
 ):
-    build_result = build_cargo_project(project_spec)
-    for artifact_path in build_result.artifacts:
-        try:
-            ingest_binary_file(
-                artifact_path,
-                db_file=db_file,
-                project_name=project_spec.crate,
-                project_purl=build_result.project_purl,
-                ecosystem="cargo",
-                project_metadata=build_result.project_metadata,
-                build_system="cargo",
-                target_os=build_result.target_os,
-                target_arch=build_result.target_arch,
-                target_triplet=build_result.target_triplet,
-                build_mode=build_result.build_mode,
-                optimization=build_result.optimization,
-                strip_status=build_result.strip_status,
-                build_metadata=build_result.build_metadata,
-                relative_to=build_result.target_dir,
-                disassemble=disassemble,
-            )
-        except (RuntimeError, FileNotFoundError) as exc:
-            logger.info(f"error encountered with {project_spec.selector}")
-            logger.error(exc)
-            logger.error(traceback.format_exc())
+    try:
+        build_result = build_cargo_project(project_spec)
+        for artifact_path in build_result.artifacts:
+            try:
+                ingest_binary_file(
+                    artifact_path,
+                    db_file=db_file,
+                    project_name=project_spec.crate,
+                    project_purl=build_result.project_purl,
+                    ecosystem="cargo",
+                    project_metadata=build_result.project_metadata,
+                    build_system="cargo",
+                    target_os=build_result.target_os,
+                    target_arch=build_result.target_arch,
+                    target_triplet=build_result.target_triplet,
+                    build_mode=build_result.build_mode,
+                    optimization=build_result.optimization,
+                    strip_status=build_result.strip_status,
+                    build_metadata=build_result.build_metadata,
+                    relative_to=build_result.target_dir,
+                    disassemble=disassemble,
+                )
+            except (RuntimeError, FileNotFoundError) as exc:
+                logger.info(f"error encountered with {project_spec.selector}")
+                logger.error(exc)
+                logger.error(traceback.format_exc())
+    except RuntimeError as exc:
+        logger.info(f"error encountered with {project_spec.selector}")
+        logger.error(exc)
+        logger.error(traceback.format_exc())
+        return []
     return build_result.artifacts
 
 

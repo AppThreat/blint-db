@@ -62,10 +62,15 @@ def _matching_installed_entry(formula: dict, keg_root: Path) -> dict | None:
 
 
 def add_project_homebrew_db(formula_name, db_file=None, disassemble=False):
-    formula_info = ensure_homebrew_formula(formula_name)
-    formula = _formula_payload(formula_info)
-    project_metadata = _formula_project_metadata(formula)
-    keg_roots = homebrew_keg_roots(formula_info)
+    try:
+        formula_info = ensure_homebrew_formula(formula_name)
+        formula = _formula_payload(formula_info)
+        project_metadata = _formula_project_metadata(formula)
+        keg_roots = homebrew_keg_roots(formula_info)
+    except RuntimeError:
+        logger.info(f"error encountered with {formula_name}")
+        logger.error(traceback.format_exc())
+        return []
     all_artifacts: list[str] = []
     if not keg_roots:
         raise RuntimeError(f"No installed Homebrew kegs found for {formula_name}")

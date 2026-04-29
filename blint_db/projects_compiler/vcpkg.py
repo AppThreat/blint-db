@@ -135,7 +135,7 @@ def mt_vcpkg_blint_db_build(project_name, vcpkg_json, db_file=None, disassemble=
             disassemble=disassemble,
         )
         return execs
-    except OperationalError as e:
+    except (OperationalError, RuntimeError) as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
         logger.error(traceback.format_exc())
