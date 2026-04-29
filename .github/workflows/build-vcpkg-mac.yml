@@ -8,29 +8,44 @@ env:
 
 jobs:
   builder-darwin-arm64-vcpkg:
-    runs-on: ['macos-hosted', 'arm64']
+    runs-on: ['self-hosted', 'macos-hosted', 'arm64']
     timeout-minutes: 7200
     permissions:
       contents: write
       packages: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        persist-credentials: false
     - name: Install uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+    - name: Install LLVM 18 toolchain
+      run: |
+        brew install llvm@18
+        LLVM_PREFIX="$(brew --prefix llvm@18)"
+        echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+        echo "$LLVM_PREFIX/bin" >> "$GITHUB_PATH"
+        echo "NYXSTONE_LLVM_PREFIX=$LLVM_PREFIX" >> "$GITHUB_ENV"
+        echo "LLVM_CONFIG=$LLVM_PREFIX/bin/llvm-config" >> "$GITHUB_ENV"
+        echo "CC=$LLVM_PREFIX/bin/clang" >> "$GITHUB_ENV"
+        echo "CXX=$LLVM_PREFIX/bin/clang++" >> "$GITHUB_ENV"
+        echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
+        echo "LDFLAGS=-L/opt/homebrew/lib -Wl,-rpath,/opt/homebrew/lib" >> "$GITHUB_ENV"
+        "$LLVM_PREFIX/bin/llvm-config" --version
     - name: Install dependencies
       run: |
-        uv venv -p 3.12
-        source .venv/bin/activate
-        uv sync --all-extras --dev
+        uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
+    - name: Verify blint + disassembly dependencies
+      run: |
+        uv run python -c "import blint, nyxstone; print(blint.__file__)"
     - name: Clean up previous
       run: |
         rm -rf ${BLINT_DB_BOOTSTRAP_PATH}
     - name: Build and upload darwin arm64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        source .venv/bin/activate
-        uv run blint-db --clean-start -Z2
-        python .oras/orasclient.py -p vcpkg-darwin-arm64
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-vcpkg
+        uv run python .oras/orasclient.py -p vcpkg-darwin-arm64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}

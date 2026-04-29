@@ -1,0 +1,36 @@
+reference,configuration,settings,options,conf,package_type,shared,build_type,target_os,target_arch,artifact_roots,notes
+zlib/1.3.1,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Canonical compression runtime shared build
+zlib/1.3.1,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Canonical compression runtime static debug build
+openssl/3.5.0,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,High-value crypto and TLS package
+openssl/3.5.0,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,High-value crypto and TLS package static debug variant
+fmt/11.2.0,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Popular formatting dependency shared variant
+fmt/11.2.0,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Popular formatting dependency static debug variant
+protobuf/5.29.3,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Compiler plus runtime artifacts
+protobuf/5.29.3,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Compiler plus runtime static debug artifacts
+spdlog/1.15.3,compiled-shared,,*:header_only=False;*:shared=True,,library,True,Release,,,lib;bin,Forces compiled spdlog library instead of header-only mode
+spdlog/1.15.3,compiled-static-debug,,*:header_only=False;*:shared=False,,library,False,Debug,,,lib;bin,Forces compiled static spdlog library debug build
+libpng/1.6.47,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Image codec shared runtime
+libpng/1.6.47,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Image codec static debug runtime
+libjpeg-turbo/3.1.0,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Image codec with SIMD-heavy native code
+libjpeg-turbo/3.1.0,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Image codec static debug variant
+zstd/1.5.7,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Compression library and CLI corpus entry
+zstd/1.5.7,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Compression library static debug corpus entry
+bzip2/1.0.8,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Static archive-focused compression package
+libarchive/3.8.1,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Archive library with many compression backends
+libarchive/3.8.1,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Archive library static debug variant
+libxml2/2.14.4,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,XML parser shared build
+libxml2/2.14.4,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,XML parser static debug build
+libcurl/8.14.1,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Network client runtime with broad transitive coverage
+c-ares/1.34.5,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Async DNS resolver static debug variant
+c-ares/1.34.5,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Async DNS resolver used in network stacks
+libcurl/8.14.1,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Network client static debug runtime variant
+libuv/1.51.0,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Event-loop and async runtime shared build
+libuv/1.51.0,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Event-loop and async runtime static debug build
+freetype/2.13.3,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Font rendering runtime
+freetype/2.13.3,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Font rendering static debug runtime
+capstone/5.0.6,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Disassembly engine shared library
+capstone/5.0.6,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Disassembly engine static debug library
+re2/20240702,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Native regex engine shared build
+re2/20240702,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Native regex engine static debug build
+poco/1.14.2,shared-release,,*:shared=True,,library,True,Release,,,lib;bin,Broad C++ utility stack with many binary components
+poco/1.14.2,static-debug,,*:shared=False,,library,False,Debug,,,lib;bin,Broad C++ utility stack static debug variant

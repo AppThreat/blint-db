@@ -3,30 +3,68 @@
 # SPDX-License-Identifier: MIT
 
 import os
+import subprocess
 from pathlib import Path
-
-from blint_db import DEBUG_MODE, VCPKG_LOCATION, WRAPDB_LOCATION, IGNORE_DIRECTORIES, logger
 
 HOME_DIRECTORY = Path.home()
 
 
+def _config():
+    from blint_db import config as config_module
+
+    return config_module
+
+
+def _wrapdb_location() -> Path:
+    return _config().WRAPDB_LOCATION
+
+
+def _vcpkg_location() -> Path:
+    return _config().VCPKG_LOCATION
+
+
+def _ignore_directories() -> list[str]:
+    return _config().IGNORE_DIRECTORIES
+
+
+def _debug_mode() -> bool:
+    return _config().DEBUG_MODE
+
+
+def _logger():
+    return _config().logger
+
+
 def _create_python_dirs():
-    wl = WRAPDB_LOCATION
-    vl = VCPKG_LOCATION
+    wl = _wrapdb_location()
+    vl = _vcpkg_location()
 
     os.makedirs(wl, exist_ok=True)
     os.makedirs(vl, exist_ok=True)
 
 
-_create_python_dirs()
-
 def subprocess_run_debug(setup_run, project_name):
-    if DEBUG_MODE:
+    if _debug_mode():
         if setup_run.stderr:
-            logger.error(
-                f"{project_name} failed to SETUP {WRAPDB_LOCATION / 'build' / project_name}"
+            _logger().error(
+                f"{project_name} failed to SETUP {_wrapdb_location() / 'build' / project_name}"
             )
-            logger.error(f"{project_name}: {setup_run.stderr}")
+            _logger().error(f"{project_name}: {setup_run.stderr}")
+
+
+def run_command(command, *, cwd=None, env=None, project_name=""):
+    _create_python_dirs()
+    result = subprocess.run(
+        command,
+        cwd=cwd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE if _debug_mode() else subprocess.DEVNULL,
+        check=False,
+        env=env or os.environ.copy(),
+        encoding="utf-8",
+    )
+    subprocess_run_debug(result, project_name)
+    return result
 
 
 def is_binary_string(content):
@@ -67,7 +105,7 @@ def filter_ignored_dirs(dirs):
     [
         dirs.remove(d)
         for d in list(dirs)
-        if d.lower() in IGNORE_DIRECTORIES or d.startswith(".")
+        if d.lower() in _ignore_directories() or d.startswith(".")
     ]
     return dirs
 

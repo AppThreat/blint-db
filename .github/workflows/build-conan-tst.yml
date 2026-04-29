@@ -1,4 +1,4 @@
-name: Test - Build and Upload vcpkg blint-db
+name: Test - Build and Upload conan blint-db
 
 on:
   workflow_dispatch:
@@ -7,8 +7,8 @@ env:
   IMAGE_NAME: appthreat/blintdb
 
 jobs:
-  builder-vcpkg-tst:
-    runs-on: ['self-hosted', 'ubuntu', 'amd64']
+  builder-conan-linux-tst:
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       packages: write
@@ -21,7 +21,7 @@ jobs:
     - name: Install LLVM 18 toolchain
       run: |
         sudo apt-get update
-        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config
+        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config build-essential ninja-build cmake
         echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
         echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
         echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> "$GITHUB_ENV"
@@ -32,25 +32,26 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
-    - name: Verify blint + disassembly dependencies
+    - name: Verify blint + conan + disassembly dependencies
       run: |
-        uv run python -c "import blint, nyxstone; print(blint.__file__)"
+        uv run python -c "import blint, nyxstone, conan; print(blint.__file__)"
     - name: Clean up previous
       run: |
         rm -rf ${BLINT_DB_BOOTSTRAP_PATH}
-    - name: Build and upload db
+    - name: Build and upload Linux conan test db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-vcpkg
-        uv run python .oras/orasclient.py -p vcpkg-tst
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-conan
+        uv run python .oras/orasclient.py -p conan-linux-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
-        VCPKG_DISABLE_METRICS: true
+        BLINT_DB_CONAN_FEW_PACKAGES: 4
+        BLINT_DB_CONAN_REMOTE: conancenter
 
-  builder-vcpkg-arm64-tst:
-    runs-on: ['self-hosted', 'ubuntu', 'arm64']
+  builder-conan-macos-tst:
+    runs-on: macos-14
     permissions:
       contents: write
       packages: write
@@ -62,31 +63,34 @@ jobs:
       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
     - name: Install LLVM 18 toolchain
       run: |
-        sudo apt-get update
-        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config
-        echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
-        echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
-        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> "$GITHUB_ENV"
-        echo "CC=clang-18" >> "$GITHUB_ENV"
-        echo "CXX=clang++-18" >> "$GITHUB_ENV"
+        brew install llvm@18 cmake ninja
+        LLVM_PREFIX="$(brew --prefix llvm@18)"
+        echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+        echo "$LLVM_PREFIX/bin" >> "$GITHUB_PATH"
+        echo "NYXSTONE_LLVM_PREFIX=$LLVM_PREFIX" >> "$GITHUB_ENV"
+        echo "LLVM_CONFIG=$LLVM_PREFIX/bin/llvm-config" >> "$GITHUB_ENV"
+        echo "CC=$LLVM_PREFIX/bin/clang" >> "$GITHUB_ENV"
+        echo "CXX=$LLVM_PREFIX/bin/clang++" >> "$GITHUB_ENV"
         echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        llvm-config --version
+        echo "LDFLAGS=-L/opt/homebrew/lib -Wl,-rpath,/opt/homebrew/lib" >> "$GITHUB_ENV"
+        "$LLVM_PREFIX/bin/llvm-config" --version
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
-    - name: Verify blint + disassembly dependencies
+    - name: Verify blint + conan + disassembly dependencies
       run: |
-        uv run python -c "import blint, nyxstone; print(blint.__file__)"
+        uv run python -c "import blint, nyxstone, conan; print(blint.__file__)"
     - name: Clean up previous
       run: |
         rm -rf ${BLINT_DB_BOOTSTRAP_PATH}
-    - name: Build and upload arm64 db
+    - name: Build and upload macOS conan test db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-vcpkg
-        uv run python .oras/orasclient.py -p vcpkg-arm64-tst
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-conan
+        uv run python .oras/orasclient.py -p conan-macos-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
-        VCPKG_DISABLE_METRICS: true
+        BLINT_DB_CONAN_FEW_PACKAGES: 4
+        BLINT_DB_CONAN_REMOTE: conancenter

@@ -1,4 +1,4 @@
-name: Build and Upload meson blint-db mac
+name: Build and Upload conan blint-db mac
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ env:
   IMAGE_NAME: appthreat/blintdb
 
 jobs:
-  builder-darwin-arm64-meson:
+  builder-darwin-arm64-conan:
     runs-on: ['self-hosted', 'macos-hosted', 'arm64']
     timeout-minutes: 7200
     permissions:
@@ -21,7 +21,7 @@ jobs:
       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
     - name: Install LLVM 18 toolchain
       run: |
-        brew install llvm@18
+        brew install llvm@18 cmake ninja
         LLVM_PREFIX="$(brew --prefix llvm@18)"
         echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
         echo "$LLVM_PREFIX/bin" >> "$GITHUB_PATH"
@@ -35,21 +35,22 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
-    - name: Verify blint + disassembly dependencies
+    - name: Verify blint + conan + disassembly dependencies
       run: |
-        uv run python -c "import blint, nyxstone; print(blint.__file__)"
+        uv run python -c "import blint, nyxstone, conan; print(blint.__file__)"
     - name: Clean up previous
       run: |
         rm -rf ${BLINT_DB_BOOTSTRAP_PATH}
-    - name: Build and upload darwin arm64 db
+    - name: Build and upload macOS conan db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-meson
-        uv run python .oras/orasclient.py -p meson-darwin-arm64
-        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-meson-darwin-arm64/blint.db
-        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-meson-darwin-arm64/blint.metadata.json
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-conan
+        uv run python .oras/orasclient.py -p conan-darwin-arm64
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-conan-darwin-arm64/blint.db
+        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-conan-darwin-arm64/blint.metadata.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
+        BLINT_DB_CONAN_REMOTE: conancenter
         HF_TOKEN: ${{ secrets.HF_TOKEN }}

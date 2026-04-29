@@ -1,0 +1,22 @@
+formula,language_family,upstream_ecosystem,reason,notes
+zstd,c,c,compression-runtime,Reference compression library and CLI
+xz,c,c,compression-runtime,LZMA/XZ userspace tooling and libraries
+openssl@3,c,c,crypto-runtime,Widely deployed TLS and cryptography stack
+libarchive,c,c,archive-runtime,Archive and compression reader-writer corpus entry
+libgit2,c,c,scm-library,Native Git plumbing library with broad dependency reach
+fmt,c++,c++,formatting,Common C++ formatting dependency
+spdlog,c++,c++,logging,Header-heavy logging stack with native artifacts
+protobuf,c++,c++,serialization,Protocol Buffers compiler-runtime corpus entry
+capstone,c,c,disassembly,Disassembly toolkit with multi-arch binaries
+tree-sitter,c,c,parser-runtime,Parser runtime and CLI used by many toolchains
+jq,c,c,json-cli,Small native CLI with stable dependency shape
+yq,go,go,yaml-cli,Single-binary YAML-JSON processing utility
+ripgrep,rust,cargo,search-cli,Rust CLI with regex-heavy native binary
+fd,rust,cargo,filesystem-cli,Rust find alternative with stable native artifacts
+bat,rust,cargo,pager-cli,Rust syntax-highlighting pager
+hyperfine,rust,cargo,benchmark-cli,Rust benchmarking CLI
+b3sum,rust,cargo,hash-cli,Rust BLAKE3 CLI
+eza,rust,cargo,ls-cli,Rust file listing utility with broad terminal feature use
+wasmtime,rust,cargo,wasm-runtime,WebAssembly runtime and CLI
+xcbeautify,swift,swiftpm,xcbuild-cli,Swift-Xcode log formatter
+swiftformat,swift,swiftpm,formatter-cli,Swift formatting corpus entry

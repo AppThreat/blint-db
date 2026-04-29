@@ -2,5 +2,4 @@
 #
 # SPDX-License-Identifier: MIT
 
-# noqa: F403,F401
-from blint_db.config import *
+from blint_db.config import *  # noqa: F401,F403
