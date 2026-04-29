@@ -53,8 +53,8 @@ jobs:
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
         uv run blint-db --clean-start --disassemble --db-file ./blint.db build-cargo
         uv run python .oras/orasclient.py -p cargo-darwin-arm64
-        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-cargo-darwin-arm64/blint.db
-        huggingface-cli upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-cargo-darwin-arm64/blint.metadata.json
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-cargo-darwin-arm64/blint.db
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-cargo-darwin-arm64/blint.metadata.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
