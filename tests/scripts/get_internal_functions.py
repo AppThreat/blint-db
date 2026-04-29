@@ -39,7 +39,11 @@ def get_blint_internal_functions(file_name):
 
     # Support legacy CycloneDX properties and new blint metadata JSON payloads.
     if isinstance(raw_data, dict):
-        metadata = raw_data.get("metadata") if isinstance(raw_data.get("metadata"), dict) else None
+        metadata = (
+            raw_data.get("metadata")
+            if isinstance(raw_data.get("metadata"), dict)
+            else None
+        )
         properties = []
         if metadata and isinstance(metadata.get("properties"), list):
             properties = metadata["properties"]
@@ -51,7 +55,11 @@ def get_blint_internal_functions(file_name):
 
         functions = raw_data.get("functions") or []
         if isinstance(functions, list):
-            return [entry.get("name") for entry in functions if isinstance(entry, dict) and entry.get("name")]
+            return [
+                entry.get("name")
+                for entry in functions
+                if isinstance(entry, dict) and entry.get("name")
+            ]
 
     return []
 
