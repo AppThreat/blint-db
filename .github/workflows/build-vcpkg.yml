@@ -29,7 +29,7 @@ jobs:
         echo "CC=clang-18" >> "$GITHUB_ENV"
         echo "CXX=clang++-18" >> "$GITHUB_ENV"
         echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        llvm-config --version
+        $LLVM_CONFIG --version
         curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
         chmod a+x ppkg
         mv ppkg /usr/local/bin/
@@ -79,7 +79,7 @@ jobs:
         echo "CC=clang-18" >> "$GITHUB_ENV"
         echo "CXX=clang++-18" >> "$GITHUB_ENV"
         echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        llvm-config --version
+        $LLVM_CONFIG --version
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13

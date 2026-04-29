@@ -28,7 +28,7 @@ jobs:
         echo "CC=clang-18" >> "$GITHUB_ENV"
         echo "CXX=clang++-18" >> "$GITHUB_ENV"
         echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        llvm-config --version
+        $LLVM_CONFIG --version
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
@@ -70,7 +70,7 @@ jobs:
         echo "CC=clang-18" >> "$GITHUB_ENV"
         echo "CXX=clang++-18" >> "$GITHUB_ENV"
         echo "CXXFLAGS=-std=c++17" >> "$GITHUB_ENV"
-        llvm-config --version
+        $LLVM_CONFIG --version
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
