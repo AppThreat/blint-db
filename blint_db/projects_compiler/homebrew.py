@@ -19,6 +19,12 @@ from blint_db.handlers.language_handlers.homebrew_handler import (
     homebrew_repository,
 )
 from blint_db.ingest import ingest_binary_file
+from blint_db.utils.provenance import build_failure_record, build_project_outcome
+
+
+def _record_outcome(project_outcomes, **kwargs):
+    if project_outcomes is not None:
+        project_outcomes.append(build_project_outcome(**kwargs))
 
 
 def _formula_payload(formula_info: dict) -> dict:
@@ -62,15 +68,10 @@ def _matching_installed_entry(formula: dict, keg_root: Path) -> dict | None:
 
 
 def add_project_homebrew_db(formula_name, db_file=None, disassemble=False):
-    try:
-        formula_info = ensure_homebrew_formula(formula_name)
-        formula = _formula_payload(formula_info)
-        project_metadata = _formula_project_metadata(formula)
-        keg_roots = homebrew_keg_roots(formula_info)
-    except RuntimeError:
-        logger.info(f"error encountered with {formula_name}")
-        logger.error(traceback.format_exc())
-        return []
+    formula_info = ensure_homebrew_formula(formula_name)
+    formula = _formula_payload(formula_info)
+    project_metadata = _formula_project_metadata(formula)
+    keg_roots = homebrew_keg_roots(formula_info)
     all_artifacts: list[str] = []
     if not keg_roots:
         raise RuntimeError(f"No installed Homebrew kegs found for {formula_name}")
@@ -128,16 +129,54 @@ def add_project_homebrew_db(formula_name, db_file=None, disassemble=False):
     return sorted(dict.fromkeys(all_artifacts))
 
 
-def mt_homebrew_blint_db_build(formula_name, db_file=None, disassemble=False):
+def mt_homebrew_blint_db_build(
+    formula_name,
+    db_file=None,
+    disassemble=False,
+    project_outcomes=None,
+):
     logger.debug(f"Running Homebrew formula {formula_name}")
     try:
-        return add_project_homebrew_db(
+        artifacts = add_project_homebrew_db(
             formula_name,
             db_file=db_file,
             disassemble=disassemble,
         )
-    except OperationalError as exc:
+        failure = None
+        status = "success"
+        if not artifacts:
+            status = "no_artifacts"
+            failure = build_failure_record(
+                stage="artifact-discovery",
+                message=f"No Homebrew artifacts were retained for {formula_name}",
+            )
+        _record_outcome(
+            project_outcomes,
+            selector=formula_name,
+            project_name=formula_name,
+            ecosystem="homebrew",
+            build_system="homebrew",
+            status=status,
+            artifact_count=len(artifacts),
+            failure=failure,
+        )
+        return artifacts
+    except (OperationalError, RuntimeError) as exc:
         logger.info(f"error encountered with {formula_name}")
         logger.error(exc)
         logger.error(traceback.format_exc())
+        _record_outcome(
+            project_outcomes,
+            selector=formula_name,
+            project_name=formula_name,
+            ecosystem="homebrew",
+            build_system="homebrew",
+            status="build_failed" if isinstance(exc, RuntimeError) else "ingest_failed",
+            artifact_count=0,
+            failure=build_failure_record(
+                stage="build" if isinstance(exc, RuntimeError) else "database",
+                message=str(exc),
+                exception=exc,
+            ),
+        )
         return []

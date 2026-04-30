@@ -15,7 +15,9 @@ username = os.getenv("GITHUB_USERNAME", "")
 db_version = os.getenv("BLINT_DB_VERSION", "v2")
 db_file = os.getenv("BLINT_DB_FILE", "./blint.db")
 metadata_file = os.getenv("BLINT_DB_METADATA_FILE")
-client.login(password=token, username=username)
+registry = os.getenv("REGISTRY", "ghcr.io")
+image_name = os.getenv("IMAGE_NAME", "appthreat/blintdb")
+client.login(server=registry, password=token, username=username)
 
 
 def default_metadata_path(db_path: str) -> str:
@@ -46,7 +48,7 @@ if pkg := args.get("pkg", None):
             f"{resolved_metadata_file}:application/vnd.appthreat.blintdb.metadata.v1+json"
         )
     client.push(
-        target=f"ghcr.io/appthreat/blintdb-{pkg}:{db_version}",
+        target=f"{registry}/{image_name}-{pkg}:{db_version}",
         config_path="./.oras/config.json",
         annotation_file="./.oras/annotations.json",
         files=files,

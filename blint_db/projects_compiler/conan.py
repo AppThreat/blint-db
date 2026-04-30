@@ -23,6 +23,12 @@ from blint_db.handlers.language_handlers.conan_handler import (
     parse_conan_reference,
 )
 from blint_db.ingest import ingest_binary_file
+from blint_db.utils.provenance import build_failure_record, build_project_outcome
+
+
+def _record_outcome(project_outcomes, **kwargs):
+    if project_outcomes is not None:
+        project_outcomes.append(build_project_outcome(**kwargs))
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,16 +267,50 @@ def mt_conan_blint_db_build(
     project_spec: ConanProjectSpec,
     db_file: str | None = None,
     disassemble: bool = False,
+    project_outcomes=None,
 ):
     logger.debug("Running Conan package %s", project_spec.selector)
     try:
-        return add_project_conan_db(
+        artifacts = add_project_conan_db(
             project_spec,
             db_file=db_file,
             disassemble=disassemble,
         )
+        failure = None
+        status = "success"
+        if not artifacts:
+            status = "no_artifacts"
+            failure = build_failure_record(
+                stage="artifact-discovery",
+                message=f"No Conan artifacts were retained for {project_spec.selector}",
+            )
+        _record_outcome(
+            project_outcomes,
+            selector=project_spec.selector,
+            project_name=project_spec.name,
+            ecosystem="conan",
+            build_system="conan",
+            status=status,
+            artifact_count=len(artifacts),
+            failure=failure,
+        )
+        return artifacts
     except (OperationalError, RuntimeError) as exc:
         logger.info("error encountered with %s", project_spec.selector)
         logger.error(exc)
         logger.error(traceback.format_exc())
+        _record_outcome(
+            project_outcomes,
+            selector=project_spec.selector,
+            project_name=project_spec.name,
+            ecosystem="conan",
+            build_system="conan",
+            status="build_failed" if isinstance(exc, RuntimeError) else "ingest_failed",
+            artifact_count=0,
+            failure=build_failure_record(
+                stage="build" if isinstance(exc, RuntimeError) else "database",
+                message=str(exc),
+                exception=exc,
+            ),
+        )
         return []

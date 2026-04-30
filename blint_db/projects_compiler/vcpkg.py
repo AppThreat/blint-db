@@ -23,6 +23,12 @@ from blint_db.handlers.language_handlers.vcpkg_handler import (
     vcpkg_build,
 )
 from blint_db.ingest import ingest_binary_file
+from blint_db.utils.provenance import build_failure_record, build_project_outcome
+
+
+def _record_outcome(project_outcomes, **kwargs):
+    if project_outcomes is not None:
+        project_outcomes.append(build_project_outcome(**kwargs))
 
 
 def git_clone_vcpkg():
@@ -125,7 +131,13 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
     return execs
 
 
-def mt_vcpkg_blint_db_build(project_name, vcpkg_json, db_file=None, disassemble=False):
+def mt_vcpkg_blint_db_build(
+    project_name,
+    vcpkg_json,
+    db_file=None,
+    disassemble=False,
+    project_outcomes=None,
+):
     logger.debug(f"Running {project_name} with vcpkg {vcpkg_json}")
     try:
         execs = add_project_vcpkg_db(
@@ -134,9 +146,43 @@ def mt_vcpkg_blint_db_build(project_name, vcpkg_json, db_file=None, disassemble=
             db_file=db_file,
             disassemble=disassemble,
         )
+        failure = None
+        status = "success"
+        if not execs:
+            status = "no_artifacts"
+            failure = build_failure_record(
+                stage="artifact-discovery",
+                message=f"No vcpkg artifacts were retained for {project_name}",
+            )
+        _record_outcome(
+            project_outcomes,
+            selector=project_name,
+            project_name=project_name,
+            ecosystem="vcpkg",
+            build_system="vcpkg",
+            status=status,
+            artifact_count=len(execs),
+            failure=failure,
+            details={"vcpkg_json": str(vcpkg_json)} if vcpkg_json else None,
+        )
         return execs
     except (OperationalError, RuntimeError) as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
         logger.error(traceback.format_exc())
+        _record_outcome(
+            project_outcomes,
+            selector=project_name,
+            project_name=project_name,
+            ecosystem="vcpkg",
+            build_system="vcpkg",
+            status="build_failed" if isinstance(e, RuntimeError) else "ingest_failed",
+            artifact_count=0,
+            failure=build_failure_record(
+                stage="build" if isinstance(e, RuntimeError) else "database",
+                message=str(e),
+                exception=e,
+            ),
+            details={"vcpkg_json": str(vcpkg_json)} if vcpkg_json else None,
+        )
         return []

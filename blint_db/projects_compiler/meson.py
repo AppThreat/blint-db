@@ -19,10 +19,17 @@ from blint_db import (
 )
 from blint_db.handlers.git_handler import git_checkout_commit, git_clone
 from blint_db.handlers.language_handlers.meson_handler import (
+    build_dir_for,
     find_meson_executables,
     meson_build,
 )
 from blint_db.ingest import ingest_binary_file
+from blint_db.utils.provenance import build_failure_record, build_project_outcome
+
+
+def _record_outcome(project_outcomes, **kwargs):
+    if project_outcomes is not None:
+        project_outcomes.append(build_project_outcome(**kwargs))
 
 
 def git_clone_wrapdb():
@@ -96,7 +103,12 @@ def add_project_meson_db(project_name, wrap_file, db_file=None, disassemble=Fals
     return execs
 
 
-def mt_meson_blint_db_build(project_name_wrap_tuple, db_file=None, disassemble=False):
+def mt_meson_blint_db_build(
+    project_name_wrap_tuple,
+    db_file=None,
+    disassemble=False,
+    project_outcomes=None,
+):
     project_name, wrap_file = project_name_wrap_tuple
     logger.debug(f"Running {project_name}")
     try:
@@ -106,11 +118,67 @@ def mt_meson_blint_db_build(project_name_wrap_tuple, db_file=None, disassemble=F
             db_file=db_file,
             disassemble=disassemble,
         )
-    except RuntimeError:
+        failure = None
+        status = "success"
+        if not execs:
+            status = "no_artifacts"
+            failure = build_failure_record(
+                stage="artifact-discovery",
+                message=f"No Meson artifacts were retained for {project_name}",
+            )
+        _record_outcome(
+            project_outcomes,
+            selector=project_name,
+            project_name=project_name,
+            ecosystem="wrapdb",
+            build_system="meson",
+            status=status,
+            artifact_count=len(execs),
+            failure=failure,
+            details={"wrap_file": str(wrap_file)} if wrap_file else None,
+        )
+    except RuntimeError as e:
+        logger.info(f"error encountered with {project_name}")
+        logger.error(e)
+        meson_log_file = build_dir_for(project_name) / "meson-logs" / "meson-log.txt"
+        if meson_log_file.exists():
+            logger.error(f"Meson log for {project_name}: {meson_log_file}")
+        logger.error(traceback.format_exc())
+        _record_outcome(
+            project_outcomes,
+            selector=project_name,
+            project_name=project_name,
+            ecosystem="wrapdb",
+            build_system="meson",
+            status="build_failed",
+            artifact_count=0,
+            failure=build_failure_record(
+                stage="build",
+                message=str(e),
+                exception=e,
+                log_file=str(meson_log_file) if meson_log_file.exists() else None,
+            ),
+            details={"wrap_file": str(wrap_file)} if wrap_file else None,
+        )
         return []
     except OperationalError as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
         logger.error(traceback.format_exc())
+        _record_outcome(
+            project_outcomes,
+            selector=project_name,
+            project_name=project_name,
+            ecosystem="wrapdb",
+            build_system="meson",
+            status="ingest_failed",
+            artifact_count=0,
+            failure=build_failure_record(
+                stage="database",
+                message=str(e),
+                exception=e,
+            ),
+            details={"wrap_file": str(wrap_file)} if wrap_file else None,
+        )
         return []
     return execs

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -63,6 +64,15 @@ def test_build_meson_subcommand_accepts_project_selection_flags_after_command():
     assert args.command == "build-meson"
     assert args.sel_project == ["zstd", "bzip2"]
     assert args.test_mode is True
+    assert args.remove_after_build is True
+
+
+def test_build_meson_subcommand_can_retain_artifacts():
+    parser = build_parser()
+    args = parser.parse_args(["build-meson", "--retain-build-artifacts", "-s", "zlib"])
+
+    assert args.command == "build-meson"
+    assert args.remove_after_build is False
 
 
 def test_build_homebrew_subcommand_accepts_project_selection_flags_after_command():
@@ -139,6 +149,71 @@ def test_meson_add_blint_bom_process_resolves_selected_projects(monkeypatch):
     assert removed_projects == ["zstd"]
 
 
+def test_meson_add_blint_bom_process_can_retain_artifacts(monkeypatch):
+    built_projects = []
+    removed_projects = []
+
+    monkeypatch.setattr(
+        "blint_db.cli.get_wrapdb_projects",
+        lambda: [("zstd", "/tmp/zstd.wrap")],
+    )
+    monkeypatch.setattr(
+        "blint_db.cli.mt_meson_blint_db_build",
+        lambda project_tuple, **kwargs: built_projects.append(project_tuple) or [],
+    )
+    monkeypatch.setattr(
+        "blint_db.cli.remove_wrapdb_project",
+        lambda project_name: removed_projects.append(project_name),
+    )
+
+    meson_add_blint_bom_process(
+        db_file="demo.db",
+        sel_project=["zstd"],
+        remove_after_build=False,
+    )
+
+    assert built_projects == [("zstd", "/tmp/zstd.wrap")]
+    assert removed_projects == []
+
+
+def test_meson_add_blint_bom_process_collects_project_outcomes(monkeypatch):
+    monkeypatch.setattr(
+        "blint_db.cli.get_wrapdb_projects",
+        lambda: [("zstd", "/tmp/zstd.wrap")],
+    )
+
+    def _fake_builder(project_tuple, **kwargs):
+        kwargs["project_outcomes"].append(
+            {
+                "selector": project_tuple[0],
+                "project_name": project_tuple[0],
+                "ecosystem": "wrapdb",
+                "build_system": "meson",
+                "status": "build_failed",
+                "artifact_count": 0,
+                "failure": {"stage": "build", "message": "compile failed"},
+            }
+        )
+        return []
+
+    monkeypatch.setattr("blint_db.cli.mt_meson_blint_db_build", _fake_builder)
+    monkeypatch.setattr("blint_db.cli.remove_wrapdb_project", lambda project_name: None)
+
+    outcomes = meson_add_blint_bom_process(db_file="demo.db", sel_project=["zstd"])
+
+    assert outcomes == [
+        {
+            "selector": "zstd",
+            "project_name": "zstd",
+            "ecosystem": "wrapdb",
+            "build_system": "meson",
+            "status": "build_failed",
+            "artifact_count": 0,
+            "failure": {"stage": "build", "message": "compile failed"},
+        }
+    ]
+
+
 def test_meson_add_blint_bom_process_rejects_unknown_selected_projects(monkeypatch):
     monkeypatch.setattr(
         "blint_db.cli.get_wrapdb_projects",
@@ -176,6 +251,39 @@ def test_vcpkg_add_blint_bom_process_resolves_selected_projects(tmp_path, monkey
         ("zlib", str(Path(tmp_path) / "ports" / "zlib" / "vcpkg.json"))
     ]
     assert removed_projects == ["zlib"]
+
+
+def test_vcpkg_add_blint_bom_process_can_retain_artifacts(tmp_path, monkeypatch):
+    built_projects = []
+    removed_projects = []
+
+    monkeypatch.setattr(
+        "blint_db.cli.get_vcpkg_projects",
+        lambda: ["zlib"],
+    )
+    monkeypatch.setattr(
+        "blint_db.cli.mt_vcpkg_blint_db_build",
+        lambda project_name, vcpkg_json, **kwargs: built_projects.append(
+            (project_name, str(vcpkg_json))
+        )
+        or [],
+    )
+    monkeypatch.setattr(
+        "blint_db.cli.remove_vcpkg_project",
+        lambda project_name: removed_projects.append(project_name),
+    )
+    monkeypatch.setattr("blint_db.cli.VCPKG_LOCATION", Path(tmp_path))
+
+    vcpkg_add_blint_bom_process(
+        db_file="demo.db",
+        sel_project=["zlib"],
+        remove_after_build=False,
+    )
+
+    assert built_projects == [
+        ("zlib", str(Path(tmp_path) / "ports" / "zlib" / "vcpkg.json"))
+    ]
+    assert removed_projects == []
 
 
 def test_vcpkg_add_blint_bom_process_rejects_unknown_selected_projects(monkeypatch):
@@ -419,6 +527,7 @@ def test_main_ingests_metadata_file_from_cli(
 
     captured = capsys.readouterr()
     assert "Ingested binary_id=" in captured.out
+    assert "Compacted database" in captured.out
     project_rows = execute_statement(
         "SELECT name, purl FROM Projects",
         db_file=str(db_file),
@@ -456,8 +565,52 @@ def test_main_build_meson_writes_run_metadata_file(tmp_path, monkeypatch, capsys
     main()
 
     captured = capsys.readouterr()
+    assert "Compacted database" in captured.out
     assert "Wrote build metadata to" in captured.out
     assert metadata_file.exists()
+
+
+def test_main_build_meson_run_metadata_includes_project_outcomes(
+    tmp_path, monkeypatch, capsys
+):
+    db_file = tmp_path / "build.db"
+    metadata_file = tmp_path / "build-run.json"
+    monkeypatch.setattr(
+        "blint_db.cli.meson_add_blint_bom_process",
+        lambda **kwargs: [
+            {
+                "selector": "zlib",
+                "project_name": "zlib",
+                "ecosystem": "wrapdb",
+                "build_system": "meson",
+                "status": "build_failed",
+                "artifact_count": 0,
+                "failure": {"stage": "build", "message": "compile failed"},
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "blint-db",
+            "--db-file",
+            str(db_file),
+            "--run-metadata-file",
+            str(metadata_file),
+            "build-meson",
+            "-s",
+            "zlib",
+        ],
+    )
+
+    main()
+
+    captured = capsys.readouterr()
+    assert "Wrote build metadata to" in captured.out
+    payload = json.loads(metadata_file.read_text(encoding="utf-8"))
+    assert payload["projects"]["attempted_count"] == 1
+    assert payload["projects"]["failure_count"] == 1
+    assert payload["projects"]["build_failures"][0]["selector"] == "zlib"
 
 
 def test_main_build_cargo_writes_run_metadata_file(tmp_path, monkeypatch, capsys):
@@ -484,6 +637,7 @@ def test_main_build_cargo_writes_run_metadata_file(tmp_path, monkeypatch, capsys
     main()
 
     captured = capsys.readouterr()
+    assert "Compacted database" in captured.out
     assert "Wrote build metadata to" in captured.out
     assert metadata_file.exists()
 
@@ -512,5 +666,6 @@ def test_main_build_conan_writes_run_metadata_file(tmp_path, monkeypatch, capsys
     main()
 
     captured = capsys.readouterr()
+    assert "Compacted database" in captured.out
     assert "Wrote build metadata to" in captured.out
     assert metadata_file.exists()
