@@ -145,7 +145,7 @@ def mt_meson_blint_db_build(
             logger.error(f"Meson log for {project_name}: {meson_log_file}")
             with open(meson_log_file, 'r') as mlog:
                 content = mlog.read()
-                print(content)
+                logger.info(content)
         _record_outcome(
             project_outcomes,
             selector=project_name,
