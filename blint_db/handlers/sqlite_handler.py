@@ -20,9 +20,13 @@ from blint_db import (
 from blint_db.utils.json import canonical_json_dumps, coerce_json_object
 
 _SCHEMA_SQL = """
+PRAGMA page_size = 4096;
+PRAGMA auto_vacuum = INCREMENTAL;
 PRAGMA journal_mode = WAL;
 PRAGMA synchronous = NORMAL;
 PRAGMA temp_store = MEMORY;
+PRAGMA secure_delete = OFF;
+PRAGMA journal_size_limit = 1048576;
 
 CREATE TABLE IF NOT EXISTS SchemaMeta (
     key TEXT PRIMARY KEY,
@@ -166,10 +170,15 @@ CREATE INDEX IF NOT EXISTS idx_builds_project ON Builds(project_id);
 CREATE INDEX IF NOT EXISTS idx_binaries_build ON Binaries(build_id);
 CREATE INDEX IF NOT EXISTS idx_binaries_sha256 ON Binaries(sha256);
 CREATE INDEX IF NOT EXISTS idx_binaries_language ON Binaries(language);
+CREATE INDEX IF NOT EXISTS idx_binaries_type_target ON Binaries(binary_type, llvm_target_tuple, binary_id);
 CREATE INDEX IF NOT EXISTS idx_symbols_name ON Symbols(name);
 CREATE INDEX IF NOT EXISTS idx_symbols_source ON Symbols(source);
+CREATE INDEX IF NOT EXISTS idx_symbols_lookup ON Symbols(name, source, binary_id);
+CREATE INDEX IF NOT EXISTS idx_symbols_binary_lookup ON Symbols(binary_id, source, name);
 CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash ON FunctionFingerprints(instruction_hash);
 CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash ON FunctionFingerprints(assembly_hash);
+CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash_binary ON FunctionFingerprints(instruction_hash, binary_id);
+CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash_binary ON FunctionFingerprints(assembly_hash, binary_id);
 """
 
 
@@ -207,6 +216,7 @@ def get_connection(db_file: str | None = None):
     connection = sqlite3.connect(database_file, timeout=SQLITE_TIMEOUT)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
+    connection.execute("PRAGMA temp_store = MEMORY")
     try:
         yield connection
         connection.commit()
@@ -296,6 +306,57 @@ def ensure_database(db_file: str | None = None):
         create_database(database_file)
         return
     _validate_schema_contract(database_file)
+
+
+def collect_database_stats(db_file: str | None = None) -> dict[str, int | str]:
+    database_file = db_file or BLINT_DB_FILE
+    if not os.path.exists(database_file):
+        return {
+            "database_file": str(database_file),
+            "size_bytes": 0,
+            "page_count": 0,
+            "freelist_count": 0,
+            "page_size": 0,
+            "wal_size_bytes": 0,
+            "shm_size_bytes": 0,
+        }
+    with get_connection(database_file) as connection:
+        page_count = int(connection.execute("PRAGMA page_count").fetchone()[0] or 0)
+        freelist_count = int(
+            connection.execute("PRAGMA freelist_count").fetchone()[0] or 0
+        )
+        page_size = int(connection.execute("PRAGMA page_size").fetchone()[0] or 0)
+    wal_path = f"{database_file}-wal"
+    shm_path = f"{database_file}-shm"
+    return {
+        "database_file": str(database_file),
+        "size_bytes": os.path.getsize(database_file),
+        "page_count": page_count,
+        "freelist_count": freelist_count,
+        "page_size": page_size,
+        "wal_size_bytes": os.path.getsize(wal_path) if os.path.exists(wal_path) else 0,
+        "shm_size_bytes": os.path.getsize(shm_path) if os.path.exists(shm_path) else 0,
+    }
+
+
+def compact_database(db_file: str | None = None) -> dict[str, dict[str, int | str]]:
+    """Checkpoint and vacuum the database to reduce final artifact size."""
+    database_file = db_file or BLINT_DB_FILE
+    if not os.path.exists(database_file):
+        return {
+            "before": collect_database_stats(database_file),
+            "after": collect_database_stats(database_file),
+        }
+    before = collect_database_stats(database_file)
+    with get_connection(database_file) as connection:
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        connection.execute("PRAGMA optimize")
+        connection.execute("VACUUM")
+        connection.execute("PRAGMA incremental_vacuum")
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        connection.execute("PRAGMA optimize")
+    after = collect_database_stats(database_file)
+    return {"before": before, "after": after}
 
 
 def upsert_project(

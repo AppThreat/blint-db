@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, distribution, version
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from blint_db import (
     BLINT_DB_SCHEMA_FAMILY,
@@ -47,7 +47,7 @@ from blint_db import (
     WRAPDB_LOCATION,
     WRAPDB_URL,
 )
-from blint_db.handlers.sqlite_handler import execute_statement
+from blint_db.handlers.sqlite_handler import collect_database_stats, execute_statement
 from blint_db.utils.json import dump_json_file
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -204,6 +204,95 @@ def _db_table_counts(db_file: str | os.PathLike) -> dict[str, int]:
     return {str(row["table_name"]): int(row["count"]) for row in rows}
 
 
+def build_failure_record(
+    *,
+    stage: str,
+    message: str,
+    returncode: int | None = None,
+    exception: BaseException | None = None,
+    **details,
+) -> dict[str, Any]:
+    failure = {
+        "stage": stage,
+        "message": message,
+    }
+    if returncode is not None:
+        failure["returncode"] = returncode
+    if exception is not None:
+        failure["exception_type"] = type(exception).__name__
+    failure.update(
+        {
+            key: value
+            for key, value in details.items()
+            if value not in (None, [], {}, "")
+        }
+    )
+    return failure
+
+
+def build_project_outcome(
+    *,
+    selector: str,
+    project_name: str,
+    ecosystem: str,
+    build_system: str,
+    status: str,
+    artifact_count: int = 0,
+    failure: Mapping[str, Any] | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    outcome = {
+        "selector": selector,
+        "project_name": project_name,
+        "ecosystem": ecosystem,
+        "build_system": build_system,
+        "status": status,
+        "artifact_count": int(artifact_count),
+    }
+    if failure:
+        outcome["failure"] = dict(failure)
+    if details:
+        normalized_details = {
+            key: value
+            for key, value in details.items()
+            if value not in (None, [], {}, "")
+        }
+        if normalized_details:
+            outcome["details"] = normalized_details
+    return outcome
+
+
+def summarize_project_outcomes(
+    project_outcomes: Sequence[Mapping[str, Any]] | None,
+) -> dict[str, Any]:
+    normalized_outcomes = [dict(outcome) for outcome in (project_outcomes or [])]
+    status_counts: dict[str, int] = {}
+    build_failures: list[dict[str, Any]] = []
+    for outcome in normalized_outcomes:
+        status = str(outcome.get("status") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+        failure = outcome.get("failure")
+        if isinstance(failure, Mapping):
+            build_failures.append(
+                {
+                    "selector": outcome.get("selector"),
+                    "project_name": outcome.get("project_name"),
+                    "ecosystem": outcome.get("ecosystem"),
+                    "build_system": outcome.get("build_system"),
+                    "status": status,
+                    **dict(failure),
+                }
+            )
+    return {
+        "attempted_count": len(normalized_outcomes),
+        "success_count": status_counts.get("success", 0),
+        "failure_count": len(build_failures),
+        "status_counts": status_counts,
+        "build_failures": build_failures,
+        "outcomes": normalized_outcomes,
+    }
+
+
 def build_run_metadata(
     *,
     command: str,
@@ -212,9 +301,12 @@ def build_run_metadata(
     disassemble: bool = False,
     test_mode: bool = False,
     selected_projects: Sequence[str] | None = None,
+    project_outcomes: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     db_path = Path(db_file)
     metadata_path = Path(metadata_file)
+    projects = summarize_project_outcomes(project_outcomes)
+    projects["selected_count"] = len(selected_projects or [])
     return {
         "generated_at": _utc_now(),
         "schema": {
@@ -358,7 +450,9 @@ def build_run_metadata(
             "path": str(db_path),
             "size_bytes": db_path.stat().st_size if db_path.exists() else 0,
             "table_counts": _db_table_counts(db_path),
+            "sqlite_stats": collect_database_stats(db_path),
         },
+        "projects": projects,
     }
 
 
@@ -370,6 +464,7 @@ def write_run_metadata(
     disassemble: bool = False,
     test_mode: bool = False,
     selected_projects: Sequence[str] | None = None,
+    project_outcomes: Sequence[Mapping[str, Any]] | None = None,
 ) -> Path:
     target_path = (
         Path(metadata_file) if metadata_file else default_run_metadata_path(db_file)
@@ -384,6 +479,7 @@ def write_run_metadata(
             disassemble=disassemble,
             test_mode=test_mode,
             selected_projects=selected_projects,
+            project_outcomes=project_outcomes,
         ),
     )
     return target_path

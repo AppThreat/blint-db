@@ -2,6 +2,8 @@ import json
 from copy import deepcopy
 
 from blint_db.handlers.sqlite_handler import (
+    collect_database_stats,
+    compact_database,
     create_database,
     execute_statement,
     fetch_binary,
@@ -36,6 +38,10 @@ def test_create_database_initializes_v2_schema(tmp_path):
         "Dependencies",
         "FunctionFingerprints",
     }.issubset(tables)
+
+    stats = collect_database_stats(str(db_file))
+    assert stats["page_size"] == 4096
+    assert stats["size_bytes"] > 0
 
 
 def test_ingest_metadata_stores_symbols_dependencies_and_hashes(
@@ -272,3 +278,26 @@ def test_ingest_metadata_file_supports_precomputed_blint_json(
     binary_row = fetch_binary(result["binary_id"], db_file=str(db_file))
     assert binary_row["project_name"] == "demo-json"
     assert binary_row["project_purl"] == "pkg:generic/demo-json@1.0.0"
+
+
+def test_compact_database_truncates_freelist_after_deletes(tmp_path, isolated_metadata):
+    db_file = tmp_path / "blint-v2.db"
+    ingest_metadata(
+        metadata=isolated_metadata,
+        db_file=str(db_file),
+        project_name="demo",
+        project_purl="pkg:generic/demo@1.0.0",
+        ecosystem="manual",
+        build_system="manual",
+    )
+
+    before_delete = collect_database_stats(str(db_file))
+    execute_statement("DELETE FROM Symbols", db_file=str(db_file))
+    after_delete = collect_database_stats(str(db_file))
+    result = compact_database(str(db_file))
+    after_compact = result["after"]
+
+    assert before_delete["size_bytes"] > 0
+    assert after_delete["freelist_count"] >= 0
+    assert after_compact["freelist_count"] <= after_delete["freelist_count"]
+    assert after_compact["wal_size_bytes"] == 0

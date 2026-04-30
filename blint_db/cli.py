@@ -10,7 +10,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
 from blint_db import (
     BLINT_DB_FILE,
@@ -42,7 +42,11 @@ from blint_db.handlers.language_handlers.wrapdb_handler import (
     get_wrapdb_projects,
     remove_wrapdb_project,
 )
-from blint_db.handlers.sqlite_handler import clear_sqlite_database, create_database
+from blint_db.handlers.sqlite_handler import (
+    clear_sqlite_database,
+    compact_database,
+    create_database,
+)
 from blint_db.ingest import infer_project_name, ingest_binary_file, ingest_metadata_file
 from blint_db.projects_compiler.cargo import mt_cargo_blint_db_build
 from blint_db.projects_compiler.conan import mt_conan_blint_db_build
@@ -61,7 +65,7 @@ def build_parser():
         "--db-file",
         dest="db_file",
         default=BLINT_DB_FILE,
-        help="SQLite database file to create or update. Defaults to blint.db.",
+        help=f"SQLite database file to create or update. Defaults to {BLINT_DB_FILE}.",
     )
     parser.add_argument(
         "--run-metadata-file",
@@ -190,9 +194,9 @@ def build_parser():
     )
     _add_build_selection_arguments(build_meson_parser)
     build_meson_parser.add_argument(
-        "--remove-after-build",
+        "--retain-build-artifacts",
         dest="remove_after_build",
-        action="store_true",
+        action="store_false",
         default=True,
         help=argparse.SUPPRESS,
     )
@@ -203,9 +207,9 @@ def build_parser():
     )
     _add_build_selection_arguments(build_vcpkg_parser)
     build_vcpkg_parser.add_argument(
-        "--remove-after-build",
+        "--retain-build-artifacts",
         dest="remove_after_build",
-        action="store_true",
+        action="store_false",
         default=True,
         help=argparse.SUPPRESS,
     )
@@ -369,7 +373,9 @@ def meson_add_blint_bom_process(
     disassemble: bool = False,
     test_mode: bool = False,
     sel_project: List | None = None,
-):
+    remove_after_build: bool = True,
+) -> list[dict[str, Any]]:
+    project_outcomes: list[dict[str, Any]] = []
     projects_list = get_wrapdb_projects()
     projects_list = _resolve_selected_wrapdb_projects(projects_list, sel_project)
     if test_mode:
@@ -379,11 +385,14 @@ def meson_add_blint_bom_process(
             project_name_tuple,
             db_file=db_file,
             disassemble=disassemble,
+            project_outcomes=project_outcomes,
         )
         print(
             f"Build complete for {project_name_tuple[0]}. Got {len(executables)} binaries."
         )
-        remove_wrapdb_project(project_name_tuple[0])
+        if remove_after_build:
+            remove_wrapdb_project(project_name_tuple[0])
+    return project_outcomes
 
 
 def remove_temp_ar():
@@ -407,7 +416,9 @@ def vcpkg_add_blint_bom_process(
     disassemble: bool = False,
     test_mode: bool = False,
     sel_project: List | None = None,
-):
+    remove_after_build: bool = True,
+) -> list[dict[str, Any]]:
+    project_outcomes: list[dict[str, Any]] = []
     projects_list = get_vcpkg_projects()
     projects_list = _resolve_selected_vcpkg_projects(projects_list, sel_project)
     if test_mode:
@@ -421,13 +432,16 @@ def vcpkg_add_blint_bom_process(
             vcpkg_json,
             db_file=db_file,
             disassemble=disassemble,
+            project_outcomes=project_outcomes,
         )
         print(f"Build complete for {project_name}. Got {len(executables)} binaries.")
-        remove_vcpkg_project(project_name)
+        if remove_after_build:
+            remove_vcpkg_project(project_name)
         count += 1
-        if count == 10:
+        if remove_after_build and count == 10:
             remove_temp_ar()
             count = 0
+    return project_outcomes
 
 
 def homebrew_add_blint_bom_process(
@@ -436,7 +450,8 @@ def homebrew_add_blint_bom_process(
     disassemble: bool = False,
     test_mode: bool = False,
     sel_project: List | None = None,
-):
+) -> list[dict[str, Any]]:
+    project_outcomes: list[dict[str, Any]] = []
     projects_list = (
         load_curated_homebrew_projects() if test_mode else get_homebrew_projects()
     )
@@ -452,8 +467,10 @@ def homebrew_add_blint_bom_process(
             formula_name,
             db_file=db_file,
             disassemble=disassemble,
+            project_outcomes=project_outcomes,
         )
         print(f"Build complete for {formula_name}. Got {len(executables)} binaries.")
+    return project_outcomes
 
 
 def cargo_add_blint_bom_process(
@@ -462,7 +479,8 @@ def cargo_add_blint_bom_process(
     disassemble: bool = False,
     test_mode: bool = False,
     sel_project: List | None = None,
-):
+) -> list[dict[str, Any]]:
+    project_outcomes: list[dict[str, Any]] = []
     projects_list = (
         get_cargo_projects() if not test_mode else load_curated_cargo_projects()
     )
@@ -480,10 +498,12 @@ def cargo_add_blint_bom_process(
             project_spec,
             db_file=db_file,
             disassemble=disassemble,
+            project_outcomes=project_outcomes,
         )
         print(
             f"Build complete for {project_spec.selector}. Got {len(executables)} binaries."
         )
+    return project_outcomes
 
 
 def conan_add_blint_bom_process(
@@ -492,7 +512,8 @@ def conan_add_blint_bom_process(
     disassemble: bool = False,
     test_mode: bool = False,
     sel_project: List | None = None,
-):
+) -> list[dict[str, Any]]:
+    project_outcomes: list[dict[str, Any]] = []
     projects_list = _require_curated_projects(
         load_curated_conan_projects(),
         ecosystem="Conan",
@@ -506,10 +527,12 @@ def conan_add_blint_bom_process(
             project_spec,
             db_file=db_file,
             disassemble=disassemble,
+            project_outcomes=project_outcomes,
         )
         print(
             f"Build complete for {project_spec.selector}. Got {len(executables)} binaries."
         )
+    return project_outcomes
 
 
 def _run_ingest(args):
@@ -567,6 +590,19 @@ def _run_ingest(args):
     )
 
 
+def _compact_and_report(db_file: str):
+    stats = compact_database(db_file)
+    before = stats["before"]
+    after = stats["after"]
+    print(
+        "Compacted database "
+        f"{db_file}: size {before['size_bytes']} -> {after['size_bytes']} bytes, "
+        f"freelist {before['freelist_count']} -> {after['freelist_count']}, "
+        f"wal {before['wal_size_bytes']} -> {after['wal_size_bytes']} bytes"
+    )
+    return stats
+
+
 def main():
     args = arguments_parser()
     command = _resolve_command(args)
@@ -578,13 +614,16 @@ def main():
     create_database(args.db_file)
     if command == "ingest":
         _run_ingest(args)
+        _compact_and_report(args.db_file)
     elif command == "build-meson":
-        meson_add_blint_bom_process(
+        project_outcomes = meson_add_blint_bom_process(
             db_file=args.db_file,
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             sel_project=args.sel_project,
+            remove_after_build=args.remove_after_build,
         )
+        _compact_and_report(args.db_file)
         metadata_path = write_run_metadata(
             command=command,
             db_file=args.db_file,
@@ -592,15 +631,18 @@ def main():
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             selected_projects=args.sel_project,
+            project_outcomes=project_outcomes,
         )
         print(f"Wrote build metadata to {metadata_path}")
     elif command == "build-vcpkg":
-        vcpkg_add_blint_bom_process(
+        project_outcomes = vcpkg_add_blint_bom_process(
             db_file=args.db_file,
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             sel_project=args.sel_project,
+            remove_after_build=args.remove_after_build,
         )
+        _compact_and_report(args.db_file)
         metadata_path = write_run_metadata(
             command=command,
             db_file=args.db_file,
@@ -608,15 +650,17 @@ def main():
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             selected_projects=args.sel_project,
+            project_outcomes=project_outcomes,
         )
         print(f"Wrote build metadata to {metadata_path}")
     elif command == "build-homebrew":
-        homebrew_add_blint_bom_process(
+        project_outcomes = homebrew_add_blint_bom_process(
             db_file=args.db_file,
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             sel_project=args.sel_project,
         )
+        _compact_and_report(args.db_file)
         metadata_path = write_run_metadata(
             command=command,
             db_file=args.db_file,
@@ -624,15 +668,17 @@ def main():
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             selected_projects=args.sel_project,
+            project_outcomes=project_outcomes,
         )
         print(f"Wrote build metadata to {metadata_path}")
     elif command == "build-cargo":
-        cargo_add_blint_bom_process(
+        project_outcomes = cargo_add_blint_bom_process(
             db_file=args.db_file,
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             sel_project=args.sel_project,
         )
+        _compact_and_report(args.db_file)
         metadata_path = write_run_metadata(
             command=command,
             db_file=args.db_file,
@@ -640,15 +686,17 @@ def main():
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             selected_projects=args.sel_project,
+            project_outcomes=project_outcomes,
         )
         print(f"Wrote build metadata to {metadata_path}")
     elif command == "build-conan":
-        conan_add_blint_bom_process(
+        project_outcomes = conan_add_blint_bom_process(
             db_file=args.db_file,
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             sel_project=args.sel_project,
         )
+        _compact_and_report(args.db_file)
         metadata_path = write_run_metadata(
             command=command,
             db_file=args.db_file,
@@ -656,6 +704,7 @@ def main():
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             selected_projects=args.sel_project,
+            project_outcomes=project_outcomes,
         )
         print(f"Wrote build metadata to {metadata_path}")
 

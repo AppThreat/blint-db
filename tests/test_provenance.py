@@ -48,6 +48,28 @@ def test_write_run_metadata_records_database_counts_and_selection(
         disassemble=True,
         test_mode=True,
         selected_projects=["zlib", "bzip2"],
+        project_outcomes=[
+            provenance.build_project_outcome(
+                selector="zlib",
+                project_name="zlib",
+                ecosystem="vcpkg",
+                build_system="vcpkg",
+                status="success",
+                artifact_count=3,
+            ),
+            provenance.build_project_outcome(
+                selector="bzip2",
+                project_name="bzip2",
+                ecosystem="vcpkg",
+                build_system="vcpkg",
+                status="build_failed",
+                failure=provenance.build_failure_record(
+                    stage="build",
+                    message="compile failed",
+                    returncode=1,
+                ),
+            ),
+        ],
     )
 
     payload = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -56,6 +78,13 @@ def test_write_run_metadata_records_database_counts_and_selection(
     assert payload["run"]["disassemble"] is True
     assert payload["run"]["test_mode"] is True
     assert payload["run"]["selected_projects"] == ["zlib", "bzip2"]
+    assert payload["projects"]["selected_count"] == 2
+    assert payload["projects"]["attempted_count"] == 2
+    assert payload["projects"]["success_count"] == 1
+    assert payload["projects"]["failure_count"] == 1
+    assert payload["projects"]["status_counts"] == {"success": 1, "build_failed": 1}
+    assert payload["projects"]["build_failures"][0]["selector"] == "bzip2"
+    assert payload["projects"]["build_failures"][0]["returncode"] == 1
     assert payload["database"]["table_counts"]["Projects"] == 0
     assert payload["database"]["table_counts"]["Binaries"] == 0
     assert payload["tool_versions"]["meson"] == "1.11.1"
@@ -221,3 +250,36 @@ def test_write_run_metadata_records_conan_context(tmp_path, monkeypatch):
         "fmt/11.2.0#shared-release",
         "zlib/1.3.1#static-debug",
     ]
+
+
+def test_summarize_project_outcomes_extracts_structured_failures():
+    summary = provenance.summarize_project_outcomes(
+        [
+            provenance.build_project_outcome(
+                selector="zlib",
+                project_name="zlib",
+                ecosystem="wrapdb",
+                build_system="meson",
+                status="success",
+                artifact_count=2,
+            ),
+            provenance.build_project_outcome(
+                selector="bzip2",
+                project_name="bzip2",
+                ecosystem="wrapdb",
+                build_system="meson",
+                status="no_artifacts",
+                failure=provenance.build_failure_record(
+                    stage="artifact-discovery",
+                    message="No artifacts",
+                ),
+            ),
+        ]
+    )
+
+    assert summary["attempted_count"] == 2
+    assert summary["success_count"] == 1
+    assert summary["failure_count"] == 1
+    assert summary["status_counts"] == {"success": 1, "no_artifacts": 1}
+    assert summary["build_failures"][0]["selector"] == "bzip2"
+    assert summary["build_failures"][0]["stage"] == "artifact-discovery"

@@ -21,6 +21,8 @@ The goal is to make `blint-db` a stronger package-identification corpus for `bli
 
 `blint-db` is published via GitHub Packages and Hugging Face datasets.
 
+Each generated database is compacted before the run completes. The build pipeline checkpoints and truncates WAL state, runs `VACUUM`, and records SQLite page and freelist statistics in the provenance sidecar.
+
 ## Why v2
 
 `blint` 3 exposes much richer metadata than the old deep SBOM properties used by the original `blint-db` pipeline. v2 therefore ingests the primary metadata contract directly instead of flattening everything through CycloneDX properties.
@@ -142,6 +144,28 @@ Key fields:
 - `instruction_metrics_json`
 - register and call-target summaries
 
+## Storage and compaction policy
+
+`blint-db` keeps write-time performance reasonable while still producing compact final artifacts.
+
+Current SQLite tuning includes:
+
+- `page_size=4096`
+- `auto_vacuum=INCREMENTAL`
+- `journal_mode=WAL`
+- `journal_size_limit=1048576`
+- `temp_store=MEMORY`
+- `secure_delete=OFF`
+
+At the end of each ingest or ecosystem build command, `blint-db` performs:
+
+- `PRAGMA wal_checkpoint(TRUNCATE)`
+- `PRAGMA optimize`
+- `VACUUM`
+- `PRAGMA incremental_vacuum`
+
+This keeps the shipped database file small without forcing slow full compaction after every individual binary insert.
+
 ## CLI overview
 
 The CLI has two primary modes:
@@ -179,6 +203,13 @@ Meson / wrapdb:
 
 ```bash
 blint-db --db-file blint-v2.db --clean-start --disassemble build-meson
+```
+
+For a smaller real corpus that is useful for local SBOM end-to-end checks:
+
+```bash
+export BLINT_DB_MESON_STRIP=0
+blint-db --db-file ./temp/meson-small.db --clean-start --disassemble build-meson -s zlib bzip2
 ```
 
 vcpkg:
@@ -240,6 +271,8 @@ blint-db --db-file blint-v2.db --clean-start -f build-conan
 ```
 
 Each ecosystem build also emits a provenance sidecar JSON next to the database by default (for example `blint.metadata.json` when the database is `blint.db`).
+That sidecar includes final table counts and SQLite size statistics after compaction.
+Its `projects` block also records `selected_count`, `attempted_count`, `success_count`, `failure_count`, `status_counts`, and `build_failures`. Each `projects.build_failures[]` entry is a flattened per-project failure record derived from `projects.outcomes[].failure`, with stable keys such as `selector`, `project_name`, `ecosystem`, `build_system`, `status`, `stage`, and `message`, plus optional fields like `returncode` and `exception_type` when available.
 
 Legacy aliases are still accepted for workflow continuity:
 
@@ -453,6 +486,56 @@ cd /path/to/blint-db
 uv sync --all-extras --dev
 uv pip install --python .venv/bin/python --editable /path/to/blint
 ```
+
+### Real end-to-end validation with `blint`
+
+A reproducible local check is available directly in the `blint` repo:
+
+```bash
+cd /path/to/blint
+python tests/scripts/validate_blintdb_small_corpus.py --ecosystems meson
+python tests/scripts/validate_blintdb_small_corpus.py --ecosystems vcpkg
+python tests/scripts/validate_blintdb_small_corpus.py --ecosystems homebrew
+```
+
+The script reads `tests/data/blintdb-small-corpus.json`, builds the requested databases, retains the relevant artifacts, runs `blint sbom` in normal and deep modes, and writes a JSON summary under `.tmp-blintdb-small-corpus/`.
+
+If you want to run the Meson flow manually, the equivalent steps are:
+
+```bash
+cd /path/to/blint-db
+export BLINT_DB_MESON_STRIP=0
+python -m blint_db.cli --clean-start --db-file ./temp/meson-small.db --disassemble build-meson -s zlib bzip2
+```
+
+Build artifacts are removed by the CLI after ingestion by default. If you want to keep the Meson/vcpkg build outputs for analyst-side validation or debugging, pass `--retain-build-artifacts`; otherwise, rebuild the selected projects in-place when you want binaries for analyst-side validation:
+
+```bash
+cd /path/to/blint-db
+python - <<'PY'
+from blint_db.handlers.language_handlers.meson_handler import find_meson_executables, meson_build
+
+for project_name in ("zlib", "bzip2"):
+    meson_build(project_name)
+    for binary in find_meson_executables(project_name):
+        print(binary)
+PY
+```
+
+Then point `blint` at the generated database:
+
+```bash
+cd /path/to/blint
+mkdir -p ./.tmp-meson-db
+cp /path/to/blint-db/temp/meson-small.db ./.tmp-meson-db/blint.db
+export BLINTDB_HOME=$PWD/.tmp-meson-db
+export USE_BLINTDB=true
+
+poetry run blint sbom -i /path/to/libz.1.dylib --use-blintdb --stdout
+poetry run blint sbom -i /path/to/libz.1.dylib --use-blintdb --deep --stdout
+```
+
+For binaries that were built into the corpus itself, expect near-exact package identification in both modes. In deep mode, the matched component should also carry non-zero `internal:blintdb_matched_instruction_hash_count` or `internal:blintdb_matched_assembly_hash_count` evidence.
 
 ## Workflow notes
 
