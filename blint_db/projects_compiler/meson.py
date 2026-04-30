@@ -143,6 +143,9 @@ def mt_meson_blint_db_build(
         meson_log_file = build_dir_for(project_name) / "meson-logs" / "meson-log.txt"
         if meson_log_file.exists():
             logger.error(f"Meson log for {project_name}: {meson_log_file}")
+            with open(meson_log_file, 'r') as mlog:
+                content = mlog.read()
+                print(content)
         _record_outcome(
             project_outcomes,
             selector=project_name,
