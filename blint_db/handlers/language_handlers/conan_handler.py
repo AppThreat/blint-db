@@ -373,8 +373,6 @@ def _extend_host_context_args(
 
 def conan_graph_info_command(
     spec: ConanProjectSpec,
-    *,
-    output_folder: str | os.PathLike,
 ) -> list[str]:
     command = [
         CONAN_EXECUTABLE,
@@ -382,8 +380,6 @@ def conan_graph_info_command(
         "info",
         f"--requires={spec.reference}",
         "--format=json",
-        "--output-folder",
-        str(output_folder),
         "--build=missing",
     ]
     if CONAN_REMOTE:
@@ -454,14 +450,20 @@ def conan_graph_info(
     ensure_conan_profiles(build_root)
     root = Path(build_root)
     env = conan_environment(root)
+    command = conan_graph_info_command(spec)
     result = _run_conan_command(
-        conan_graph_info_command(spec, output_folder=root / "graph"),
+        command,
         cwd=root,
         env=env,
         project_name=spec.selector,
     )
     if result.returncode != 0:
-        raise RuntimeError(f"conan graph info failed for {spec.selector}")
+        stderr = (result.stderr or "").strip()
+        details = stderr or "no stderr output"
+        raise RuntimeError(
+            f"conan graph info failed for {spec.selector}"
+            f" (exit={result.returncode}): {details}"
+        )
     return _json_from_output(result.stdout)
 
 

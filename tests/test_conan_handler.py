@@ -135,13 +135,11 @@ def test_conan_graph_info_command_uses_profiles_and_context_flags(monkeypatch):
         target_arch="x86_64",
     )
 
-    command = conan_handler.conan_graph_info_command(
-        spec, output_folder="/tmp/conan-graph"
-    )
+    command = conan_handler.conan_graph_info_command(spec)
 
     assert command[:3] == ["conan", "graph", "info"]
     assert "--format=json" in command
-    assert command[command.index("--output-folder") + 1] == "/tmp/conan-graph"
+    assert "--output-folder" not in command
     assert command[command.index("--remote") + 1] == "conancenter"
     assert command[command.index("-pr:h") + 1] == "default"
     assert command[command.index("-pr:b") + 1] == "build"

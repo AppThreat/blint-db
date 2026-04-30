@@ -269,7 +269,7 @@ def mt_conan_blint_db_build(
             db_file=db_file,
             disassemble=disassemble,
         )
-    except OperationalError as exc:
+    except (OperationalError, RuntimeError) as exc:
         logger.info("error encountered with %s", project_spec.selector)
         logger.error(exc)
         logger.error(traceback.format_exc())
