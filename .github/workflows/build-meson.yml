@@ -107,7 +107,7 @@ jobs:
     - name: Build and upload arm64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-meson
+        uv run blint-db --retain-build-artifacts --disassemble --db-file ./blint.db build-meson
         uv run python .oras/orasclient.py -p meson-arm64
         uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-meson-arm64/blint.db
         uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-meson-arm64/blint.metadata.json
