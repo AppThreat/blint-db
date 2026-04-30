@@ -40,7 +40,7 @@ jobs:
         "$LLVM_CONFIG_BIN" --version
         curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
         chmod a+x ppkg
-        mv ppkg /usr/local/bin/
+        sudo mv ppkg /usr/local/bin/
         ppkg setup
     - name: Install dependencies
       run: |
