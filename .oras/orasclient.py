@@ -17,7 +17,7 @@ db_file = os.getenv("BLINT_DB_FILE", "./blint.db")
 metadata_file = os.getenv("BLINT_DB_METADATA_FILE")
 registry = os.getenv("REGISTRY", "ghcr.io")
 image_name = os.getenv("IMAGE_NAME", "appthreat/blintdb")
-client.login(server=registry, password=token, username=username)
+client.login(hostname=registry, password=token, username=username)
 
 
 def default_metadata_path(db_path: str) -> str:

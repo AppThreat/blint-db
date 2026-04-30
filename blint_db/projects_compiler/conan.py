@@ -259,7 +259,6 @@ def add_project_conan_db(
         except (RuntimeError, FileNotFoundError) as exc:
             logger.info("error encountered with %s", project_spec.selector)
             logger.error(exc)
-            logger.error(traceback.format_exc())
     return build_result.artifacts
 
 
@@ -298,7 +297,6 @@ def mt_conan_blint_db_build(
     except (OperationalError, RuntimeError) as exc:
         logger.info("error encountered with %s", project_spec.selector)
         logger.error(exc)
-        logger.error(traceback.format_exc())
         _record_outcome(
             project_outcomes,
             selector=project_spec.selector,

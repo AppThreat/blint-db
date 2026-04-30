@@ -50,7 +50,6 @@ def add_project_cargo_db(
         except (RuntimeError, FileNotFoundError) as exc:
             logger.info(f"error encountered with {project_spec.selector}")
             logger.error(exc)
-            logger.error(traceback.format_exc())
     return build_result.artifacts
 
 
@@ -89,7 +88,6 @@ def mt_cargo_blint_db_build(
     except (OperationalError, RuntimeError) as exc:
         logger.info(f"error encountered with {project_spec.selector}")
         logger.error(exc)
-        logger.error(traceback.format_exc())
         _record_outcome(
             project_outcomes,
             selector=project_spec.selector,

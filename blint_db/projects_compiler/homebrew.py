@@ -125,7 +125,6 @@ def add_project_homebrew_db(formula_name, db_file=None, disassemble=False):
             except (RuntimeError, FileNotFoundError) as exc:
                 logger.info(f"error encountered with {formula_name}")
                 logger.error(exc)
-                logger.error(traceback.format_exc())
     return sorted(dict.fromkeys(all_artifacts))
 
 
@@ -164,7 +163,6 @@ def mt_homebrew_blint_db_build(
     except (OperationalError, RuntimeError) as exc:
         logger.info(f"error encountered with {formula_name}")
         logger.error(exc)
-        logger.error(traceback.format_exc())
         _record_outcome(
             project_outcomes,
             selector=formula_name,

@@ -127,7 +127,6 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
         except (RuntimeError, FileNotFoundError) as e:
             logger.info(f"error encountered with {project_name}")
             logger.error(e)
-            logger.error(traceback.format_exc())
     return execs
 
 
@@ -169,7 +168,6 @@ def mt_vcpkg_blint_db_build(
     except (OperationalError, RuntimeError) as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
-        logger.error(traceback.format_exc())
         _record_outcome(
             project_outcomes,
             selector=project_name,
