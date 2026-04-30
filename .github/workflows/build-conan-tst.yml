@@ -22,13 +22,21 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config build-essential ninja-build cmake
-        echo "/usr/lib/llvm-18/bin" >> $GITHUB_PATH
+        LLVM_CONFIG_BIN="$(command -v llvm-config || command -v llvm-config-18 || true)"
+        if [ -z "$LLVM_CONFIG_BIN" ] && [ -x /usr/lib/llvm-18/bin/llvm-config ]; then
+          LLVM_CONFIG_BIN=/usr/lib/llvm-18/bin/llvm-config
+        fi
+        if [ -z "$LLVM_CONFIG_BIN" ]; then
+          echo "llvm-config not found after llvm-18 installation" >&2
+          exit 1
+        fi
+        echo "$(dirname "$LLVM_CONFIG_BIN")" >> $GITHUB_PATH
         echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> $GITHUB_ENV
-        echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> $GITHUB_ENV
+        echo "LLVM_CONFIG=$LLVM_CONFIG_BIN" >> $GITHUB_ENV
         echo "CC=clang-18" >> $GITHUB_ENV
         echo "CXX=clang++-18" >> $GITHUB_ENV
         echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
-        llvm-config --version
+        "$LLVM_CONFIG_BIN" --version
     - name: Install dependencies
       run: |
         uv sync --upgrade --all-extras --all-groups --all-packages -p 3.13
