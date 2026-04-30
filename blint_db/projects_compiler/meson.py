@@ -143,9 +143,6 @@ def mt_meson_blint_db_build(
         meson_log_file = build_dir_for(project_name) / "meson-logs" / "meson-log.txt"
         if meson_log_file.exists():
             logger.error(f"Meson log for {project_name}: {meson_log_file}")
-            with open(meson_log_file, 'r') as mlog:
-                content = mlog.read()
-                logger.info(content)
         _record_outcome(
             project_outcomes,
             selector=project_name,
@@ -158,7 +155,6 @@ def mt_meson_blint_db_build(
                 stage="build",
                 message=str(e),
                 exception=e,
-                log_file=str(meson_log_file) if meson_log_file.exists() else None,
             ),
             details={"wrap_file": str(wrap_file)} if wrap_file else None,
         )
