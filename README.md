@@ -508,7 +508,7 @@ export BLINT_DB_MESON_STRIP=0
 python -m blint_db.cli --clean-start --db-file ./temp/meson-small.db --disassemble build-meson -s zlib bzip2
 ```
 
-Build artifacts are removed by the CLI after ingestion, so rebuild the selected projects in-place when you want binaries for analyst-side validation:
+Build artifacts are removed by the CLI after ingestion by default. If you want to keep the Meson/vcpkg build outputs for analyst-side validation or debugging, pass `--retain-build-artifacts`; otherwise, rebuild the selected projects in-place when you want binaries for analyst-side validation:
 
 ```bash
 cd /path/to/blint-db
