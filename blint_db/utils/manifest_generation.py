@@ -124,7 +124,9 @@ def build_homebrew_manifest_rows(
             break
         try:
             formula_payload = metadata_loader(formula_name) or {}
-        except Exception:  # pragma: no cover - network-dependent resilience path
+        except Exception:
+            # Metadata lookup failures are tolerated so manifest generation can
+            # continue when the remote API, network, or an injected loader fails.
             formula_payload = {}
         language_family, ecosystem = _homebrew_language_family(
             formula_name, formula_payload

@@ -44,7 +44,7 @@ jobs:
     - name: Build and upload darwin arm64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-homebrew
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-homebrew -f
         uv run python .oras/orasclient.py -p homebrew-darwin-arm64
         uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-homebrew-darwin-arm64/blint.db
         uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-homebrew-darwin-arm64/blint.metadata.json
