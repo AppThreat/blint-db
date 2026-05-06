@@ -44,7 +44,7 @@ jobs:
     - name: Build and upload darwin arm64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-homebrew
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-homebrew
         uv run python .oras/orasclient.py -p homebrew-darwin-arm64
         uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-homebrew-darwin-arm64/blint.db
         uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-homebrew-darwin-arm64/blint.metadata.json
@@ -52,6 +52,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
         BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
+        BLINT_DB_HOMEBREW_FORMULAS_FILE: blint_db/inputs/homebrew-top-100-formulas.csv
         BLINT_DB_HOMEBREW_REINSTALL_EXISTING: true
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
 

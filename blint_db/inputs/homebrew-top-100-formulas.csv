@@ -1,0 +1,101 @@
+formula,language_family,upstream_ecosystem,reason,notes
+gh,go,go,top_installs_rank_1,GitHub command-line tool
+node,c,c,top_installs_rank_2,"Open-source, cross-platform JavaScript runtime environment"
+awscli,c,c,top_installs_rank_3,Official Amazon AWS command-line interface
+git,c,c,top_installs_rank_4,Distributed revision control system
+ffmpeg,c,c,top_installs_rank_5,"Play, record, convert, and stream select audio and video codecs"
+uv,rust,cargo,top_installs_rank_6,"Extremely fast Python package installer and resolver, written in Rust"
+cmake,c,c,top_installs_rank_7,Cross-platform make
+go,go,go,top_installs_rank_8,Open source programming language to build simple/reliable/efficient software
+pyenv,c,c,top_installs_rank_9,Python version management
+coreutils,c,c,top_installs_rank_10,"GNU File, Shell, and Text utilities"
+pkgconf,c,c,top_installs_rank_11,Package compiler and linker metadata toolkit
+python@3.13,c,c,top_installs_rank_12,"Interpreted, interactive, object-oriented programming language"
+openssl@3,c,c,top_installs_rank_13,Cryptography and SSL/TLS Toolkit
+imagemagick,c,c,top_installs_rank_14,Tools and libraries to manipulate images in select formats
+xcbeautify,c,c,top_installs_rank_15,Little beautifier tool for xcodebuild
+jq,c,c,top_installs_rank_16,Lightweight and flexible command-line JSON processor
+mkcert,rust,cargo,top_installs_rank_17,Simple tool to make locally trusted development certificates
+gemini-cli,c,c,top_installs_rank_18,Interact with Google Gemini AI models from the command-line
+docker,go,go,top_installs_rank_19,"Pack, ship and run any application as a lightweight container"
+mise,rust,cargo,top_installs_rank_20,Polyglot runtime manager (asdf rust clone)
+yt-dlp,c,c,top_installs_rank_21,Feature-rich command-line audio/video downloader
+gnupg,c,c,top_installs_rank_22,GNU Privacy Guard (OpenPGP)
+gcc,c,c,top_installs_rank_23,GNU compiler collection
+python@3.11,c,c,top_installs_rank_24,"Interpreted, interactive, object-oriented programming language"
+xz,c,c,top_installs_rank_25,General-purpose data compression with high compression ratio
+yq,go,go,top_installs_rank_26,"Process YAML, JSON, XML, CSV and properties documents from the CLI"
+harfbuzz,c,c,top_installs_rank_27,OpenType text shaping engine
+helm,go,go,top_installs_rank_28,Kubernetes package manager
+python@3.12,c,c,top_installs_rank_29,"Interpreted, interactive, object-oriented programming language"
+neovim,c,c,top_installs_rank_30,Ambitious Vim-fork focused on extensibility and agility
+kubernetes-cli,go,go,top_installs_rank_31,Kubernetes command-line interface
+fzf,go,go,top_installs_rank_32,Command-line fuzzy finder written in Go
+ollama,go,go,top_installs_rank_33,"Create, run, and share large language models (LLMs)"
+glib,c,c,top_installs_rank_34,Core application library for C
+nvm,c,c,top_installs_rank_35,Manage multiple Node.js versions
+graphviz,c,c,top_installs_rank_36,Graph visualization software from AT&T and Bell Labs
+python@3.14,c,c,top_installs_rank_37,"Interpreted, interactive, object-oriented programming language"
+poppler,c,c,top_installs_rank_38,PDF rendering library (based on the xpdf-3.0 code base)
+pnpm,c,c,top_installs_rank_39,"Fast, disk space efficient package manager"
+swiftlint,swift,swiftpm,top_installs_rank_40,Tool to enforce Swift style and conventions
+protobuf,c,c,top_installs_rank_41,Protocol buffers (Google's data interchange format)
+wget,c,c,top_installs_rank_42,Internet file retriever
+azure-cli,rust,cargo,top_installs_rank_43,Microsoft Azure CLI 2.0
+curl,c,c,top_installs_rank_44,"Get a file from an HTTP, HTTPS or FTP server"
+tmux,c,c,top_installs_rank_45,Terminal multiplexer
+pipx,c,c,top_installs_rank_46,Execute binaries from Python packages in isolated environments
+python@3.10,c,c,top_installs_rank_47,"Interpreted, interactive, object-oriented programming language"
+redis,c,c,top_installs_rank_48,"Persistent key-value database, with built-in net interface"
+php,c,c,top_installs_rank_49,General-purpose scripting language
+docker-compose,go,go,top_installs_rank_50,Isolated development environments using Docker
+postgresql@14,c,c,top_installs_rank_51,Object-relational database system
+openjdk,c,c,top_installs_rank_52,Development kit for the Java programming language
+tree,c,c,top_installs_rank_53,Display directories as trees (with optional color/HTML output)
+openjdk@17,c,c,top_installs_rank_54,Development kit for the Java programming language
+ripgrep,rust,cargo,top_installs_rank_55,Search tool like grep and The Silver Searcher
+cocoapods,c,c,top_installs_rank_56,Dependency manager for Cocoa projects
+ninja,c,c,top_installs_rank_57,Small build system for use with gyp or CMake
+maven,c,c,top_installs_rank_58,Java-based project management
+watchman,rust,cargo,top_installs_rank_59,Watch files and take action when they change
+llvm,c,c,top_installs_rank_60,Next-gen compiler infrastructure
+git-lfs,go,go,top_installs_rank_61,Git extension for versioning large files
+hello,c,c,top_installs_rank_62,Program providing model for GNU coding standards and practices
+pandoc,c,c,top_installs_rank_63,Swiss-army knife of markup format conversion
+ccache,c,c,top_installs_rank_64,Object-file caching compiler wrapper
+mysql,c,c,top_installs_rank_65,Open source relational database management system
+rust,c,c,top_installs_rank_66,"Safe, concurrent, practical language"
+hashicorp/tap/terraform,c,c,top_installs_rank_67,
+gnu-tar,c,c,top_installs_rank_68,GNU version of the tar archiving utility
+node@22,c,c,top_installs_rank_69,"Open-source, cross-platform JavaScript runtime environment"
+ruby,rust,cargo,top_installs_rank_70,"Powerful, clean, object-oriented scripting language"
+nmap,c,c,top_installs_rank_71,Port scanning utility for large networks
+python@3.9,c,c,top_installs_rank_72,"Interpreted, interactive, object-oriented programming language"
+tesseract,c,c,top_installs_rank_73,OCR (Optical Character Recognition) engine
+qemu,c,c,top_installs_rank_74,Generic machine emulator and virtualizer
+anomalyco/tap/opencode,c,c,top_installs_rank_75,
+rbenv,c,c,top_installs_rank_76,Ruby version manager
+pango,c,c,top_installs_rank_77,Framework for layout and rendering of i18n text
+norwoodj/tap/helm-docs,c,c,top_installs_rank_78,
+lazygit,go,go,top_installs_rank_79,Simple terminal UI for git commands
+just,rust,cargo,top_installs_rank_80,Handy way to save and run project-specific commands
+automake,c,c,top_installs_rank_81,Tool for generating GNU Standards-compliant Makefiles
+vim,c,c,top_installs_rank_82,Vi 'workalike' with many additional features
+gnutls,c,c,top_installs_rank_83,GNU Transport Layer Security (TLS) Library
+terragrunt,go,go,top_installs_rank_84,Thin wrapper for Terraform e.g. for locking state
+ansible,rust,cargo,top_installs_rank_85,"Automate deployment, configuration, and upgrading"
+mint,swift,swiftpm,top_installs_rank_86,Dependency manager that installs and runs Swift command-line tool packages
+fastfetch,c,c,top_installs_rank_87,"Like neofetch, but much faster because written mostly in C"
+podman,go,go,top_installs_rank_88,Tool for managing OCI containers and pods
+glab,go,go,top_installs_rank_89,Open-source GitLab command-line tool
+unbound,c,c,top_installs_rank_90,"Validating, recursive, caching DNS resolver"
+libpq,c,c,top_installs_rank_91,Postgres C API library
+bash,c,c,top_installs_rank_92,"Bourne-Again SHell, a UNIX command interpreter"
+librsvg,rust,cargo,top_installs_rank_93,Library to render SVG files using Cairo
+gradle,c,c,top_installs_rank_94,Open-source build automation tool based on the Groovy and Kotlin DSL
+k9s,go,go,top_installs_rank_95,Kubernetes CLI To Manage Your Clusters In Style!
+htop,c,c,top_installs_rank_96,Improved top (interactive process viewer)
+eza,rust,cargo,top_installs_rank_97,"Modern, maintained replacement for ls"
+starship,rust,cargo,top_installs_rank_98,Cross-shell prompt for astronauts
+xclogparser,c,c,top_installs_rank_99,Tool to parse the SLF serialization format used by Xcode
+cloudflared,go,go,top_installs_rank_100,Cloudflare Tunnel client (formerly Argo Tunnel)

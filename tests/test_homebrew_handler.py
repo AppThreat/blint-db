@@ -29,6 +29,20 @@ def test_default_curated_homebrew_projects_file_is_packaged_and_non_empty():
     assert "xcbeautify" in projects
 
 
+def test_top_100_homebrew_projects_manifest_is_packaged_and_bounded():
+    top_manifest = (
+        homebrew_handler.HOMEBREW_CURATED_FORMULAS_FILE.parent
+        / "homebrew-top-100-formulas.csv"
+    )
+
+    assert top_manifest.exists()
+
+    projects = homebrew_handler.load_curated_homebrew_projects(top_manifest)
+
+    assert len(projects) == 100
+    assert projects[:5] == ["gh", "node", "awscli", "git", "ffmpeg"]
+
+
 def test_homebrew_install_command_supports_source_reinstalls(monkeypatch):
     monkeypatch.setattr(
         homebrew_handler, "HOMEBREW_EXECUTABLE", "/opt/homebrew/bin/brew"
