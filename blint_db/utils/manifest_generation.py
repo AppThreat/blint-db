@@ -9,7 +9,7 @@ import json
 import subprocess
 from pathlib import Path
 from typing import Any, Iterable
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 _HOME_BREW_ANALYTICS_URL = (
@@ -101,12 +101,14 @@ def _homebrew_language_family(
 
 def fetch_homebrew_top_formulae(limit: int) -> list[str]:
     payload = _fetch_json(_HOME_BREW_ANALYTICS_URL)
-    formulae = payload.get("formulae") or []
+    formulae = payload.get("formulae") or payload.get("items") or []
     return [entry.get("formula") for entry in formulae[:limit] if entry.get("formula")]
 
 
 def fetch_homebrew_formula_metadata(formula_name: str) -> dict[str, Any]:
-    return _fetch_json(_HOME_BREW_FORMULA_API.format(formula=formula_name))
+    return _fetch_json(
+        _HOME_BREW_FORMULA_API.format(formula=quote(formula_name, safe=""))
+    )
 
 
 def build_homebrew_manifest_rows(
@@ -120,7 +122,12 @@ def build_homebrew_manifest_rows(
     for rank, formula_name in enumerate(formula_names, start=1):
         if len(rows) >= limit:
             break
-        formula_payload = metadata_loader(formula_name) or {}
+        try:
+            formula_payload = metadata_loader(formula_name) or {}
+        except Exception:
+            # Metadata lookup failures are tolerated so manifest generation can
+            # continue when the remote API, network, or an injected loader fails.
+            formula_payload = {}
         language_family, ecosystem = _homebrew_language_family(
             formula_name, formula_payload
         )

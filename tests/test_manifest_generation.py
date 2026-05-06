@@ -27,6 +27,26 @@ def test_build_homebrew_manifest_rows_uses_metadata_and_limit():
     ]
 
 
+def test_build_homebrew_manifest_rows_tolerates_metadata_lookup_failures():
+    rows = manifest_generation.build_homebrew_manifest_rows(
+        ["hashicorp/tap/terraform"],
+        limit=1,
+        metadata_loader=lambda _formula_name: (_ for _ in ()).throw(
+            RuntimeError("404")
+        ),
+    )
+
+    assert rows == [
+        {
+            "formula": "hashicorp/tap/terraform",
+            "language_family": "c",
+            "upstream_ecosystem": "c",
+            "reason": "top_installs_rank_1",
+            "notes": "",
+        }
+    ]
+
+
 def test_build_cargo_manifest_rows_can_emit_dev_profile_duplicates():
     payload = {
         "crates": [
@@ -78,6 +98,23 @@ def test_generate_homebrew_manifest_writes_csv(tmp_path, monkeypatch):
 
     rows = list(csv.DictReader(output_file.open(encoding="utf-8")))
     assert [row["formula"] for row in rows] == ["fmt", "ripgrep"]
+
+
+def test_fetch_homebrew_top_formulae_supports_current_items_payload(monkeypatch):
+    monkeypatch.setattr(
+        manifest_generation,
+        "_fetch_json",
+        lambda _url, timeout=60: {
+            "category": "install-on-request",
+            "items": [
+                {"number": 1, "formula": "gh"},
+                {"number": 2, "formula": "node"},
+                {"number": 3, "formula": "git"},
+            ],
+        },
+    )
+
+    assert manifest_generation.fetch_homebrew_top_formulae(2) == ["gh", "node"]
 
 
 def test_generate_cargo_manifest_writes_csv(tmp_path, monkeypatch):
