@@ -14,6 +14,10 @@ from blint_db.handlers.blint_handler import (
     relative_binary_path,
     summarize_binary_metadata,
 )
+from blint_db.handlers.callgraph_handler import (
+    extract_binary_callgraph,
+    extract_source_callgraph,
+)
 from blint_db.handlers.sqlite_handler import (
     add_binary,
     add_build,
@@ -22,8 +26,11 @@ from blint_db.handlers.sqlite_handler import (
     replace_binary_dependencies,
     replace_binary_function_fingerprints,
     replace_binary_symbols,
+    replace_callgraph_edges,
+    replace_callgraph_nodes,
     update_binary_statistics,
     upsert_project,
+    upsert_source_graph,
 )
 
 
@@ -120,6 +127,14 @@ def ingest_metadata(
             binary_id,
             summarized["function_fingerprints"],
         )
+        if metadata.get("callgraph"):
+            binary_graph = extract_binary_callgraph(metadata)
+            replace_callgraph_nodes(
+                connection, "binary", binary_id, binary_graph["nodes"]
+            )
+            replace_callgraph_edges(
+                connection, "binary", binary_id, binary_graph["edges"]
+            )
         update_binary_statistics(connection, binary_id)
     return {
         "project_id": project_id,
@@ -211,6 +226,63 @@ def ingest_metadata_file(
         binary_file_path=binary_file_path,
         relative_to=relative_to,
     )
+
+
+def ingest_source_callgraph(
+    *,
+    source_callgraph: dict[str, Any],
+    source_key: str,
+    db_file: str | None = None,
+    project_id: int | None = None,
+    name: str | None = None,
+    purl: str | None = None,
+    tool: str | None = None,
+    tool_schema_version: str | None = None,
+    metadata=None,
+) -> dict[str, Any]:
+    """Register a source callgraph and store its canonical nodes and edges.
+
+    The source graph becomes part of the corpus that an unknown binary can be
+    matched against via
+    :func:`blint_db.handlers.sqlite_handler.match_binary_against_source_corpus`.
+
+    Args:
+        source_callgraph: Parsed source-analysis callgraph JSON.
+        source_key: Stable identifier for this analysis; re-ingesting updates it.
+        db_file: Optional database path override.
+        project_id: Optional owning project to associate the graph with.
+        name: Human-readable graph name.
+        purl: Package URL the source graph belongs to.
+        tool: Name of the source analyzer that produced the callgraph.
+        tool_schema_version: Schema version reported by the analyzer.
+        metadata: Optional extra metadata to persist.
+
+    Returns:
+        A dict with the ``source_graph_id`` and node/edge counts.
+    """
+    create_database(db_file)
+    graph = extract_source_callgraph(source_callgraph)
+    with get_connection(db_file) as connection:
+        source_graph_id = upsert_source_graph(
+            connection,
+            source_key=source_key,
+            project_id=project_id,
+            name=name,
+            purl=purl,
+            tool=tool or (source_callgraph.get("tool") or {}).get("name"),
+            tool_schema_version=tool_schema_version
+            or source_callgraph.get("schema_version"),
+            node_count=graph["node_count"],
+            edge_count=graph["edge_count"],
+            metadata=metadata,
+        )
+        replace_callgraph_nodes(connection, "source", source_graph_id, graph["nodes"])
+        replace_callgraph_edges(connection, "source", source_graph_id, graph["edges"])
+    return {
+        "source_graph_id": source_graph_id,
+        "node_count": graph["node_count"],
+        "edge_count": graph["edge_count"],
+    }
 
 
 def infer_project_name(

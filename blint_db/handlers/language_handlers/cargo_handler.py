@@ -428,6 +428,103 @@ def resolve_cargo_project_spec(
     )
 
 
+_TOP_CRATES_CSV_FIELDS = (
+    "crate",
+    "version",
+    "feature_profile",
+    "profile",
+    "default_features",
+    "features",
+    "bins",
+    "package",
+    "target",
+)
+
+
+def _top_crate_version(crate_payload: dict) -> str | None:
+    """Return the best version string to build for a crates.io crate payload."""
+    for key in (
+        "max_stable_version",
+        "newest_version",
+        "max_version",
+        "default_version",
+    ):
+        value = (crate_payload.get(key) or "").strip()
+        if value:
+            return value
+    return None
+
+
+def fetch_top_crates(count: int) -> list[dict]:
+    """Return the most downloaded crates from crates.io, newest stable version each.
+
+    Args:
+        count: Number of crates to return, ordered by all-time download count.
+
+    Returns:
+        A list of row dictionaries using the curated crate CSV schema. Crates
+        without a resolvable version are skipped.
+    """
+    if count <= 0:
+        return []
+    per_page = min(100, count)
+    rows: list[dict] = []
+    seen: set[str] = set()
+    page = 1
+    api_root = CARGO_REGISTRY_API.rstrip("/")
+    while len(rows) < count:
+        url = f"{api_root}/api/v1/crates?page={page}&per_page={per_page}&sort=downloads"
+        payload = _crates_api_json(url)
+        crates = payload.get("crates") or []
+        if not crates:
+            break
+        for crate_payload in crates:
+            name = (crate_payload.get("name") or "").strip()
+            version = _top_crate_version(crate_payload)
+            if not name or not version or name in seen:
+                continue
+            seen.add(name)
+            rows.append(
+                {
+                    "crate": name,
+                    "version": version,
+                    "feature_profile": "",
+                    "profile": CARGO_DEFAULT_PROFILE,
+                    "default_features": "true",
+                    "features": "",
+                    "bins": "",
+                    "package": "",
+                    "target": "",
+                }
+            )
+            if len(rows) >= count:
+                break
+        page += 1
+    return rows
+
+
+def write_top_crates_csv(count: int, output_path: str | os.PathLike) -> int:
+    """Fetch the top crates and persist them as a curated-style CSV file.
+
+    Args:
+        count: Number of crates to fetch.
+        output_path: Destination CSV path.
+
+    Returns:
+        The number of crate rows written.
+    """
+    rows = fetch_top_crates(count)
+    destination = Path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with open(destination, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=_TOP_CRATES_CSV_FIELDS)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+    logger.info("Wrote %d top crates to %s", len(rows), destination)
+    return len(rows)
+
+
 def crates_io_release(spec: CargoProjectSpec) -> dict:
     payload = _crates_api_json(
         f"{CARGO_REGISTRY_API.rstrip('/')}/api/v1/crates/{quote(spec.crate, safe='')}/{quote(spec.version, safe='')}"

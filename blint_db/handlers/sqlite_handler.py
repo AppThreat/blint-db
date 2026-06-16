@@ -164,6 +164,47 @@ CREATE TABLE IF NOT EXISTS FunctionFingerprints (
     UNIQUE(binary_id, function_key)
 );
 
+CREATE TABLE IF NOT EXISTS SourceGraphs (
+    source_graph_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_key TEXT NOT NULL UNIQUE,
+    project_id INTEGER,
+    name TEXT,
+    purl TEXT,
+    tool TEXT,
+    tool_schema_version TEXT,
+    node_count INTEGER NOT NULL DEFAULT 0,
+    edge_count INTEGER NOT NULL DEFAULT 0,
+    metadata_json TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (project_id) REFERENCES Projects(project_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS CallGraphNodes (
+    node_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    graph_kind TEXT NOT NULL,
+    owner_id INTEGER NOT NULL,
+    node_ref TEXT NOT NULL,
+    canon_name TEXT,
+    raw_name TEXT,
+    address TEXT,
+    kind TEXT,
+    is_local INTEGER,
+    features_json TEXT,
+    UNIQUE(graph_kind, owner_id, node_ref)
+);
+
+CREATE TABLE IF NOT EXISTS CallGraphEdges (
+    edge_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    graph_kind TEXT NOT NULL,
+    owner_id INTEGER NOT NULL,
+    src_ref TEXT NOT NULL,
+    dst_ref TEXT NOT NULL,
+    edge_type TEXT,
+    confidence TEXT,
+    UNIQUE(graph_kind, owner_id, src_ref, dst_ref, edge_type)
+);
+
 CREATE INDEX IF NOT EXISTS idx_projects_name ON Projects(name);
 CREATE INDEX IF NOT EXISTS idx_projects_purl ON Projects(purl);
 CREATE INDEX IF NOT EXISTS idx_builds_project ON Builds(project_id);
@@ -179,6 +220,11 @@ CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash ON FunctionFingerprint
 CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash ON FunctionFingerprints(assembly_hash);
 CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash_binary ON FunctionFingerprints(instruction_hash, binary_id);
 CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash_binary ON FunctionFingerprints(assembly_hash, binary_id);
+CREATE INDEX IF NOT EXISTS idx_source_graphs_project ON SourceGraphs(project_id);
+CREATE INDEX IF NOT EXISTS idx_source_graphs_purl ON SourceGraphs(purl);
+CREATE INDEX IF NOT EXISTS idx_cgnodes_canon ON CallGraphNodes(canon_name, graph_kind);
+CREATE INDEX IF NOT EXISTS idx_cgnodes_owner ON CallGraphNodes(graph_kind, owner_id);
+CREATE INDEX IF NOT EXISTS idx_cgedges_owner_src ON CallGraphEdges(graph_kind, owner_id, src_ref);
 """
 
 
@@ -978,3 +1024,186 @@ def lookup_project_function_hash_matches(
     params.append(limit)
     with get_connection(db_file) as connection:
         return [dict(row) for row in connection.execute(query, params).fetchall()]
+
+
+def upsert_source_graph(
+    connection: sqlite3.Connection,
+    *,
+    source_key: str,
+    project_id: int | None = None,
+    name: str | None = None,
+    purl: str | None = None,
+    tool: str | None = None,
+    tool_schema_version: str | None = None,
+    node_count: int = 0,
+    edge_count: int = 0,
+    metadata: dict | None = None,
+) -> int:
+    """Insert or update a source callgraph record and return its id.
+
+    A source graph is the canonical-name-keyed callgraph produced by a source
+    analyzer. It is identified by ``source_key`` so re-ingesting the same
+    analysis updates the existing row rather than duplicating it.
+    """
+    now = _utc_now()
+    connection.execute(
+        """
+        INSERT INTO SourceGraphs(
+            source_key, project_id, name, purl, tool, tool_schema_version,
+            node_count, edge_count, metadata_json, created_at, updated_at
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(source_key) DO UPDATE SET
+            project_id=excluded.project_id,
+            name=excluded.name,
+            purl=excluded.purl,
+            tool=excluded.tool,
+            tool_schema_version=excluded.tool_schema_version,
+            node_count=excluded.node_count,
+            edge_count=excluded.edge_count,
+            metadata_json=excluded.metadata_json,
+            updated_at=excluded.updated_at
+        """,
+        (
+            source_key,
+            project_id,
+            name,
+            purl,
+            tool,
+            tool_schema_version,
+            int(node_count),
+            int(edge_count),
+            _json_dump(metadata),
+            now,
+            now,
+        ),
+    )
+    row = connection.execute(
+        "SELECT source_graph_id FROM SourceGraphs WHERE source_key=?",
+        (source_key,),
+    ).fetchone()
+    return int(row["source_graph_id"])
+
+
+def replace_callgraph_nodes(
+    connection: sqlite3.Connection,
+    graph_kind: str,
+    owner_id: int,
+    nodes: Iterable[dict],
+):
+    """Replace the callgraph nodes for one graph.
+
+    ``graph_kind`` is ``"source"`` or ``"binary"``. ``owner_id`` is the
+    ``source_graph_id`` for source graphs and the ``binary_id`` for binary
+    graphs. Existing rows for the same graph are removed first so re-ingestion
+    is idempotent.
+    """
+    connection.execute(
+        "DELETE FROM CallGraphNodes WHERE graph_kind=? AND owner_id=?",
+        (graph_kind, owner_id),
+    )
+    connection.executemany(
+        """
+        INSERT OR IGNORE INTO CallGraphNodes(
+            graph_kind, owner_id, node_ref, canon_name, raw_name, address,
+            kind, is_local, features_json
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                graph_kind,
+                owner_id,
+                str(node["node_ref"]),
+                node.get("canon_name") or None,
+                node.get("raw_name"),
+                node.get("address"),
+                node.get("kind"),
+                _bool_to_int(node.get("is_local")),
+                _json_dump(node.get("features")),
+            )
+            for node in nodes
+            if node.get("node_ref") is not None
+        ],
+    )
+
+
+def replace_callgraph_edges(
+    connection: sqlite3.Connection,
+    graph_kind: str,
+    owner_id: int,
+    edges: Iterable[dict],
+):
+    """Replace the callgraph edges for one graph (see :func:`replace_callgraph_nodes`)."""
+    connection.execute(
+        "DELETE FROM CallGraphEdges WHERE graph_kind=? AND owner_id=?",
+        (graph_kind, owner_id),
+    )
+    connection.executemany(
+        """
+        INSERT OR IGNORE INTO CallGraphEdges(
+            graph_kind, owner_id, src_ref, dst_ref, edge_type, confidence
+        ) VALUES(?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                graph_kind,
+                owner_id,
+                str(edge["src_ref"]),
+                str(edge["dst_ref"]),
+                edge.get("edge_type"),
+                edge.get("confidence"),
+            )
+            for edge in edges
+            if edge.get("src_ref") is not None and edge.get("dst_ref") is not None
+        ],
+    )
+
+
+def match_binary_against_source_corpus(
+    binary_id: int,
+    *,
+    db_file: str | None = None,
+    limit: int = 20,
+) -> list[dict]:
+    """Rank source graphs by canonical-name overlap with a binary's callgraph.
+
+    This drives one-binary-against-many-source identification: every named
+    binary function is matched against the canonical names recorded for each
+    source graph in the corpus, and graphs are ranked by how many distinct
+    binary functions they account for.
+
+    Args:
+        binary_id: The binary whose callgraph nodes should be matched.
+        db_file: Optional database path override.
+        limit: Maximum number of ranked source graphs to return.
+
+    Returns:
+        A list of dicts with the source graph identity and overlap counts,
+        ordered by shared-function count.
+    """
+    query = """
+        SELECT
+            SourceGraphs.source_graph_id,
+            SourceGraphs.name AS source_name,
+            SourceGraphs.purl AS source_purl,
+            SourceGraphs.tool AS source_tool,
+            COUNT(DISTINCT binary_nodes.canon_name) AS shared_functions,
+            SourceGraphs.node_count AS source_node_count
+        FROM CallGraphNodes AS binary_nodes
+        JOIN CallGraphNodes AS source_nodes
+            ON source_nodes.graph_kind = 'source'
+            AND source_nodes.canon_name = binary_nodes.canon_name
+        JOIN SourceGraphs
+            ON SourceGraphs.source_graph_id = source_nodes.owner_id
+        WHERE binary_nodes.graph_kind = 'binary'
+            AND binary_nodes.owner_id = ?
+            AND binary_nodes.canon_name IS NOT NULL
+            AND binary_nodes.canon_name <> ''
+        GROUP BY SourceGraphs.source_graph_id
+        ORDER BY shared_functions DESC, SourceGraphs.source_graph_id ASC
+        LIMIT ?
+    """
+    with get_connection(db_file) as connection:
+        return [
+            dict(row)
+            for row in connection.execute(query, (binary_id, limit)).fetchall()
+        ]

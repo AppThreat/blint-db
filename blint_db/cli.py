@@ -16,6 +16,8 @@ from blint_db import (
     BLINT_DB_FILE,
     CARGO_CURATED_CRATES_FILE,
     CARGO_FEW_PACKAGES,
+    CARGO_TOP_CRATES_COUNT,
+    CARGO_TOP_CRATES_FILE,
     CONAN_CURATED_PACKAGES_FILE,
     CONAN_FEW_PACKAGES,
     HOMEBREW_CURATED_FORMULAS_FILE,
@@ -25,6 +27,7 @@ from blint_db.handlers.language_handlers.cargo_handler import (
     get_cargo_projects,
     load_curated_cargo_projects,
     resolve_cargo_project_spec,
+    write_top_crates_csv,
 )
 from blint_db.handlers.language_handlers.conan_handler import (
     load_curated_conan_projects,
@@ -238,6 +241,40 @@ def build_parser():
         action="store_true",
         default=False,
         help=argparse.SUPPRESS,
+    )
+    build_cargo_parser.add_argument(
+        "--with-source-callgraph",
+        dest="with_source_callgraph",
+        action="store_true",
+        default=False,
+        help="Run rusi over each crate's source and ingest the source callgraph "
+        "alongside the binary, enabling binary-to-source matching.",
+    )
+    build_cargo_parser.add_argument(
+        "--rusi-cmd",
+        dest="rusi_cmd",
+        default=None,
+        help="Base command used to invoke rusi, for example "
+        "'cargo run -p rusi-cli --' or a path to a rusi binary. Falls back to "
+        "the BLINT_DB_RUSI_CMD or RUSI_CMD environment variable.",
+    )
+
+    gen_top_crates_parser = subparsers.add_parser(
+        "gen-cargo-top-crates",
+        help="Fetch the most downloaded crates from crates.io and write them to a CSV.",
+    )
+    gen_top_crates_parser.add_argument(
+        "--count",
+        dest="top_crates_count",
+        type=int,
+        default=CARGO_TOP_CRATES_COUNT,
+        help=f"Number of crates to fetch. Defaults to {CARGO_TOP_CRATES_COUNT}.",
+    )
+    gen_top_crates_parser.add_argument(
+        "--output",
+        dest="top_crates_output",
+        default=str(CARGO_TOP_CRATES_FILE),
+        help=f"Destination CSV path. Defaults to {CARGO_TOP_CRATES_FILE}.",
     )
 
     build_conan_parser = subparsers.add_parser(
@@ -479,6 +516,8 @@ def cargo_add_blint_bom_process(
     disassemble: bool = False,
     test_mode: bool = False,
     sel_project: List | None = None,
+    with_source_callgraph: bool = False,
+    rusi_command: str | None = None,
 ) -> list[dict[str, Any]]:
     project_outcomes: list[dict[str, Any]] = []
     projects_list = (
@@ -499,6 +538,8 @@ def cargo_add_blint_bom_process(
             db_file=db_file,
             disassemble=disassemble,
             project_outcomes=project_outcomes,
+            with_source_callgraph=with_source_callgraph,
+            rusi_command=rusi_command,
         )
         print(
             f"Build complete for {project_spec.selector}. Got {len(executables)} binaries."
@@ -609,6 +650,10 @@ def main():
     if not command:
         build_parser().print_help()
         return
+    if command == "gen-cargo-top-crates":
+        count = write_top_crates_csv(args.top_crates_count, args.top_crates_output)
+        print(f"Wrote {count} top crates to {args.top_crates_output}")
+        return
     if args.clean:
         clear_sqlite_database(args.db_file)
     create_database(args.db_file)
@@ -677,6 +722,8 @@ def main():
             disassemble=args.disassemble,
             test_mode=args.test_mode,
             sel_project=args.sel_project,
+            with_source_callgraph=args.with_source_callgraph,
+            rusi_command=args.rusi_cmd,
         )
         _compact_and_report(args.db_file)
         metadata_path = write_run_metadata(

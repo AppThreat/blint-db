@@ -99,6 +99,20 @@ CARGO_CURATED_CRATES_FILE = Path(
         str(_default_curated_input_file("cargo-crates.csv")),
     )
 )
+CARGO_TOP_CRATES_FILE = Path(
+    os.getenv(
+        "BLINT_DB_CARGO_TOP_CRATES_FILE",
+        str(CARGO_CURATED_CRATES_FILE.parent / "cargo-top-crates.csv"),
+    )
+)
+CARGO_TOP_CRATES_COUNT = max(
+    1, int(os.getenv("BLINT_DB_CARGO_TOP_CRATES_COUNT", "100"))
+)
+# Base command used to invoke the rusi source analyzer, for example
+# "cargo run -p rusi-cli --" or a path to a built rusi binary. Resolved from the
+# CLI argument first, then these environment variables.
+RUSI_COMMAND = os.getenv("BLINT_DB_RUSI_CMD") or os.getenv("RUSI_CMD") or ""
+RUSI_HTTP_TIMEOUT = max(30, int(os.getenv("BLINT_DB_RUSI_TIMEOUT", "1800")))
 CARGO_DEFAULT_PROFILE = os.getenv("BLINT_DB_CARGO_PROFILE", "release")
 CARGO_DEFAULT_TARGET = os.getenv("BLINT_DB_CARGO_TARGET") or None
 CARGO_FEW_PACKAGES = max(1, int(os.getenv("BLINT_DB_CARGO_FEW_PACKAGES", "2")))
