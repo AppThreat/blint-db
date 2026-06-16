@@ -45,10 +45,16 @@ from blint_db.handlers.language_handlers.wrapdb_handler import (
     get_wrapdb_projects,
     remove_wrapdb_project,
 )
+from blint_db.handlers.blint_handler import (
+    collect_blint_metadata,
+    load_blint_metadata,
+)
+from blint_db.handlers.callgraph_handler import extract_binary_callgraph
 from blint_db.handlers.sqlite_handler import (
     clear_sqlite_database,
     compact_database,
     create_database,
+    match_canon_names_against_source_corpus,
 )
 from blint_db.ingest import infer_project_name, ingest_binary_file, ingest_metadata_file
 from blint_db.projects_compiler.cargo import mt_cargo_blint_db_build
@@ -257,6 +263,28 @@ def build_parser():
         help="Base command used to invoke rusi, for example "
         "'cargo run -p rusi-cli --' or a path to a rusi binary. Falls back to "
         "the BLINT_DB_RUSI_CMD or RUSI_CMD environment variable.",
+    )
+
+    match_callgraph_parser = subparsers.add_parser(
+        "match-callgraph",
+        help="Identify a binary by matching its callgraph against the source corpus.",
+    )
+    match_callgraph_parser.add_argument(
+        "--input",
+        dest="input",
+        help="Path to a binary to disassemble and match against the corpus.",
+    )
+    match_callgraph_parser.add_argument(
+        "--metadata-file",
+        dest="metadata_file",
+        help="Path to a pre-generated blint metadata JSON to match instead of a binary.",
+    )
+    match_callgraph_parser.add_argument(
+        "--limit",
+        dest="match_limit",
+        type=int,
+        default=20,
+        help="Maximum number of ranked source matches to show. Defaults to 20.",
     )
 
     gen_top_crates_parser = subparsers.add_parser(
@@ -631,6 +659,42 @@ def _run_ingest(args):
     )
 
 
+def _run_match_callgraph(args):
+    """Match a binary's callgraph against the stored source corpus and print it."""
+    if args.metadata_file:
+        metadata = load_blint_metadata(args.metadata_file)
+    elif args.input:
+        metadata = collect_blint_metadata(args.input, disassemble=True)
+    else:
+        raise SystemExit(
+            "Provide either --input or --metadata-file for match-callgraph."
+        )
+    if not metadata.get("callgraph"):
+        raise SystemExit(
+            "The binary has no callgraph. Disassembly is required "
+            "(install the blint extended group / nyxstone)."
+        )
+    binary_graph = extract_binary_callgraph(metadata)
+    canon_names = [node["canon_name"] for node in binary_graph["nodes"]]
+    matches = match_canon_names_against_source_corpus(
+        canon_names, db_file=args.db_file, limit=args.match_limit
+    )
+    named = sum(1 for name in canon_names if name)
+    print(
+        f"Binary functions: {binary_graph['node_count']} "
+        f"(named: {named}). Top source matches:"
+    )
+    if not matches:
+        print("  No source graphs in the corpus shared any function names.")
+        return
+    for match in matches:
+        purl = match["source_purl"] or match["source_name"] or "unknown"
+        print(
+            f"  {purl}  shared_functions={match['shared_functions']} "
+            f"source_functions={match['source_node_count']} tool={match['source_tool']}"
+        )
+
+
 def _compact_and_report(db_file: str):
     stats = compact_database(db_file)
     before = stats["before"]
@@ -657,7 +721,9 @@ def main():
     if args.clean:
         clear_sqlite_database(args.db_file)
     create_database(args.db_file)
-    if command == "ingest":
+    if command == "match-callgraph":
+        _run_match_callgraph(args)
+    elif command == "ingest":
         _run_ingest(args)
         _compact_and_report(args.db_file)
     elif command == "build-meson":

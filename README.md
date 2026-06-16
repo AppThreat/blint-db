@@ -144,6 +144,44 @@ Key fields:
 - `instruction_metrics_json`
 - register and call-target summaries
 
+### `SourceGraphs`
+
+Registers a source-level callgraph produced by a source analyzer (for example
+rusi for Rust). Identified by a stable `source_key` so re-ingesting updates the
+existing row.
+
+Key fields:
+
+- `source_key`
+- `project_id` (optional link to `Projects`)
+- `name`
+- `purl`
+- `tool` and `tool_schema_version`
+- `node_count` and `edge_count`
+
+### `CallGraphNodes`
+
+Stores callgraph nodes for both source and binary graphs, discriminated by
+`graph_kind` (`source` or `binary`). `owner_id` is the `source_graph_id` for
+source graphs and the `binary_id` for binary graphs. The `canon_name` column
+holds the canonical, generic-free, hash-free function name that both sides join
+on, computed by blint's canonicalization.
+
+Key fields:
+
+- `graph_kind`, `owner_id`, `node_ref`
+- `canon_name`, `raw_name`, `address`, `kind`, `is_local`
+- `features_json`
+
+### `CallGraphEdges`
+
+Stores callgraph edges for both source and binary graphs (same `graph_kind` and
+`owner_id` discriminators), with `src_ref`, `dst_ref`, `edge_type`, and
+`confidence`.
+
+These three tables let an unknown binary be matched against many stored source
+graphs at once. See the callgraph matching section below.
+
 ## Storage and compaction policy
 
 `blint-db` keeps write-time performance reasonable while still producing compact final artifacts.
@@ -281,6 +319,62 @@ blint-db --clean-start -Z1 --disassemble
 blint-db --clean-start -Z2 --disassemble
 ```
 
+### 3. Build a binary-to-source callgraph corpus and match an unknown binary
+
+`blint-db` can store both the binary callgraph that `blint` recovers and the
+source callgraph that a source analyzer produces, then identify an unknown
+binary by how many canonical function names it shares with each stored source
+graph. This is the corpus-scale version of the single-pair `blint
+callgraph-match` command. The current source analyzer is rusi, for Rust.
+
+Generate a list of the most downloaded crates from crates.io and persist it as a
+curated-schema CSV (defaults to `blint_db/inputs/cargo-top-crates.csv`):
+
+```bash
+blint-db gen-cargo-top-crates --count 100 --output blint_db/inputs/cargo-top-crates.csv
+```
+
+Build a corpus from those crates with both the binary callgraph (requires
+`--disassemble`) and the source callgraph. The rusi command is supplied with
+`--rusi-cmd`, or through the `BLINT_DB_RUSI_CMD` (or `RUSI_CMD`) environment
+variable. The base command is whatever runs rusi in your environment, for
+example a path to a built `rusi` binary or `cargo run -p rusi-cli --` from a rusi
+checkout:
+
+```bash
+export BLINT_DB_CARGO_CRATES_FILE=./blint_db/inputs/cargo-top-crates.csv
+blint-db --db-file blint-v2.db --clean-start build-cargo \
+  --disassemble \
+  --with-source-callgraph \
+  --rusi-cmd "/path/to/rusi"
+```
+
+`--with-source-callgraph` runs rusi over each crate's extracted source and
+ingests the source callgraph linked to the same project and package URL as the
+binary. It still works for library-only crates that produce no binary, since the
+source graph is independent of the build artifacts.
+
+Identify an unknown binary against the corpus. Pass a binary to disassemble, or a
+pre-generated blint metadata JSON:
+
+```bash
+blint-db --db-file blint-v2.db match-callgraph --input ./some-binary --limit 10
+blint-db --db-file blint-v2.db match-callgraph --metadata-file ./some-binary-metadata.json
+```
+
+The command prints the source graphs ranked by the number of shared canonical
+function names, for example:
+
+```
+Binary functions: 22173 (named: 22173). Top source matches:
+  pkg:cargo/wasm-tools@1.247.0  shared_functions=2682 source_functions=15079 tool=rusi
+```
+
+Matching by name is reliable for unstripped binaries. For stripped binaries the
+single-pair `blint callgraph-match` command can additionally recover some
+functions by call structure. See the `docs/CALLGRAPH_MATCH.md` document in the
+`blint` repository for the algorithm, configuration, and limitations.
+
 ## Python usage
 
 The low-level ingestion helpers live in `blint_db.ingest`.
@@ -322,6 +416,33 @@ lookup_project_function_hash_matches(
 ```
 
 These project-level helpers aggregate matches across all binaries belonging to the same stored project and return `project_id`, `project_name`, and `project_purl` along with match counts.
+
+Callgraph corpus example. Register a source callgraph and identify a binary
+against the corpus by shared canonical function names:
+
+```python
+import json
+from blint_db.handlers.blint_handler import collect_blint_metadata
+from blint_db.handlers.callgraph_handler import extract_binary_callgraph
+from blint_db.handlers.sqlite_handler import match_canon_names_against_source_corpus
+from blint_db.ingest import ingest_source_callgraph
+
+ingest_source_callgraph(
+    source_callgraph=json.load(open("callgraph.json")),
+    source_key="wasm-tools@1.247.0",
+    db_file="blint-v2.db",
+    name="wasm-tools",
+    purl="pkg:cargo/wasm-tools@1.247.0",
+    tool="rusi",
+)
+
+metadata = collect_blint_metadata("/path/to/binary", disassemble=True)
+canon_names = [n["canon_name"] for n in extract_binary_callgraph(metadata)["nodes"]]
+matches = match_canon_names_against_source_corpus(canon_names, db_file="blint-v2.db")
+```
+
+`match_binary_against_source_corpus(binary_id, ...)` is the equivalent for a
+binary already ingested into the database.
 
 Build provenance example:
 

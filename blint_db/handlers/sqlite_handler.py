@@ -1207,3 +1207,53 @@ def match_binary_against_source_corpus(
             dict(row)
             for row in connection.execute(query, (binary_id, limit)).fetchall()
         ]
+
+
+def match_canon_names_against_source_corpus(
+    canon_names,
+    *,
+    db_file: str | None = None,
+    limit: int = 20,
+) -> list[dict]:
+    """Rank source graphs by overlap with a set of canonical function names.
+
+    This is the transient form of :func:`match_binary_against_source_corpus`. It
+    takes the canonical names of an arbitrary binary, without that binary having
+    to be ingested into the database, and ranks the stored source graphs by how
+    many of those names they contain. It powers identifying an unknown binary
+    against the corpus from the command line.
+
+    Args:
+        canon_names: Iterable of canonical function names from the binary.
+        db_file: Optional database path override.
+        limit: Maximum number of ranked source graphs to return.
+
+    Returns:
+        A list of dicts with the source graph identity and overlap counts,
+        ordered by shared-function count.
+    """
+    names = sorted({name for name in canon_names if name})
+    if not names:
+        return []
+    placeholders = ",".join("?" for _ in names)
+    query = f"""
+        SELECT
+            SourceGraphs.source_graph_id,
+            SourceGraphs.name AS source_name,
+            SourceGraphs.purl AS source_purl,
+            SourceGraphs.tool AS source_tool,
+            COUNT(DISTINCT source_nodes.canon_name) AS shared_functions,
+            SourceGraphs.node_count AS source_node_count
+        FROM CallGraphNodes AS source_nodes
+        JOIN SourceGraphs
+            ON SourceGraphs.source_graph_id = source_nodes.owner_id
+        WHERE source_nodes.graph_kind = 'source'
+            AND source_nodes.canon_name IN ({placeholders})
+        GROUP BY SourceGraphs.source_graph_id
+        ORDER BY shared_functions DESC, SourceGraphs.source_graph_id ASC
+        LIMIT ?
+    """
+    with get_connection(db_file) as connection:
+        return [
+            dict(row) for row in connection.execute(query, (*names, limit)).fetchall()
+        ]

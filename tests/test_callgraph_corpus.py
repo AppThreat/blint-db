@@ -4,6 +4,7 @@ from blint_db.handlers.sqlite_handler import (
     create_database,
     execute_statement,
     match_binary_against_source_corpus,
+    match_canon_names_against_source_corpus,
 )
 from blint_db.ingest import ingest_metadata, ingest_source_callgraph
 
@@ -117,6 +118,49 @@ def test_source_ingest_and_binary_corpus_match(tmp_path):
     assert matches[0]["source_purl"] == "pkg:cargo/app@1.0.0"
     assert matches[0]["shared_functions"] == 3
     assert matches[0]["source_tool"] == "rusi"
+
+
+def test_match_canon_names_against_corpus_without_ingesting_binary(tmp_path):
+    db_file = tmp_path / "blint-v2.db"
+    ingest_source_callgraph(
+        source_callgraph=_SOURCE,
+        source_key="app@1.0.0",
+        db_file=str(db_file),
+        name="app",
+        purl="pkg:cargo/app@1.0.0",
+    )
+    ingest_source_callgraph(
+        source_callgraph={
+            "call_graph": {
+                "nodes": [
+                    {"id": "cg-z", "qualified_name": "other::thing", "local": True}
+                ],
+                "edges": [],
+            }
+        },
+        source_key="other@1",
+        db_file=str(db_file),
+        name="other",
+        purl="pkg:cargo/other@1.0.0",
+    )
+
+    matches = match_canon_names_against_source_corpus(
+        ["app::main", "app::helper", "app::leaf", "unrelated::fn"],
+        db_file=str(db_file),
+    )
+    assert matches[0]["source_purl"] == "pkg:cargo/app@1.0.0"
+    assert matches[0]["shared_functions"] == 3
+    # The decoy graph shares nothing and is excluded.
+    assert all(m["source_purl"] != "pkg:cargo/other@1.0.0" for m in matches)
+
+
+def test_match_canon_names_empty_input_returns_no_matches(tmp_path):
+    db_file = tmp_path / "blint-v2.db"
+    create_database(str(db_file))
+    assert match_canon_names_against_source_corpus([], db_file=str(db_file)) == []
+    assert (
+        match_canon_names_against_source_corpus(["", None], db_file=str(db_file)) == []
+    )
 
 
 def test_source_ingest_is_idempotent_on_source_key(tmp_path):
