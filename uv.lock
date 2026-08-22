@@ -199,8 +199,8 @@ wheels = [
 
 [[package]]
 name = "blint"
-version = "3.2.2"
-source = { git = "https://github.com/owasp-dep-scan/blint?rev=22b182d78393e357d88e16a50267c335d51f9670#22b182d78393e357d88e16a50267c335d51f9670" }
+version = "3.3.0"
+source = { git = "https://github.com/owasp-dep-scan/blint?rev=6f7882abd4155149da86d86ff4d5fe5b269dcf39#6f7882abd4155149da86d86ff4d5fe5b269dcf39" }
 dependencies = [
     { name = "apkinspector" },
     { name = "appdirs" },
@@ -246,7 +246,7 @@ extended = [
 [package.metadata]
 requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=26.3.1" },
-    { name = "blint", git = "https://github.com/owasp-dep-scan/blint?rev=22b182d78393e357d88e16a50267c335d51f9670" },
+    { name = "blint", git = "https://github.com/owasp-dep-scan/blint?rev=6f7882abd4155149da86d86ff4d5fe5b269dcf39" },
     { name = "conan", specifier = ">=2.28.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
     { name = "huggingface-hub", specifier = ">=1.12.2" },
