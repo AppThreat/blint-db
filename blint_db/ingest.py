@@ -24,6 +24,7 @@ from blint_db.handlers.sqlite_handler import (
     create_database,
     get_connection,
     replace_binary_dependencies,
+    replace_binary_abi_requirements,
     replace_binary_function_fingerprints,
     replace_binary_symbols,
     replace_callgraph_edges,
@@ -126,6 +127,11 @@ def ingest_metadata(
             connection,
             binary_id,
             summarized["function_fingerprints"],
+        )
+        replace_binary_abi_requirements(
+            connection,
+            binary_id,
+            summarized.get("abi_requirements") or [],
         )
         if metadata.get("callgraph"):
             binary_graph = extract_binary_callgraph(metadata)

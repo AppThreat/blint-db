@@ -43,10 +43,44 @@ Use `blint-db` v2 to:
 - build architecture-aware symbol and function-hash corpora
 - compare stripped/unstripped or versioned binary families
 - support ML or heuristic matching experiments on binary metadata
+- filter a corpus by the runtime it requires, for example every binary that cannot run on a given glibc version
+
+## What version 3 adds
+
+Version 3 ingests the ELF ABI analysis `blint` produces, which answers questions the dependency table cannot.
+
+**A real runtime floor.** Every versioned symbol a binary imports carries a minimum version of the library providing it, and the highest across all imports is the version the runtime must supply. Version 2 stored only the version definition table, which lists nodes the linker recorded whether or not any symbol binds to them. `AbiRequirements` now stores the floor derived from the imports, alongside the symbols that set it.
+
+**Version-aware symbol matching.** `Symbols.symbol_version` records the version node each symbol binds to, so `lookup_versioned_symbol_matches` can distinguish builds of a library that export the same names at different versions. `Symbols.raw_name` records the linkage name, without which no C++ or Rust symbol can be matched across binaries.
+
+**Runtime-loaded dependencies.** Libraries opened through `dlopen` never appear in `DT_NEEDED`. Three new dependency sources capture them: the declarative packaging note, names recovered from the image, and the result of resolving the closure against a real filesystem.
+
+### Querying the new data
+
+```python
+from blint_db.handlers.sqlite_handler import (
+    lookup_binaries_by_abi_requirement,
+    lookup_versioned_symbol_matches,
+)
+
+# Every binary that will not start on a host older than glibc 2.34.
+lookup_binaries_by_abi_requirement("GLIBC", min_version="2.34")
+
+# Symbol matching that distinguishes library builds by version node.
+lookup_versioned_symbol_matches([("statx", "GLIBC_2.28"), ("memcpy", "GLIBC_2.14")])
+```
+
+Version comparison is done in Python rather than SQL, because SQLite orders version strings lexically and would place `2.9` above `2.34`.
+
+Databases are generated rather than distributed as long-lived state, so there is no in-place migration between schema versions. Recreate with `--clean-start`; the schema contract check refuses to open a file written by an older schema.
+
+For the full schema reference and a set of worked queries, see [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
 ## Database schema
 
-The schema is versioned through `SchemaMeta` and currently targets **schema version 2**.
+The schema is versioned through `SchemaMeta` and currently targets **schema version 3**.
+
+Version 3 adds ELF ABI data: the runtime floor each binary requires, the version node every symbol binds to, and the dependencies a binary loads at runtime rather than links against. See [What version 3 adds](#what-version-3-adds).
 
 ### `SchemaMeta`
 
@@ -96,7 +130,11 @@ Key fields:
 - `build_info_json`
 - `security_properties_json`
 - `callgraph_json`
+- `abi_analysis_json`
 - sanitized `metadata_json`
+- denormalized ABI columns: `libc`, `min_glibc_version`, `uses_ifunc`, `uses_private_symbol_versions`, `uses_runtime_loading`
+
+The ABI columns are duplicated out of `abi_analysis_json` so that a corpus can be filtered by C library or runtime floor without unpacking a JSON blob per row.
 
 The stored metadata intentionally omits the heavy raw `disassembled_functions` payload. Hashes and metrics are normalized into `FunctionFingerprints` instead.
 
@@ -113,7 +151,25 @@ Each row tracks:
 - `is_exported`
 - `is_function`
 - `is_variable`
+- `symbol_version` (the version node the symbol binds to, e.g. `GLIBC_2.28`)
+- `raw_name` (the linkage name, when demangling changed it)
 - `metadata_json`
+
+`symbol_version` is what makes a symbol match version aware. Without it, `memcpy@GLIBC_2.14` and `memcpy@GLIBC_2.2.5` are the same evidence, which is a large part of why symbol-only identification picks the wrong build of a library.
+
+`raw_name` is what makes a C++ or Rust symbol matchable at all. `name` holds the demangled form because that is what a reader wants, but another object's export table holds the mangled form, so that is the only key the two can be joined on. Both symbol lookups search either column.
+
+### `AbiRequirements`
+
+One row per version provider a binary requires, derived from the symbols it imports rather than from the version definition table.
+
+Each row tracks:
+
+- `provider` (e.g. `GLIBC`, `GLIBCXX`, `LIBPAM_EXTENSION`)
+- `min_version` — the **highest** version node any imported symbol binds to, which is the minimum the runtime must supply
+- `symbol_count` — how many imported symbols bind to this provider
+- `determining_symbols` — the imports that set `min_version`, so an unexpectedly high floor can be traced to the one symbol responsible
+- `package_name` and `package_group`
 
 ### `Dependencies`
 
@@ -122,9 +178,14 @@ Normalized dependency evidence from:
 - `dynamic_entries`
 - `libraries`
 - `import_dependencies`
+- `dlopen_dependencies` — declared through the packaging note
+- `recovered_dependencies` — recovered from the image, with the confidence grade in `tag`
+- `link_closure` and `link_closure_missing` — from resolving the closure against a real filesystem
 - `go_dependencies`
 - `rust_dependencies`
 - `dotnet_dependencies`
+
+The three runtime-loading sources matter because a library opened through `dlopen` never appears in `dynamic_entries`, and those are frequently the components that determine what a binary can do: drivers, codecs, authentication modules and cryptographic providers are almost always loaded on demand.
 
 ### `FunctionFingerprints`
 

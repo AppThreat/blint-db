@@ -1,6 +1,6 @@
 [project]
 name = "blint-db"
-version = "2.0.0"
+version = "2.1.0"
 description = "Symbols database for OWASP blint"
 license = { file = "LICENSE" }
 authors = [
@@ -66,4 +66,7 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [tool.uv.sources]
+# The pinned rev must contain blint.lib.elf_abi, which schema version 3 reads
+# for version comparison and ABI requirement ingest. Bump this to the commit
+# that lands the ELF ABI analysis before regenerating the lock file.
 blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "22b182d78393e357d88e16a50267c335d51f9670" }
