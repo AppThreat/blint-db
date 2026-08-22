@@ -129,6 +129,15 @@ def extract_symbols(metadata: dict[str, Any]) -> list[dict]:
                 "is_exported": entry.get("is_exported", source == "exports"),
                 "is_function": entry.get("is_function", default_is_function),
                 "is_variable": entry.get("is_variable", False),
+                # The version node a symbol binds to distinguishes otherwise
+                # identical names across library versions, which is exactly the
+                # ambiguity that makes symbol-only package identification weak.
+                "symbol_version": str(entry.get("version") or "").strip() or None,
+                # The linkage name is what appears in another object's export
+                # table, so it is the only key that matches a C++ or Rust symbol
+                # across binaries. blint records it only when demangling changed
+                # the name, which is why it is frequently null.
+                "raw_name": str(entry.get("raw_name") or "").strip() or None,
                 "metadata": optional_json_object(
                     {
                         key: value
@@ -144,6 +153,8 @@ def extract_symbols(metadata: dict[str, Any]) -> list[dict]:
                             "is_exported",
                             "is_function",
                             "is_variable",
+                            "version",
+                            "raw_name",
                         }
                     }
                 ),
@@ -217,6 +228,59 @@ def extract_dependencies(metadata: dict[str, Any]) -> list[dict]:
                     }
                 ),
             )
+
+    # Declared through the packaging note. These were parsed but never
+    # ingested, so a binary that documented its runtime dependencies properly
+    # still landed in the database without them.
+    for entry in metadata.get("dlopen_dependencies", []) or []:
+        if isinstance(entry, dict):
+            add_dependency(
+                "dlopen_dependencies",
+                entry.get("name"),
+                tag=entry.get("priority"),
+                metadata_obj=optional_json_object(
+                    {k: v for k, v in entry.items() if k != "name"}
+                ),
+            )
+
+    # Recovered from the image rather than declared anywhere. These are the
+    # load-on-demand dependencies -- drivers, codecs, auth modules -- that no
+    # static dependency table lists.
+    for entry in metadata.get("recovered_dependencies", []) or []:
+        if isinstance(entry, dict):
+            add_dependency(
+                "recovered_dependencies",
+                entry.get("name"),
+                tag=entry.get("confidence"),
+                metadata_obj=optional_json_object(
+                    {k: v for k, v in entry.items() if k != "name"}
+                ),
+            )
+
+    # Resolution against a real filesystem records where each library was found
+    # and what could not be found at all.
+    link_closure = metadata.get("link_closure") or {}
+    if isinstance(link_closure, dict):
+        for entry in link_closure.get("resolved") or []:
+            if isinstance(entry, dict):
+                add_dependency(
+                    "link_closure",
+                    entry.get("name"),
+                    tag=entry.get("relation"),
+                    metadata_obj=optional_json_object(
+                        {k: v for k, v in entry.items() if k != "name"}
+                    ),
+                )
+        for entry in link_closure.get("missing") or []:
+            if isinstance(entry, dict):
+                add_dependency(
+                    "link_closure_missing",
+                    entry.get("name"),
+                    tag="missing",
+                    metadata_obj=optional_json_object(
+                        {k: v for k, v in entry.items() if k != "name"}
+                    ),
+                )
 
     for entry in metadata.get("libraries", []) or []:
         if isinstance(entry, dict):
@@ -370,6 +434,31 @@ def extract_function_fingerprints(
     return functions
 
 
+def extract_abi_requirements(metadata: dict[str, Any]) -> list[dict]:
+    """Return the per-provider ABI requirements for normalized storage.
+
+    The minimum version is derived from the symbols the binary actually imports,
+    so it is a real runtime floor rather than a restatement of the version
+    definition table.
+    """
+    abi_analysis = coerce_json_object(metadata.get("abi_analysis"))
+    requirements = []
+    for entry in abi_analysis.get("requirements") or []:
+        if not isinstance(entry, dict) or not entry.get("provider"):
+            continue
+        requirements.append(
+            {
+                "provider": entry["provider"],
+                "min_version": entry.get("min_version") or None,
+                "symbol_count": _safe_int(entry.get("symbol_count")),
+                "package_name": entry.get("package_name") or None,
+                "package_group": entry.get("package_group") or None,
+                "determining_symbols": entry.get("determining_symbols") or [],
+            }
+        )
+    return requirements
+
+
 def summarize_binary_metadata(
     metadata: dict[str, Any], *, hash_mode: str = "both"
 ) -> dict[str, Any]:
@@ -377,6 +466,7 @@ def summarize_binary_metadata(
     symbols = extract_symbols(metadata)
     dependencies = extract_dependencies(metadata)
     function_fingerprints = extract_function_fingerprints(metadata, hash_mode=hash_mode)
+    abi_requirements = extract_abi_requirements(metadata)
     file_path = metadata.get("file_path") or metadata.get("name")
     build_info = make_json_safe(coerce_json_object(metadata.get("build_info"))) or None
     security_properties = make_json_safe(summarize_security_properties(metadata))
@@ -386,6 +476,12 @@ def summarize_binary_metadata(
     summary["build_info"] = build_info
     summary["security_properties"] = security_properties
     summary["callgraph"] = callgraph_summary
+    summary["abi_analysis"] = (
+        make_json_safe(coerce_json_object(metadata.get("abi_analysis"))) or None
+    )
+    summary["runtime_loading"] = (
+        make_json_safe(coerce_json_object(metadata.get("runtime_loading"))) or None
+    )
     summary["file_size"] = _file_size_from_path(file_path)
     summary["symbol_count"] = len(symbols)
     summary["imported_library_count"] = len(dependencies)
@@ -396,6 +492,7 @@ def summarize_binary_metadata(
         "symbols": symbols,
         "dependencies": dependencies,
         "function_fingerprints": function_fingerprints,
+        "abi_requirements": abi_requirements,
     }
 
 
@@ -465,6 +562,7 @@ def normalize_ingest_records(
         "symbols": summary_bundle["symbols"],
         "dependencies": summary_bundle["dependencies"],
         "function_fingerprints": summary_bundle["function_fingerprints"],
+        "abi_requirements": summary_bundle["abi_requirements"],
     }
 
 

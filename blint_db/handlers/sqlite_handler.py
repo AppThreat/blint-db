@@ -17,6 +17,7 @@ from blint_db import (
     BLINT_DB_SCHEMA_VERSION,
     SQLITE_TIMEOUT,
 )
+from blint.lib.elf_abi import version_sort_key
 from blint_db.utils.json import canonical_json_dumps, coerce_json_object
 
 _SCHEMA_SQL = """
@@ -95,9 +96,15 @@ CREATE TABLE IF NOT EXISTS Binaries (
     callgraph_node_count INTEGER,
     callgraph_edge_count INTEGER,
     callgraph_external_count INTEGER,
+    libc TEXT,
+    min_glibc_version TEXT,
+    uses_ifunc INTEGER,
+    uses_private_symbol_versions INTEGER,
+    uses_runtime_loading INTEGER,
     build_info_json TEXT,
     security_properties_json TEXT,
     callgraph_json TEXT,
+    abi_analysis_json TEXT,
     metadata_json TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
@@ -115,9 +122,24 @@ CREATE TABLE IF NOT EXISTS Symbols (
     is_exported INTEGER,
     is_function INTEGER,
     is_variable INTEGER,
+    symbol_version TEXT,
+    raw_name TEXT,
     metadata_json TEXT,
     FOREIGN KEY (binary_id) REFERENCES Binaries(binary_id) ON DELETE CASCADE,
     UNIQUE(binary_id, source, name, address, size)
+);
+
+CREATE TABLE IF NOT EXISTS AbiRequirements (
+    requirement_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    binary_id INTEGER NOT NULL,
+    provider TEXT NOT NULL,
+    min_version TEXT,
+    symbol_count INTEGER,
+    package_name TEXT,
+    package_group TEXT,
+    determining_symbols TEXT,
+    FOREIGN KEY (binary_id) REFERENCES Binaries(binary_id) ON DELETE CASCADE,
+    UNIQUE(binary_id, provider)
 );
 
 CREATE TABLE IF NOT EXISTS Dependencies (
@@ -216,6 +238,13 @@ CREATE INDEX IF NOT EXISTS idx_symbols_name ON Symbols(name);
 CREATE INDEX IF NOT EXISTS idx_symbols_source ON Symbols(source);
 CREATE INDEX IF NOT EXISTS idx_symbols_lookup ON Symbols(name, source, binary_id);
 CREATE INDEX IF NOT EXISTS idx_symbols_binary_lookup ON Symbols(binary_id, source, name);
+CREATE INDEX IF NOT EXISTS idx_symbols_version ON Symbols(symbol_version);
+CREATE INDEX IF NOT EXISTS idx_symbols_raw_name ON Symbols(raw_name);
+CREATE INDEX IF NOT EXISTS idx_symbols_raw_lookup ON Symbols(raw_name, source, binary_id);
+CREATE INDEX IF NOT EXISTS idx_binaries_libc ON Binaries(libc, min_glibc_version);
+CREATE INDEX IF NOT EXISTS idx_abi_provider ON AbiRequirements(provider, min_version);
+CREATE INDEX IF NOT EXISTS idx_abi_binary ON AbiRequirements(binary_id, provider);
+CREATE INDEX IF NOT EXISTS idx_dependencies_source_name ON Dependencies(source, name);
 CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash ON FunctionFingerprints(instruction_hash);
 CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash ON FunctionFingerprints(assembly_hash);
 CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash_binary ON FunctionFingerprints(instruction_hash, binary_id);
@@ -535,6 +564,8 @@ def upsert_binary(
         coerce_json_object(metadata.get("security_properties")) or None
     )
     callgraph = coerce_json_object(metadata.get("callgraph")) or None
+    abi_analysis = coerce_json_object(metadata.get("abi_analysis")) or None
+    runtime_loading = coerce_json_object(metadata.get("runtime_loading")) or None
     binary_key = _identity_key(
         {
             "build_id": build_id,
@@ -553,9 +584,11 @@ def upsert_binary(
             sha256, sha1, md5, is_shared_library, is_pie, has_nx, has_canary,
             security_stripped, relro, file_size, imported_library_count, symbol_count,
             function_count, disassembly_enabled, callgraph_version, callgraph_node_count,
-            callgraph_edge_count, callgraph_external_count, build_info_json,
-            security_properties_json, callgraph_json, metadata_json, created_at, updated_at
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            callgraph_edge_count, callgraph_external_count, libc, min_glibc_version,
+            uses_ifunc, uses_private_symbol_versions, uses_runtime_loading, build_info_json,
+            security_properties_json, callgraph_json, abi_analysis_json, metadata_json,
+            created_at, updated_at
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(binary_key) DO UPDATE SET
             file_path=excluded.file_path,
             relative_path=excluded.relative_path,
@@ -585,9 +618,15 @@ def upsert_binary(
             callgraph_node_count=excluded.callgraph_node_count,
             callgraph_edge_count=excluded.callgraph_edge_count,
             callgraph_external_count=excluded.callgraph_external_count,
+            libc=excluded.libc,
+            min_glibc_version=excluded.min_glibc_version,
+            uses_ifunc=excluded.uses_ifunc,
+            uses_private_symbol_versions=excluded.uses_private_symbol_versions,
+            uses_runtime_loading=excluded.uses_runtime_loading,
             build_info_json=excluded.build_info_json,
             security_properties_json=excluded.security_properties_json,
             callgraph_json=excluded.callgraph_json,
+            abi_analysis_json=excluded.abi_analysis_json,
             metadata_json=excluded.metadata_json,
             updated_at=excluded.updated_at
         """,
@@ -630,9 +669,19 @@ def upsert_binary(
             callgraph.get("node_count") if callgraph else None,
             callgraph.get("edge_count") if callgraph else None,
             callgraph.get("external_count") if callgraph else None,
+            abi_analysis.get("libc") if abi_analysis else None,
+            abi_analysis.get("min_glibc_version") if abi_analysis else None,
+            _bool_to_int(abi_analysis.get("uses_ifunc") if abi_analysis else None),
+            _bool_to_int(
+                abi_analysis.get("uses_private_symbol_versions") if abi_analysis else None
+            ),
+            _bool_to_int(
+                runtime_loading.get("loads_libraries") if runtime_loading else None
+            ),
             _json_dump(build_info),
             _json_dump(security_properties),
             _json_dump(callgraph),
+            _json_dump(abi_analysis),
             _json_dump(
                 metadata.get("metadata_json")
                 if "metadata_json" in metadata
@@ -672,8 +721,8 @@ def replace_binary_symbols(
         """
         INSERT OR IGNORE INTO Symbols(
             binary_id, name, source, address, size, is_imported, is_exported,
-            is_function, is_variable, metadata_json
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            is_function, is_variable, symbol_version, raw_name, metadata_json
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             (
@@ -686,6 +735,8 @@ def replace_binary_symbols(
                 _bool_to_int(symbol.get("is_exported")),
                 _bool_to_int(symbol.get("is_function")),
                 _bool_to_int(symbol.get("is_variable")),
+                symbol.get("symbol_version"),
+                symbol.get("raw_name"),
                 _json_dump(symbol.get("metadata")),
             )
             for symbol in symbols
@@ -720,6 +771,49 @@ def replace_binary_dependencies(
             if dependency.get("name") and dependency.get("source")
         ],
     )
+
+
+def replace_binary_abi_requirements(
+    connection: sqlite3.Connection,
+    binary_id: int,
+    requirements: Iterable[dict],
+):
+    """Store one row per version provider the binary requires.
+
+    Keeping these normalized rather than only inside `abi_analysis_json` is what
+    makes the corpus queryable by runtime floor, which is the question the ABI
+    data is most often asked: which binaries in this build cannot run on the
+    target's C library version.
+    """
+    connection.execute("DELETE FROM AbiRequirements WHERE binary_id=?", (binary_id,))
+    connection.executemany(
+        """
+        INSERT OR IGNORE INTO AbiRequirements(
+            binary_id, provider, min_version, symbol_count, package_name,
+            package_group, determining_symbols
+        ) VALUES(?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                binary_id,
+                requirement["provider"],
+                requirement.get("min_version") or None,
+                _safe_requirement_count(requirement.get("symbol_count")),
+                requirement.get("package_name") or None,
+                requirement.get("package_group") or None,
+                ", ".join(requirement.get("determining_symbols") or []) or None,
+            )
+            for requirement in requirements
+            if requirement.get("provider")
+        ],
+    )
+
+
+def _safe_requirement_count(value) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def replace_binary_function_fingerprints(
@@ -887,7 +981,9 @@ def lookup_symbol_matches(
     cleaned = _clean_nonempty_values(symbol_names)
     if not cleaned:
         return []
-    params: list = list(cleaned)
+    # The caller may supply either form, and a C++ symbol only matches on its
+    # linkage name, so both columns are searched with the same values.
+    params: list = list(cleaned) + list(cleaned)
     query = """
         SELECT
             Binaries.binary_id,
@@ -900,8 +996,8 @@ def lookup_symbol_matches(
         JOIN Binaries ON Symbols.binary_id = Binaries.binary_id
         JOIN Builds ON Binaries.build_id = Builds.build_id
         JOIN Projects ON Builds.project_id = Projects.project_id
-        WHERE Symbols.name IN ({})
-    """.format(",".join("?" for _ in cleaned))
+        WHERE (Symbols.name IN ({placeholders}) OR Symbols.raw_name IN ({placeholders}))
+    """.format(placeholders=",".join("?" for _ in cleaned))
     sources_clause, source_params = _symbol_sources_clause(sources)
     if sources_clause:
         query += sources_clause
@@ -916,6 +1012,111 @@ def lookup_symbol_matches(
         return [dict(row) for row in connection.execute(query, params).fetchall()]
 
 
+def lookup_versioned_symbol_matches(
+    versioned_symbols: Sequence[tuple[str, str]],
+    *,
+    db_file: str | None = None,
+    limit: int = 20,
+) -> list[dict]:
+    """Match symbols together with the version node they bind to.
+
+    A plain symbol match treats `memcpy@GLIBC_2.14` and `memcpy@GLIBC_2.2.5` as
+    the same evidence, which is what makes symbol-only identification pick the
+    wrong build of a library. Pairing the name with its version node removes
+    that ambiguity for every versioned symbol.
+
+    Args:
+        versioned_symbols: `(name, version_node)` pairs, e.g. `("memcpy", "GLIBC_2.14")`.
+        db_file: Database to query.
+        limit: Maximum binaries to return.
+    """
+    pairs = [
+        (str(name).strip(), str(version).strip())
+        for name, version in versioned_symbols
+        if str(name).strip() and str(version).strip()
+    ]
+    if not pairs:
+        return []
+    predicate = " OR ".join(
+        "((Symbols.name = ? OR Symbols.raw_name = ?) AND Symbols.symbol_version = ?)"
+        for _ in pairs
+    )
+    params: list = [value for name, version in pairs for value in (name, name, version)]
+    query = f"""
+        SELECT
+            Binaries.binary_id,
+            Binaries.name AS binary_name,
+            Binaries.libc,
+            Binaries.min_glibc_version,
+            Projects.name AS project_name,
+            Projects.purl AS project_purl,
+            COUNT(DISTINCT Symbols.name || '@' || Symbols.symbol_version)
+                AS matched_symbol_count
+        FROM Symbols
+        JOIN Binaries ON Symbols.binary_id = Binaries.binary_id
+        JOIN Builds ON Binaries.build_id = Builds.build_id
+        JOIN Projects ON Builds.project_id = Projects.project_id
+        WHERE {predicate}
+        GROUP BY Binaries.binary_id
+        ORDER BY matched_symbol_count DESC, Binaries.binary_id ASC
+        LIMIT ?
+    """
+    params.append(limit)
+    with get_connection(db_file) as connection:
+        return [dict(row) for row in connection.execute(query, params).fetchall()]
+
+
+def lookup_binaries_by_abi_requirement(
+    provider: str,
+    *,
+    min_version: str | None = None,
+    db_file: str | None = None,
+    limit: int = 100,
+) -> list[dict]:
+    """Find binaries requiring a given version provider, optionally at or above a version.
+
+    Version comparison is done in Python rather than SQL, because SQLite orders
+    version strings lexically and would place `2.9` above `2.34`.
+
+    Args:
+        provider: Version node provider, e.g. `GLIBC`.
+        min_version: Only return binaries whose floor is at least this version.
+        db_file: Database to query.
+        limit: Maximum rows to return.
+    """
+    query = """
+        SELECT
+            Binaries.binary_id,
+            Binaries.name AS binary_name,
+            Binaries.libc,
+            Projects.name AS project_name,
+            Projects.purl AS project_purl,
+            AbiRequirements.provider,
+            AbiRequirements.min_version,
+            AbiRequirements.symbol_count,
+            AbiRequirements.determining_symbols
+        FROM AbiRequirements
+        JOIN Binaries ON AbiRequirements.binary_id = Binaries.binary_id
+        JOIN Builds ON Binaries.build_id = Builds.build_id
+        JOIN Projects ON Builds.project_id = Projects.project_id
+        WHERE AbiRequirements.provider = ?
+    """
+    with get_connection(db_file) as connection:
+        rows = [dict(row) for row in connection.execute(query, (provider,)).fetchall()]
+    if min_version:
+        threshold = version_sort_key(min_version)
+        rows = [
+            row
+            for row in rows
+            if row.get("min_version") and version_sort_key(row["min_version"]) >= threshold
+        ]
+    rows.sort(
+        key=lambda row: (version_sort_key(row.get("min_version") or ""), row["binary_id"]),
+        reverse=True,
+    )
+    return rows[:limit]
+
+
 def lookup_project_symbol_matches(
     symbol_names: Sequence[str],
     *,
@@ -926,7 +1127,9 @@ def lookup_project_symbol_matches(
     cleaned = _clean_nonempty_values(symbol_names)
     if not cleaned:
         return []
-    params: list = list(cleaned)
+    # Both name columns are searched with the same values, so the bindings are
+    # supplied twice.
+    params: list = list(cleaned) + list(cleaned)
     query = """
         SELECT
             Projects.project_id,
@@ -939,8 +1142,8 @@ def lookup_project_symbol_matches(
         JOIN Binaries ON Symbols.binary_id = Binaries.binary_id
         JOIN Builds ON Binaries.build_id = Builds.build_id
         JOIN Projects ON Builds.project_id = Projects.project_id
-        WHERE Symbols.name IN ({})
-    """.format(",".join("?" for _ in cleaned))
+        WHERE (Symbols.name IN ({placeholders}) OR Symbols.raw_name IN ({placeholders}))
+    """.format(placeholders=",".join("?" for _ in cleaned))
     sources_clause, source_params = _symbol_sources_clause(sources)
     if sources_clause:
         query += sources_clause
