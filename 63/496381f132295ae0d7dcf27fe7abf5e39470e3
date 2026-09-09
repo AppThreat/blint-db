@@ -1,0 +1,20 @@
+blint_db/ingest.py
+  h_6a4cc5cdf68def 262,267-269
+tests/test_archive_members.py
+  h_6a4cc5cdf68def 1-101
+tests/test_blint_handler.py
+  h_6a4cc5cdf68def 69-70
+tests/test_sqlite_handler.py
+  h_6a4cc5cdf68def 20,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "63496381f132295ae0d7dcf27fe7abf5e39470e3",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
