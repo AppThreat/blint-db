@@ -501,6 +501,7 @@ def summarize_binary_metadata(
     summary["imported_library_count"] = len(dependencies)
     summary["function_count"] = len(function_fingerprints)
     summary["disassembly_enabled"] = bool(function_fingerprints)
+    summary["import_hash"] = metadata.get("import_hash")
     return {
         "summary": summary,
         "symbols": symbols,

@@ -56,7 +56,12 @@ from blint_db.handlers.sqlite_handler import (
     create_database,
     match_canon_names_against_source_corpus,
 )
-from blint_db.ingest import infer_project_name, ingest_binary_file, ingest_metadata_file
+from blint_db.ingest import (
+    infer_project_name,
+    ingest_archive_members,
+    ingest_binary_file,
+    ingest_metadata_file,
+)
 from blint_db.projects_compiler.cargo import mt_cargo_blint_db_build
 from blint_db.projects_compiler.conan import mt_conan_blint_db_build
 from blint_db.projects_compiler.homebrew import mt_homebrew_blint_db_build
@@ -177,6 +182,14 @@ def build_parser():
         "--relative-to",
         dest="relative_to",
         help="Path prefix used to normalize stored binary relative paths.",
+    )
+    ingest_parser.add_argument(
+        "--archive-members",
+        dest="archive_members",
+        action="store_true",
+        default=False,
+        help="When the input is a static archive (.a/.lib), also ingest every "
+        "object member as its own binary row for member-level matching.",
     )
 
     def _add_build_selection_arguments(subparser):
@@ -649,6 +662,19 @@ def _run_ingest(args):
             relative_to=args.relative_to,
             disassemble=args.disassemble,
         )
+        member_results = []
+        if args.archive_members:
+            member_results = ingest_archive_members(
+                args.input,
+                db_file=args.db_file,
+                project_name=project_name,
+                project_purl=args.project_purl,
+                ecosystem=args.ecosystem,
+                build_system=args.build_system,
+                strip_status=args.strip_status,
+                disassemble=args.disassemble,
+            )
+            print(f"Ingested {len(member_results)} archive members")
     else:
         raise SystemExit(
             "Provide either --input or --metadata-file for the ingest command."

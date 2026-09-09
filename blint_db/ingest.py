@@ -5,6 +5,8 @@ from __future__ import annotations
 # SPDX-License-Identifier: MIT
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -69,6 +71,7 @@ def ingest_metadata(
     build_metadata=None,
     binary_file_path: str | None = None,
     relative_to: str | None = None,
+    archive_name: str | None = None,
 ) -> dict[str, Any]:
     create_database(db_file)
     binary_path = binary_file_path or metadata.get("file_path") or metadata.get("name")
@@ -76,6 +79,8 @@ def ingest_metadata(
     summary = summarized["summary"]
     if binary_path:
         summary["file_path"] = str(binary_path)
+    if archive_name:
+        summary["archive_name"] = archive_name
     if not target_os:
         target_os = (
             build_metadata.get("target_os")
@@ -190,6 +195,83 @@ def ingest_binary_file(
         binary_file_path=binary_file_path,
         relative_to=relative_to,
     )
+
+
+# Windows path separators must not smuggle a directory name into the member
+# name; members are stored with a plain basename.
+def extract_archive_members(
+    archive_file_path: str | os.PathLike,
+) -> list[dict[str, Any]]:
+    """Return the object-file members of a static archive (``.a``/``.lib``).
+
+    Each entry carries ``name`` (a plain basename) and ``data`` (the raw member
+    bytes). Symbol-index members such as ``__.SYMDEF`` and the long-name
+    members are skipped: they are archive bookkeeping, not compilable objects.
+    """
+    import ar
+
+    members: list[dict[str, Any]] = []
+    with open(archive_file_path, "rb") as handle:
+        archive = ar.Archive(handle)
+        for member in archive:
+            name = os.path.basename(str(member.name).replace("\\", "/"))
+            if not name or not name.lower().endswith((".o", ".obj")):
+                continue
+            data = member.get_stream(handle).read(member.size)
+            if data:
+                members.append({"name": name, "data": data})
+    return members
+
+
+def ingest_archive_members(
+    archive_file_path: str,
+    *,
+    db_file: str | None = None,
+    project_name: str,
+    project_purl: str | None = None,
+    ecosystem: str | None = None,
+    build_system: str = "manual",
+    strip_status: str | None = None,
+    disassemble: bool = False,
+    archive_name: str | None = None,
+) -> list[dict[str, Any]]:
+    """Ingest every object member of a static archive as its own binary row.
+
+    Member rows carry ``archive_name`` so consumers can group function-hash
+    evidence at member granularity (the unit a statically linked binary
+    actually contains). Returns one result dict per ingested member.
+    """
+    results: list[dict[str, Any]] = []
+    archive_name = archive_name or os.path.basename(archive_file_path)
+    with tempfile.TemporaryDirectory(prefix="blintdb-members-") as temp_dir:
+        for index, member in enumerate(extract_archive_members(archive_file_path)):
+            member_path = os.path.join(temp_dir, f"{index:06d}_{member['name']}")
+            with open(member_path, "wb") as member_handle:
+                member_handle.write(member["data"])
+            try:
+                metadata = collect_blint_metadata(member_path, disassemble=disassemble)
+            except Exception:  # pylint: disable=broad-exception-caught
+                continue
+            if not metadata:
+                continue
+            # Report the member's own name, not the temporary file's index
+            # prefix; the prefix only keeps same-named members from different
+            # archives from colliding on disk.
+            metadata["name"] = member["name"]
+            result = ingest_metadata(
+                metadata=metadata,
+                db_file=db_file,
+                project_name=project_name,
+                project_purl=project_purl,
+                ecosystem=ecosystem,
+                build_system=build_system,
+                is_stripped=_resolve_strip_status(strip_status),
+                binary_file_path=member_path,
+                archive_name=archive_name,
+            )
+            result["member_name"] = member["name"]
+            results.append(result)
+    return results
 
 
 def ingest_metadata_file(

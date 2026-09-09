@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS Binaries (
     uses_ifunc INTEGER,
     uses_private_symbol_versions INTEGER,
     uses_runtime_loading INTEGER,
+    archive_name TEXT,
     build_info_json TEXT,
     security_properties_json TEXT,
     callgraph_json TEXT,
@@ -255,6 +256,7 @@ CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash_binary ON FunctionFingerp
 CREATE INDEX IF NOT EXISTS idx_functions_fuzzy_hash_binary ON FunctionFingerprints(fuzzy_hash, binary_id);
 CREATE INDEX IF NOT EXISTS idx_functions_cfg_hash_binary ON FunctionFingerprints(cfg_hash, binary_id);
 CREATE INDEX IF NOT EXISTS idx_binaries_import_hash ON Binaries(import_hash);
+CREATE INDEX IF NOT EXISTS idx_binaries_archive_name ON Binaries(archive_name);
 CREATE INDEX IF NOT EXISTS idx_source_graphs_project ON SourceGraphs(project_id);
 CREATE INDEX IF NOT EXISTS idx_source_graphs_purl ON SourceGraphs(purl);
 CREATE INDEX IF NOT EXISTS idx_cgnodes_canon ON CallGraphNodes(canon_name, graph_kind);
@@ -591,10 +593,11 @@ def upsert_binary(
             security_stripped, relro, file_size, imported_library_count, symbol_count,
             function_count, disassembly_enabled, callgraph_version, callgraph_node_count,
             callgraph_edge_count, callgraph_external_count, libc, min_glibc_version,
-            uses_ifunc, uses_private_symbol_versions, uses_runtime_loading, build_info_json,
+            uses_ifunc, uses_private_symbol_versions, uses_runtime_loading,
+            archive_name, build_info_json,
             security_properties_json, callgraph_json, abi_analysis_json, metadata_json,
             created_at, updated_at
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(binary_key) DO UPDATE SET
             file_path=excluded.file_path,
             relative_path=excluded.relative_path,
@@ -630,6 +633,8 @@ def upsert_binary(
             uses_ifunc=excluded.uses_ifunc,
             uses_private_symbol_versions=excluded.uses_private_symbol_versions,
             uses_runtime_loading=excluded.uses_runtime_loading,
+            import_hash=excluded.import_hash,
+            archive_name=excluded.archive_name,
             build_info_json=excluded.build_info_json,
             security_properties_json=excluded.security_properties_json,
             callgraph_json=excluded.callgraph_json,
@@ -686,6 +691,7 @@ def upsert_binary(
             _bool_to_int(
                 runtime_loading.get("loads_libraries") if runtime_loading else None
             ),
+            metadata.get("archive_name"),
             _json_dump(build_info),
             _json_dump(security_properties),
             _json_dump(callgraph),
@@ -836,8 +842,7 @@ def replace_binary_function_fingerprints(
         """
         INSERT OR IGNORE INTO FunctionFingerprints(
             binary_id, function_key, name, address, rva_or_address, assembly_hash,
-            instruction_hash, fuzzy_hash, cfg_hash, instruction_count,
-            function_type, has_indirect_call,
+            instruction_hash, fuzzy_hash, cfg_hash, instruction_count, function_type, has_indirect_call,
             has_pac, has_system_call, has_security_feature, has_crypto_call,
             has_gpu_call, has_loop, instruction_metrics_json, regs_read_json,
             regs_written_json, used_simd_reg_types_json, direct_calls_json,
