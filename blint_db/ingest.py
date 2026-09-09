@@ -259,14 +259,14 @@ def _seed_object_file_functions(
 ) -> bool:
     """Seed ``metadata["functions"]`` from symtab for Mach-O object members.
 
-    Returns True when seeds were added. lief's Mach-O function list is built
+    Returns True when seeds were written. lief's Mach-O function list is built
     from LC_FUNCTION_STARTS and unwind data, neither of which exists in a
     relocatable object, and what little prologue scanning finds is a handful
     of local labels (an 81-symbol lapi.o discovered 7). The symbol table does
     carry every text symbol, so a member whose Mach-O file type is MH_OBJECT
-    is seeded from the defined section symbols inside ``__TEXT,__text``.
-    ELF and PE members already discover functions from their symbol tables,
-    and linked Mach-O images keep their normal discovery.
+    has its function list replaced by the defined section symbols inside
+    ``__TEXT,__text`` -- always, including over any partial list parse left
+    behind. Linked Mach-O images, ELF and PE members are left untouched.
     """
     if str(metadata.get("binary_type")) != "MachO":
         return False
