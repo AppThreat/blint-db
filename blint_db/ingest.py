@@ -223,6 +223,136 @@ def extract_archive_members(
     return members
 
 
+def _is_macho_object_file(member_path: str) -> bool:
+    """Whether the file is a relocatable Mach-O object (MH_OBJECT)."""
+    import lief
+
+    try:
+        parsed = lief.MachO.parse(member_path)
+        binary = parsed.at(0)
+        return binary.header.file_type == lief.MachO.Header.FILE_TYPE.OBJECT
+    except Exception:  # pylint: disable=broad-exception-caught
+        return False
+
+
+def _macho_text_range(member_path: str) -> tuple[int, int] | None:
+    """Return the (start, end) byte range of the ``__TEXT,__text`` section."""
+    import lief
+
+    try:
+        parsed = lief.MachO.parse(member_path)
+        binary = parsed.at(0)
+        for section in binary.sections:
+            if (
+                str(getattr(section, "segment_name", "")) == "__TEXT"
+                and str(section.name) == "__text"
+            ):
+                start = int(section.virtual_address)
+                return start, start + int(section.size)
+    except Exception:  # pylint: disable=broad-exception-caught
+        return None
+    return None
+
+
+def _seed_object_file_functions(
+    metadata: dict[str, Any], member_path: str
+) -> bool:
+    """Seed ``metadata["functions"]`` from symtab for Mach-O object members.
+
+    Returns True when seeds were added. lief's Mach-O function list is built
+    from LC_FUNCTION_STARTS and unwind data, neither of which exists in a
+    relocatable object, and what little prologue scanning finds is a handful
+    of local labels (an 81-symbol lapi.o discovered 7). The symbol table does
+    carry every text symbol, so a member whose Mach-O file type is MH_OBJECT
+    is seeded from the defined section symbols inside ``__TEXT,__text``.
+    ELF and PE members already discover functions from their symbol tables,
+    and linked Mach-O images keep their normal discovery.
+    """
+    if str(metadata.get("binary_type")) != "MachO":
+        return False
+    symtab = metadata.get("symtab_symbols") or []
+    if not symtab:
+        return False
+    if not _is_macho_object_file(member_path):
+        return False
+    text_range = _macho_text_range(member_path)
+    if not text_range:
+        return False
+
+    def _sym_addr(symbol: dict) -> int | None:
+        try:
+            return int(str(symbol.get("address")), 16)
+        except (TypeError, ValueError):
+            return None
+
+    text_start, text_end = text_range
+    in_text = [
+        symbol
+        for symbol in symtab
+        if str(symbol.get("type")) == "TYPE.SECTION"
+        and (addr := _sym_addr(symbol)) is not None
+        and text_start <= addr < text_end
+    ]
+    if not in_text:
+        return False
+    in_text.sort(key=_sym_addr)
+    functions = []
+    for index, symbol in enumerate(in_text):
+        start = _sym_addr(symbol) or 0
+        next_addr = _sym_addr(in_text[index + 1]) if index + 1 < len(in_text) else None
+        # No symbol sizes in a Mach-O symtab: bound each seed by the next
+        # text symbol. The disassembler re-derives real function boundaries
+        # from the instruction stream; the size only scopes the byte read.
+        end = next_addr if next_addr else min(text_end, start + 4096)
+        functions.append(
+            {
+                "index": index,
+                "name": symbol.get("name"),
+                "address": symbol.get("address"),
+                "size": max(4, end - start),
+                "flags": None,
+            }
+        )
+    metadata["functions"] = functions
+    return True
+
+
+def _disassemble_member_metadata(metadata: dict[str, Any], member_path: str) -> None:
+    """Disassemble a member whose function list was seeded post-parse.
+
+    ``collect_blint_metadata(disassemble=True)`` runs disassembly inside
+    blint's parse, before the object-file seed exists — so for seeded members
+    the disassembly has to be driven here. The disassembler reads function
+    bytes through the lief object, which blint does not expose on its metadata,
+    hence the format-specific re-parse (mirroring blint's own dispatch).
+    """
+    import lief
+
+    from blint.lib.binary import attach_function_hashes
+    from blint.lib.disassembler import disassemble_functions
+
+    binary_type = str(metadata.get("binary_type"))
+    try:
+        if binary_type == "ELF":
+            parsed = lief.ELF.parse(member_path)
+            parsed_obj = parsed.at(0) if len(parsed) else None
+        elif binary_type == "MachO":
+            parsed_obj = lief.MachO.parse(member_path).at(0)
+        elif binary_type == "PE":
+            parsed_obj = lief.PE.parse(member_path)
+        else:
+            parsed_obj = None
+    except Exception:  # pylint: disable=broad-exception-caught
+        parsed_obj = None
+    if parsed_obj is None:
+        return
+    disassembled = disassemble_functions(parsed_obj, metadata)
+    if not disassembled:
+        return
+    metadata["disassembled_functions"] = disassembled
+    attach_function_hashes(disassembled)
+
+
 def ingest_archive_members(
     archive_file_path: str,
     *,
@@ -258,6 +388,12 @@ def ingest_archive_members(
             # prefix; the prefix only keeps same-named members from different
             # archives from colliding on disk.
             metadata["name"] = member["name"]
+            if disassemble and _seed_object_file_functions(metadata, member_path):
+                # Mach-O relocatable members discover almost nothing inside
+                # blint's parse (lief builds its function list from
+                # LC_FUNCTION_STARTS, absent in objects); re-disassemble
+                # against the seeded symbol table instead.
+                _disassemble_member_metadata(metadata, member_path)
             result = ingest_metadata(
                 metadata=metadata,
                 db_file=db_file,
