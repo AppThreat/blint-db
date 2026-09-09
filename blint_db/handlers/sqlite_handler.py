@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS Binaries (
     sha256 TEXT,
     sha1 TEXT,
     md5 TEXT,
+    import_hash TEXT,
     is_shared_library INTEGER,
     is_pie INTEGER,
     has_nx INTEGER,
@@ -164,6 +165,8 @@ CREATE TABLE IF NOT EXISTS FunctionFingerprints (
     rva_or_address TEXT,
     assembly_hash TEXT,
     instruction_hash TEXT,
+    fuzzy_hash TEXT,
+    cfg_hash TEXT,
     instruction_count INTEGER,
     function_type TEXT,
     has_indirect_call INTEGER,
@@ -249,6 +252,9 @@ CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash ON FunctionFingerprint
 CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash ON FunctionFingerprints(assembly_hash);
 CREATE INDEX IF NOT EXISTS idx_functions_instruction_hash_binary ON FunctionFingerprints(instruction_hash, binary_id);
 CREATE INDEX IF NOT EXISTS idx_functions_assembly_hash_binary ON FunctionFingerprints(assembly_hash, binary_id);
+CREATE INDEX IF NOT EXISTS idx_functions_fuzzy_hash_binary ON FunctionFingerprints(fuzzy_hash, binary_id);
+CREATE INDEX IF NOT EXISTS idx_functions_cfg_hash_binary ON FunctionFingerprints(cfg_hash, binary_id);
+CREATE INDEX IF NOT EXISTS idx_binaries_import_hash ON Binaries(import_hash);
 CREATE INDEX IF NOT EXISTS idx_source_graphs_project ON SourceGraphs(project_id);
 CREATE INDEX IF NOT EXISTS idx_source_graphs_purl ON SourceGraphs(purl);
 CREATE INDEX IF NOT EXISTS idx_cgnodes_canon ON CallGraphNodes(canon_name, graph_kind);
@@ -581,14 +587,14 @@ def upsert_binary(
         INSERT INTO Binaries(
             binary_key, build_id, file_path, relative_path, name, binary_type, exe_type,
             machine_type, llvm_target_tuple, language, compiler_version, linker_version,
-            sha256, sha1, md5, is_shared_library, is_pie, has_nx, has_canary,
+            import_hash, sha256, sha1, md5, is_shared_library, is_pie, has_nx, has_canary,
             security_stripped, relro, file_size, imported_library_count, symbol_count,
             function_count, disassembly_enabled, callgraph_version, callgraph_node_count,
             callgraph_edge_count, callgraph_external_count, libc, min_glibc_version,
             uses_ifunc, uses_private_symbol_versions, uses_runtime_loading, build_info_json,
             security_properties_json, callgraph_json, abi_analysis_json, metadata_json,
             created_at, updated_at
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(binary_key) DO UPDATE SET
             file_path=excluded.file_path,
             relative_path=excluded.relative_path,
@@ -600,6 +606,7 @@ def upsert_binary(
             language=excluded.language,
             compiler_version=excluded.compiler_version,
             linker_version=excluded.linker_version,
+            import_hash=excluded.import_hash,
             sha256=excluded.sha256,
             sha1=excluded.sha1,
             md5=excluded.md5,
@@ -643,6 +650,7 @@ def upsert_binary(
             build_info.get("language") if build_info else None,
             build_info.get("compiler_version") if build_info else None,
             build_info.get("linker_version") if build_info else None,
+            metadata.get("import_hash") or None,
             hashes.get("sha256"),
             hashes.get("sha1"),
             hashes.get("md5"),
@@ -828,13 +836,14 @@ def replace_binary_function_fingerprints(
         """
         INSERT OR IGNORE INTO FunctionFingerprints(
             binary_id, function_key, name, address, rva_or_address, assembly_hash,
-            instruction_hash, instruction_count, function_type, has_indirect_call,
+            instruction_hash, fuzzy_hash, cfg_hash, instruction_count,
+            function_type, has_indirect_call,
             has_pac, has_system_call, has_security_feature, has_crypto_call,
             has_gpu_call, has_loop, instruction_metrics_json, regs_read_json,
             regs_written_json, used_simd_reg_types_json, direct_calls_json,
             direct_call_targets_json, proprietary_instructions_json,
             sreg_interactions_json, metadata_json
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             (
@@ -845,6 +854,8 @@ def replace_binary_function_fingerprints(
                 function.get("rva_or_address"),
                 function.get("assembly_hash"),
                 function.get("instruction_hash"),
+                function.get("fuzzy_hash"),
+                function.get("cfg_hash"),
                 function.get("instruction_count"),
                 function.get("function_type"),
                 _bool_to_int(function.get("has_indirect_call")),

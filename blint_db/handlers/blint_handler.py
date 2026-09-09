@@ -10,6 +10,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from blint.db import MIN_FUNCTION_INSTRUCTION_COUNT_FOR_FUZZY_HASH_LOOKUP
 from blint.lib.binary import parse
 from blint_db.utils.json import make_json_safe, coerce_json_object, optional_json_object
 
@@ -384,6 +385,17 @@ def extract_function_fingerprints(
         function_name = function_data.get("name")
         if not function_name:
             continue
+        # The similarity hashes are stored only for functions large enough for
+        # blint to query them with. Below that floor a mnemonic sequence is a
+        # compiler idiom shared by every project, so indexing it would grow the
+        # database with rows that can only ever produce false matches.
+        instruction_count = function_data.get("instruction_count")
+        above_fuzzy_floor = (
+            instruction_count is not None
+            and int(instruction_count) >= MIN_FUNCTION_INSTRUCTION_COUNT_FOR_FUZZY_HASH_LOOKUP
+        )
+        fuzzy_hash = function_data.get("fuzzy_hash") if above_fuzzy_floor else None
+        cfg_hash = function_data.get("cfg_hash") if above_fuzzy_floor else None
         extra_metadata = optional_json_object(
             {
                 "instructions_with_registers": function_data.get(
@@ -409,7 +421,9 @@ def extract_function_fingerprints(
                     if include_instruction_hash
                     else None
                 ),
-                "instruction_count": function_data.get("instruction_count"),
+                "fuzzy_hash": fuzzy_hash,
+                "cfg_hash": cfg_hash,
+                "instruction_count": instruction_count,
                 "function_type": function_data.get("function_type"),
                 "has_indirect_call": function_data.get("has_indirect_call"),
                 "has_pac": function_data.get("has_pac"),
