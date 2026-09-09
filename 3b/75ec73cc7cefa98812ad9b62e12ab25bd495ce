@@ -1,0 +1,22 @@
+blint_db/cli.py
+  h_6a4cc5cdf68def 59-64,186-193,665-677
+blint_db/config.py
+  h_6a4cc5cdf68def 44-47
+blint_db/handlers/blint_handler.py
+  h_6a4cc5cdf68def 412-413,492
+blint_db/handlers/sqlite_handler.py
+  h_6a4cc5cdf68def 104-105,169-170,254-255,258-261,598-599,602,637-638,694-695,846,852,863-864
+blint_db/ingest.py
+  h_6a4cc5cdf68def 8-9,74,82-83,200-276
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "3b75ec73cc7cefa98812ad9b62e12ab25bd495ce",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
