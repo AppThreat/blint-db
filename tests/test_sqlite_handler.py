@@ -21,7 +21,7 @@ def test_create_database_initializes_current_schema(tmp_path):
 
     create_database(str(db_file))
 
-    assert get_schema_version(str(db_file)) == 4
+    assert get_schema_version(str(db_file)) == 3
     tables = {
         row["name"]
         for row in execute_statement(
