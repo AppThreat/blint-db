@@ -1,0 +1,14 @@
+tests/test_sqlite_handler.py
+  h_6a4cc5cdf68def 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0a310f33052e0caae58a1f416e16e32bcd94076b",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
