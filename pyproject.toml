@@ -7,6 +7,7 @@ authors = [
   {name= "Team AppThreat", email = "cloud@appthreat.com"},
 ]
 dependencies = [
+    "ar>=1.0.1",
     "blint",
     "conan>=2.28.0",
     "huggingface-hub>=1.12.2",
@@ -66,4 +67,4 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [tool.uv.sources]
-blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "6f7882abd4155149da86d86ff4d5fe5b269dcf39" }
+blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "6d9c5ebda72368cb6b53bb8a347c54a63c2e4cd9" }

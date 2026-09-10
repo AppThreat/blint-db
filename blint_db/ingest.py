@@ -35,6 +35,7 @@ from blint_db.handlers.sqlite_handler import (
     upsert_project,
     upsert_source_graph,
 )
+from blint_db.config import logger
 
 
 def _load_optional_json_file(file_path: str | None):
@@ -370,19 +371,34 @@ def ingest_archive_members(
     Member rows carry ``archive_name`` so consumers can group function-hash
     evidence at member granularity (the unit a statically linked binary
     actually contains). Returns one result dict per ingested member.
+
+    A member is identified by ``<archive path>::<member name>``, not by the
+    file it was unpacked to. The unpacked path is a fresh temporary directory
+    on every run and it reaches the row's identity key, so identifying members
+    by it makes re-ingesting an archive insert a second copy of every member
+    instead of updating the first — and a duplicated member splits the
+    function-hash evidence a consumer divides by that member's own function
+    count.
     """
     results: list[dict[str, Any]] = []
     archive_name = archive_name or os.path.basename(archive_file_path)
     with tempfile.TemporaryDirectory(prefix="blintdb-members-") as temp_dir:
         for index, member in enumerate(extract_archive_members(archive_file_path)):
             member_path = os.path.join(temp_dir, f"{index:06d}_{member['name']}")
+            member_identity = f"{archive_file_path}::{member['name']}"
             with open(member_path, "wb") as member_handle:
                 member_handle.write(member["data"])
             try:
                 metadata = collect_blint_metadata(member_path, disassemble=disassemble)
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                # One unparseable member must not end the archive, but it must
+                # not vanish either: an archive that silently ingests half its
+                # members reads downstream as a small member set, not as a
+                # failure.
+                logger.warning("Skipping archive member %s: %s", member_identity, exc)
                 continue
             if not metadata:
+                logger.warning("Skipping archive member %s: no metadata", member_identity)
                 continue
             # Report the member's own name, not the temporary file's index
             # prefix; the prefix only keeps same-named members from different
@@ -402,7 +418,7 @@ def ingest_archive_members(
                 ecosystem=ecosystem,
                 build_system=build_system,
                 is_stripped=_resolve_strip_status(strip_status),
-                binary_file_path=member_path,
+                binary_file_path=member_identity,
                 archive_name=archive_name,
             )
             result["member_name"] = member["name"]

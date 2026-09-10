@@ -99,3 +99,48 @@ def test_seed_recovers_macho_object_functions(tmp_path):
     # seeds rather than appending.
     assert _seed_object_file_functions(metadata, str(obj)) is True
     assert [f["name"] for f in metadata["functions"]] == names
+
+
+@pytest.mark.skipif(_clang() is None, reason="clang not available")
+def test_re_ingesting_an_archive_updates_its_members_rather_than_duplicating(tmp_path):
+    """A member's identity must not be the temporary file it was unpacked to.
+
+    The unpacked path is a fresh temporary directory on every run and it feeds
+    the row's identity key, so a member identified by it never matches the row
+    written last time. Two ingests then leave two rows per member, each
+    carrying the member's full function_count while the matched hashes split
+    between them — which is the denominator a consumer divides by.
+    """
+    import sqlite3
+
+    clang = _clang()
+    source = tmp_path / "alpha.c"
+    source.write_text("int alpha(int x) { return x + 1; }\n")
+    obj = tmp_path / "alpha.o"
+    subprocess.run([clang, "-O0", "-c", str(source), "-o", str(obj)], capture_output=True, check=False)
+    if not obj.exists():
+        pytest.skip("object file build failed")
+    archive = tmp_path / "libalpha.a"
+    subprocess.run(["ar", "rcs", str(archive), str(obj)], capture_output=True, check=False)
+    if not archive.exists():
+        pytest.skip("ar not available")
+
+    from blint_db.ingest import ingest_archive_members
+
+    db_file = str(tmp_path / "members.db")
+    for _ in range(2):
+        ingest_archive_members(
+            str(archive),
+            db_file=db_file,
+            project_name="alpha",
+            project_purl="pkg:generic/alpha@1",
+            ecosystem="generic",
+        )
+    connection = sqlite3.connect(db_file)
+    try:
+        rows = connection.execute(
+            "SELECT name, count(*) FROM Binaries WHERE archive_name = 'libalpha.a' GROUP BY name"
+        ).fetchall()
+    finally:
+        connection.close()
+    assert rows == [("alpha.o", 1)]
