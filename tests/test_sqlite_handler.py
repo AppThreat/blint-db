@@ -17,7 +17,7 @@ from blint_db.ingest import ingest_metadata, ingest_metadata_file
 
 
 def test_create_database_initializes_current_schema(tmp_path):
-    db_file = tmp_path / "blint-v3.db"
+    db_file = tmp_path / "blint-v4.db"
 
     create_database(str(db_file))
 
