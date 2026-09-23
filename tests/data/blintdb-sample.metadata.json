@@ -1,0 +1,196 @@
+{
+  "config": {
+    "build_jobs": 14,
+    "cargo_curated_crates_file": "/Users/appthreat/work/AppThreat/blint-db/blint_db/inputs/cargo-crates.csv",
+    "cargo_default_profile": "release",
+    "cargo_default_target": null,
+    "conan_curated_packages_file": "/Users/appthreat/work/AppThreat/blint-db/blint_db/inputs/conan-center-packages.csv",
+    "conan_default_build_profile": null,
+    "conan_default_build_type": "Release",
+    "conan_default_deployer": "full_deploy",
+    "conan_default_host_profile": null,
+    "conan_remote": "conancenter",
+    "homebrew_build_from_source": false,
+    "homebrew_curated_formulas_file": "/Users/appthreat/work/AppThreat/blint-db/blint_db/inputs/homebrew-formulas.csv",
+    "meson_build_type": "debug",
+    "meson_default_library": "shared",
+    "meson_strip": false,
+    "vcpkg_default_triplet": "arm64-osx",
+    "vcpkg_keep_going": true
+  },
+  "database": {
+    "path": "/Users/appthreat/work/AppThreat/blint-db/tests/data/blintdb-sample.db",
+    "size_bytes": 6623232,
+    "sqlite_stats": {
+      "database_file": "/Users/appthreat/work/AppThreat/blint-db/tests/data/blintdb-sample.db",
+      "freelist_count": 0,
+      "page_count": 1617,
+      "page_size": 4096,
+      "shm_size_bytes": 0,
+      "size_bytes": 6623232,
+      "wal_size_bytes": 0
+    },
+    "table_counts": {
+      "Binaries": 6,
+      "Builds": 4,
+      "Dependencies": 19,
+      "FunctionFingerprints": 0,
+      "Projects": 3,
+      "Symbols": 6580
+    }
+  },
+  "ecosystem_sources": {
+    "cargo": null,
+    "conan": null,
+    "homebrew": null,
+    "vcpkg": null,
+    "wrapdb": {
+      "expected_commit": "e74bfb6078dd4805d346d1fc38d0f6ad198443ad",
+      "path": "/tmp/blintdb-sample-bootstrap/wrapdb",
+      "url": "https://github.com/mesonbuild/wrapdb.git"
+    }
+  },
+  "generated_at": "2026-09-23T16:20:00+00:00",
+  "host": {
+    "machine": "arm64",
+    "platform": "macOS-15.8-arm64-arm-64bit-Mach-O",
+    "release": "24.6.0",
+    "system": "Darwin"
+  },
+  "packages": {
+    "blint": {
+      "direct_url": {
+        "url": "https://github.com/owasp-dep-scan/blint",
+        "vcs_info": {
+          "commit_id": "aabbafd1894a44b0a1ada44899941c57868d309c",
+          "requested_revision": "aabbafd1894a44b0a1ada44899941c57868d309c",
+          "vcs": "git"
+        }
+      },
+      "version": "4.0.0"
+    },
+    "blint-db": {
+      "direct_url": {
+        "dir_info": {
+          "editable": true
+        },
+        "url": "file:///Users/appthreat/work/AppThreat/blint-db"
+      },
+      "version": "2.1.0"
+    },
+    "nyxstone": {
+      "version": "0.1.8"
+    }
+  },
+  "projects": {
+    "attempted_count": 3,
+    "build_failures": [],
+    "failure_count": 0,
+    "outcomes": [
+      {
+        "artifact_count": 2,
+        "build_system": "meson",
+        "details": {
+          "wrap_file": "/tmp/blintdb-sample-bootstrap/wrapdb/subprojects/zlib.wrap"
+        },
+        "ecosystem": "wrapdb",
+        "project_name": "zlib",
+        "selector": "zlib",
+        "status": "success"
+      },
+      {
+        "artifact_count": 2,
+        "build_system": "meson",
+        "details": {
+          "wrap_file": "/tmp/blintdb-sample-bootstrap/wrapdb/subprojects/bzip2.wrap"
+        },
+        "ecosystem": "wrapdb",
+        "project_name": "bzip2",
+        "selector": "bzip2",
+        "status": "success"
+      },
+      {
+        "artifact_count": 2,
+        "build_system": "meson",
+        "details": {
+          "wrap_file": "/tmp/blintdb-sample-bootstrap/wrapdb/subprojects/c-ares.wrap"
+        },
+        "ecosystem": "wrapdb",
+        "project_name": "c-ares",
+        "selector": "c-ares",
+        "status": "success"
+      }
+    ],
+    "selected_count": 3,
+    "status_counts": {
+      "success": 3
+    },
+    "success_count": 3
+  },
+  "repositories": {
+    "blint-db": {
+      "branch": "feat/d0-testable",
+      "commit": "348bd13985d153ad9f97ba714b3f2176046146b0",
+      "dirty": true,
+      "path": "/Users/appthreat/work/AppThreat/blint-db"
+    },
+    "wrapdb": {
+      "branch": "HEAD",
+      "commit": "e74bfb6078dd4805d346d1fc38d0f6ad198443ad",
+      "dirty": false,
+      "expected_commit": "e74bfb6078dd4805d346d1fc38d0f6ad198443ad",
+      "matches_expected_commit": true,
+      "path": "/tmp/blintdb-sample-bootstrap/wrapdb"
+    }
+  },
+  "run": {
+    "argv": [
+      "/Users/appthreat/work/AppThreat/blint-db/.venv/bin/blint-db",
+      "--clean-start",
+      "--db-file",
+      "/Users/appthreat/work/AppThreat/blint-db/tests/data/blintdb-sample.db",
+      "--run-metadata-file",
+      "/Users/appthreat/work/AppThreat/blint-db/tests/data/blintdb-sample.metadata.json",
+      "build-meson",
+      "-s",
+      "zlib",
+      "bzip2",
+      "c-ares"
+    ],
+    "command": "build-meson",
+    "db_file": "/Users/appthreat/work/AppThreat/blint-db/tests/data/blintdb-sample.db",
+    "disassemble": false,
+    "metadata_file": "/Users/appthreat/work/AppThreat/blint-db/tests/data/blintdb-sample.metadata.json",
+    "selected_projects": [
+      "zlib",
+      "bzip2",
+      "c-ares"
+    ],
+    "test_mode": false,
+    "working_directory": "/Users/appthreat/work/AppThreat/blint-db"
+  },
+  "runner": {
+    "github_run_attempt": null,
+    "github_run_id": null,
+    "github_sha": null,
+    "github_workflow": null,
+    "runner_arch": null,
+    "runner_os": null
+  },
+  "schema": {
+    "family": "blint-db",
+    "version": 3
+  },
+  "tool_versions": {
+    "brew": "Homebrew 7.0.6",
+    "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "conan": "Conan version 2.31.2",
+    "llvm-config": "22.1.8",
+    "meson": "1.12.0",
+    "ninja": "1.13.0.git.kitware.jobserver-pipe-1",
+    "python": "3.13.2",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "swift": "Apple Swift version 6.3.3 (swift-6.3.3-RELEASE)",
+    "uv": "uv 0.12.18 (01cb90c1a 2026-09-22 aarch64-apple-darwin)"
+  }
+}
