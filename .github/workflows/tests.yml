@@ -104,3 +104,24 @@ jobs:
           # quieter "no match" result downstream.
           assert not build_failures, build_failures
           PY
+
+  contract-vs-blint-main:
+    # The pinned run above only fails when the pin moves. This job runs the
+    # query-contract tests against blint's current main, so a blint change
+    # that the committed schema cannot serve shows up here first.
+    name: contract tests vs blint main
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+      - name: Install dependencies with blint main
+        run: |
+          uv sync --frozen -p 3.13 --extra dev
+          uv pip install --reinstall-package blint "blint @ git+https://github.com/owasp-dep-scan/blint@main"
+          uv run --no-sync python -c "import importlib.metadata as m; print('blint', m.version('blint'))"
+      - name: Run contract tests
+        run: uv run --no-sync pytest -rs tests/test_blintdb_contract.py
