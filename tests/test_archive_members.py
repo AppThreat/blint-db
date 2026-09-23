@@ -69,6 +69,10 @@ def test_seed_object_file_functions_requires_macho_object(tmp_path):
     assert _seed_object_file_functions(empty, str(tmp_path / "missing.o")) is False
 
 
+@pytest.mark.skipif(
+    sys.platform != "darwin",
+    reason="Mach-O object seeding requires a darwin-built object file",
+)
 @pytest.mark.skipif(_clang() is None, reason="clang not available")
 def test_seed_recovers_macho_object_functions(tmp_path):
     clang = _clang()
@@ -79,7 +83,7 @@ def test_seed_recovers_macho_object_functions(tmp_path):
     )
     obj = tmp_path / "two_fns.o"
     subprocess.run(
-        [clang, "-arch", "arm64" if sys.platform == "darwin" else "", "-O0", "-c", str(source), "-o", str(obj)],
+        [clang, "-arch", "arm64", "-O0", "-c", str(source), "-o", str(obj)],
         capture_output=True,
         check=False,
     )

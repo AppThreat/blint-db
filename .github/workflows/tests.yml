@@ -1,0 +1,127 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: pytest + flake8 (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+      - name: Install dependencies
+        # pytest/flake8 live in the optional-dependencies "dev" extra (not a
+        # PEP 735 dependency-group), so a plain `uv sync` installs neither —
+        # the first CI run failed with "Failed to spawn: pytest".
+        run: uv sync --frozen -p 3.13 --extra dev
+      - name: Run tests
+        run: |
+          # -rs prints every skip with its stated reason plus the skip count,
+          # so a capability that silently skips on CI is visible in the log.
+          uv run --no-sync pytest -rs
+      - name: Flake8 error gate
+        run: |
+          # Same gate blint's CI runs; E9,F63,F7,F82 are the error classes
+          # that make a module unimportable or a name undefined.
+          uv run --no-sync flake8 blint_db tests --count --select=E9,F63,F7,F82
+
+  tiny-meson-corpus:
+    name: tiny meson corpus (zlib, symbol-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+      - name: Install dependencies
+        run: uv sync --frozen -p 3.13
+      - name: Build one-wrap corpus end-to-end (symbol-only)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/blint-db-bootstrap"
+          BLINT_DB_BOOTSTRAP_PATH="${RUNNER_TEMP}/blint-db-bootstrap" \
+          BLINT_DB_MESON_STRIP=0 \
+            uv run --no-sync blint-db \
+              --clean-start \
+              --db-file "${RUNNER_TEMP}/zlib-small.db" \
+              --run-metadata-file "${RUNNER_TEMP}/zlib-small.metadata.json" \
+              build-meson -s zlib --retain-build-artifacts
+      - name: Assert schema v3, non-empty rows, provenance sidecar
+        run: |
+          uv run --no-sync python - "${RUNNER_TEMP}/zlib-small.db" "${RUNNER_TEMP}/zlib-small.metadata.json" <<'PY'
+          import json
+          import sqlite3
+          import sys
+
+          db_file, metadata_file = sys.argv[1], sys.argv[2]
+
+          connection = sqlite3.connect(db_file)
+          meta = dict(connection.execute("SELECT key, value FROM SchemaMeta").fetchall())
+          assert meta.get("schema_family") == "blint-db", meta
+          assert meta.get("schema_version") == "3", meta
+          counts = {
+              table: connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+              for table in ("Projects", "Builds", "Binaries", "Symbols")
+          }
+          print(f"table counts: {counts}")
+          assert counts["Projects"] > 0, counts
+          assert counts["Builds"] > 0, counts
+          assert counts["Binaries"] > 0, counts
+          assert counts["Symbols"] > 0, counts
+          symbol_only = connection.execute(
+              "SELECT COUNT(*) FROM FunctionFingerprints"
+          ).fetchone()[0]
+          print(f"function fingerprints (symbol-only build, expected 0): {symbol_only}")
+          project_rows = connection.execute(
+              "SELECT name, purl, ecosystem FROM Projects"
+          ).fetchall()
+          print(f"projects: {project_rows}")
+          assert any(row[0] == "zlib" for row in project_rows), project_rows
+          connection.close()
+
+          provenance = json.load(open(metadata_file, encoding="utf-8"))
+          projects = provenance.get("projects") or {}
+          build_failures = projects.get("build_failures") or []
+          print(f"build statuses: {projects.get('status_counts')}")
+          print(f"build failures: {json.dumps(build_failures, indent=2)}")
+          assert provenance["schema"]["version"] == 3, provenance["schema"]
+          assert projects.get("success_count", 0) >= 1, projects
+          # A selector that did not build is a failure of this job, not a
+          # quieter "no match" result downstream.
+          assert not build_failures, build_failures
+          PY
+
+  contract-vs-blint-main:
+    # The pinned run above only fails when the pin moves. This job runs the
+    # query-contract tests against blint's current main, so a blint change
+    # that the committed schema cannot serve shows up here first.
+    name: contract tests vs blint main
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+      - name: Install dependencies with blint main
+        run: |
+          uv sync --frozen -p 3.13 --extra dev
+          uv pip install --reinstall-package blint "blint @ git+https://github.com/owasp-dep-scan/blint@main"
+          uv run --no-sync python -c "import importlib.metadata as m; print('blint', m.version('blint'))"
+      - name: Run contract tests
+        run: uv run --no-sync pytest -rs tests/test_blintdb_contract.py
