@@ -22,7 +22,7 @@ from blint_db.handlers.language_handlers.vcpkg_handler import (
     find_vcpkg_executables,
     vcpkg_build,
 )
-from blint_db.ingest import ingest_binary_file
+from blint_db.ingest import ingest_archive_members, ingest_binary_file
 from blint_db.utils.provenance import build_failure_record, build_project_outcome
 
 
@@ -124,6 +124,27 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
                 relative_to=VCPKG_LOCATION / "installed" / VCPKG_DEFAULT_TRIPLET,
                 disassemble=disassemble,
             )
+            # Static archives (the default for vcpkg's Android triplets, and
+            # common for cross builds generally) parse to nothing as a whole:
+            # lief does not read the ar container, so the whole-file row
+            # carries no symbols. The object members are the queryable unit
+            # (P4.3 member rows), so each archive is also ingested member by
+            # member.
+            if str(files).lower().endswith((".a", ".lib")):
+                member_results = ingest_archive_members(
+                    files,
+                    db_file=db_file,
+                    project_name=project_name,
+                    project_purl=purl,
+                    ecosystem="vcpkg",
+                    build_system="vcpkg",
+                    strip_status="unstripped",
+                    disassemble=disassemble,
+                    archive_name=os.path.basename(files),
+                )
+                logger.debug(
+                    "Ingested %d archive members for %s", len(member_results), files
+                )
         except (RuntimeError, FileNotFoundError) as e:
             logger.info(f"error encountered with {project_name}")
             logger.error(e)

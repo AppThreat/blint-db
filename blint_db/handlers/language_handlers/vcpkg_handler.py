@@ -11,7 +11,6 @@ from pathlib import Path
 from blint_db import (
     BUILD_JOBS,
     DEBUG_MODE,
-    VCPKG_ARCH_OS,
     VCPKG_COMMIT_HASH,
     VCPKG_DEFAULT_TRIPLET,
     VCPKG_EXTRA_INSTALL_ARGS,
@@ -37,7 +36,11 @@ class VcpkgHandler(BaseHandler):
         return vcpkg_build(project_name)
 
     def find_executables(self, project_name):
-        project_path = f"{project_name}_{VCPKG_ARCH_OS}"
+        # The packages directory is suffixed with the *target* triplet
+        # (BLINT_DB_VCPKG_TRIPLET), not the host arch-os: a cross build
+        # (arm64-android on an arm64-osx host) lands in
+        # packages/<port>_arm64-android and must be found there.
+        project_path = f"{project_name}_{VCPKG_DEFAULT_TRIPLET}"
         target_directory = VCPKG_LOCATION / "packages" / project_path
         return get_executables(target_directory)
 
@@ -183,7 +186,10 @@ def vcpkg_build(project_name):
 
 
 def find_vcpkg_executables(project_name):
-    project_path = f"{project_name}_{VCPKG_ARCH_OS}"
+    # Cross-triplet builds (BLINT_DB_VCPKG_TRIPLET=arm64-android on an
+    # arm64-osx host) place the artifacts under the target triplet's
+    # package directory; VCPKG_ARCH_OS names the host and finds nothing.
+    project_path = f"{project_name}_{VCPKG_DEFAULT_TRIPLET}"
     target_directory = VCPKG_LOCATION / "packages" / project_path
     exes = [
         file_path

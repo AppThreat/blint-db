@@ -141,13 +141,58 @@ def test_find_vcpkg_executables_reads_installed_listfiles(tmp_path, monkeypatch)
     )
 
     monkeypatch.setattr(vcpkg_handler, "VCPKG_LOCATION", vcpkg_root)
-    monkeypatch.setattr(vcpkg_handler, "VCPKG_ARCH_OS", "arm64-osx")
     monkeypatch.setattr(vcpkg_handler, "VCPKG_DEFAULT_TRIPLET", "arm64-osx")
     monkeypatch.setattr(vcpkg_handler, "get_executables", lambda directory: [])
 
     executables = vcpkg_handler.find_vcpkg_executables("zlib")
 
     assert executables == [str(debug_lib), str(release_lib)]
+
+
+def test_find_vcpkg_executables_uses_triplet_not_host(tmp_path, monkeypatch):
+    """A cross-triplet build is found under packages/<port>_<triplet>.
+
+    With BLINT_DB_VCPKG_TRIPLET=arm64-android on an arm64-osx host, vcpkg
+    writes packages/zstd_arm64-android; the host arch-os directory does not
+    exist. The lookup must follow the triplet, and must not fall back to
+    unrelated directories (an empty list is the honest "nothing built").
+    """
+    vcpkg_root = tmp_path / "vcpkg"
+    android_lib = vcpkg_root / "packages" / "zstd_arm64-android" / "lib" / "libzstd.a"
+    android_lib.parent.mkdir(parents=True)
+    # A real archive header carries non-text bytes; get_executables only
+    # keeps files is_exe recognises as binary.
+    android_lib.write_bytes(b"!<arch>\n\x00\x00\x00\x00")
+    # A host-triplet package that must NOT be picked up for a cross build.
+    host_lib = vcpkg_root / "packages" / "zstd_arm64-osx" / "lib" / "libz.a"
+    host_lib.parent.mkdir(parents=True)
+    host_lib.write_bytes(b"!<arch>\n\x00\x00\x00\x00")
+
+    monkeypatch.setattr(vcpkg_handler, "VCPKG_LOCATION", vcpkg_root)
+    monkeypatch.setattr(vcpkg_handler, "VCPKG_DEFAULT_TRIPLET", "arm64-android")
+
+    executables = vcpkg_handler.find_vcpkg_executables("zstd")
+
+    assert executables == [str(android_lib)]
+
+
+def test_vcpkg_handler_find_executables_uses_triplet(tmp_path, monkeypatch):
+    """The handler's own find_executables crosses the same boundary.
+
+    VcpkgHandler.__init__ clones and bootstraps vcpkg, so the instance is
+    built without running it; only the lookup is under test.
+    """
+    vcpkg_root = tmp_path / "vcpkg"
+    android_lib = vcpkg_root / "packages" / "zstd_arm64-android" / "lib" / "libzstd.a"
+    android_lib.parent.mkdir(parents=True)
+    android_lib.write_bytes(b"!<arch>\n\x00\x00\x00\x00")
+
+    monkeypatch.setattr(vcpkg_handler, "VCPKG_LOCATION", vcpkg_root)
+    monkeypatch.setattr(vcpkg_handler, "VCPKG_DEFAULT_TRIPLET", "arm64-android")
+
+    handler = vcpkg_handler.VcpkgHandler.__new__(vcpkg_handler.VcpkgHandler)
+
+    assert handler.find_executables("zstd") == [str(android_lib)]
 
 
 def test_cargo_build_command_uses_locked_release_and_feature_flags(monkeypatch):
