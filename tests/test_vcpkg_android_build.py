@@ -98,3 +98,14 @@ def test_host_triplet_build_rows_keep_host_derived_target(tmp_path, monkeypatch)
     assert kwargs["target_arch"] == "arm64"
     # A host build records no Android facts.
     assert "android" not in (kwargs["build_metadata"] or {})
+
+
+def test_port_version_reads_every_vcpkg_schema_field():
+    from blint_db.projects_compiler.vcpkg import _port_version
+
+    assert _port_version({"version": "1.5.7"}) == "1.5.7"
+    assert _port_version({"version-semver": "3.13.3"}) == "3.13.3"
+    assert _port_version({"version-string": "1.3.7"}) == "1.3.7"
+    assert _port_version({"version-date": "2024-08-13"}) == "2024-08-13"
+    assert _port_version({"version": None, "version-semver": "3.13.3"}) == "3.13.3"
+    assert _port_version({}) is None

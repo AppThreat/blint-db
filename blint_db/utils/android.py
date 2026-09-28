@@ -4,9 +4,10 @@
 """Android triplet facts for vcpkg cross builds.
 
 The four Android ABIs map onto vcpkg triplets; at the pinned vcpkg revision
-(63bb8e44c1) the armeabi-v7a triplet is ``arm-android`` (community, NEON
-off) - later vcpkg revisions renamed it ``arm-neon-android``, so both
-spellings map to the same ABI here. The dynamic-linkage overlay triplets
+(63bb8e44c1) the armeabi-v7a triplet is ``arm-android`` (community; its
+NEON-off flag predates NDK r27, which rejects it - the dynamic overlay
+drops it, and newer vcpkg revisions renamed the triplet
+``arm-neon-android``), so both spellings map to the same ABI here. The dynamic-linkage overlay triplets
 used for the corpus append ``-dynamic`` (contrib/vcpkg-overlay-triplets).
 """
 

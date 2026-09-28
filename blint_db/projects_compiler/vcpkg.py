@@ -90,6 +90,19 @@ def exec_explorer(directory):
     return executables
 
 
+def _port_version(vcpkg_metadata: dict) -> str | None:
+    """The port's own version string, whichever schema field declares it.
+
+    vcpkg ports carry their version as ``version``, ``version-string``,
+    ``version-semver`` or ``version-date``; reading only the first lost the
+    purl version for ports like aom that use ``version-semver``.
+    """
+    for key in ("version", "version-string", "version-semver", "version-date"):
+        if vcpkg_metadata.get(key):
+            return str(vcpkg_metadata[key])
+    return None
+
+
 def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=False):
     purl = None
     metadata = None
@@ -97,9 +110,10 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
         with open(vcpkg_json, encoding="utf-8") as fp:
             try:
                 vcpkg_metadata = json.load(fp)
+                version = _port_version(vcpkg_metadata)
                 purl = (
-                    f"pkg:generic/{vcpkg_metadata['name']}@{vcpkg_metadata['version']}"
-                    if vcpkg_metadata.get("version")
+                    f"pkg:generic/{vcpkg_metadata['name']}@{version}"
+                    if version
                     else f"pkg:generic/{vcpkg_metadata['name']}"
                 )
                 description = vcpkg_metadata.get("description")
