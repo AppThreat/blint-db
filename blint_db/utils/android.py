@@ -3,12 +3,10 @@
 # SPDX-License-Identifier: MIT
 """Android triplet facts for vcpkg cross builds.
 
-The four Android ABIs map onto vcpkg triplets; at the pinned vcpkg revision
-(63bb8e44c1) the armeabi-v7a triplet is ``arm-android`` (community; its
-NEON-off flag predates NDK r27, which rejects it - the dynamic overlay
-drops it, and newer vcpkg revisions renamed the triplet
-``arm-neon-android``), so both spellings map to the same ABI here. The dynamic-linkage overlay triplets
-used for the corpus append ``-dynamic`` (contrib/vcpkg-overlay-triplets).
+At the pinned vcpkg revision (63bb8e44c1) the armeabi-v7a triplet is the
+community ``arm-android``; newer revisions call it ``arm-neon-android``, so
+both map to the same ABI. The dynamic-linkage overlay triplets the Android
+corpus builds with append ``-dynamic`` (contrib/vcpkg-overlay-triplets).
 """
 
 from __future__ import annotations
@@ -17,7 +15,7 @@ import os
 import re
 from pathlib import Path
 
-# vcpkg triplet -> Android ABI (the blint/cyclonedx qualifier spelling).
+# vcpkg triplet -> Android ABI (the spelling blint's abi qualifier uses).
 ANDROID_TRIPLET_ABIS = {
     "arm64-android": "arm64-v8a",
     "arm-android": "armeabi-v7a",
@@ -26,61 +24,42 @@ ANDROID_TRIPLET_ABIS = {
     "x86-android": "x86",
 }
 
-# Triplet prefix -> (target_os, target_arch) for the Builds table. A
-# non-android triplet keeps the host-derived values the caller already had.
-_TRIPLET_TARGETS = {
-    "arm64-android": ("android", "arm64"),
-    "arm-android": ("android", "arm"),
-    "arm-neon-android": ("android", "arm"),
-    "x64-android": ("android", "x64"),
-    "x86-android": ("android", "x86"),
-}
-
 _SYSTEM_VERSION_RE = re.compile(r"set\s*\(\s*VCPKG_CMAKE_SYSTEM_VERSION\s+(\d+)\s*\)")
 _NDK_REVISION_RE = re.compile(r"^Pkg\.Revision\s*=\s*(\S+)", re.MULTILINE)
 
 
-def is_android_triplet(triplet: str | None) -> bool:
-    """Whether the triplet targets Android (including -dynamic overlays)."""
-    if not triplet:
-        return False
-    base = triplet.removesuffix("-dynamic")
-    return base in ANDROID_TRIPLET_ABIS
+def _base_triplet(triplet: str | None) -> str:
+    return (triplet or "").removesuffix("-dynamic")
 
 
 def android_triplet_abi(triplet: str | None) -> str | None:
-    """The Android ABI name for a triplet, or None for non-android ones."""
-    if not triplet:
-        return None
-    return ANDROID_TRIPLET_ABIS.get(triplet.removesuffix("-dynamic"))
+    """The Android ABI a triplet builds for, or None for non-Android ones."""
+    return ANDROID_TRIPLET_ABIS.get(_base_triplet(triplet))
+
+
+def is_android_triplet(triplet: str | None) -> bool:
+    return android_triplet_abi(triplet) is not None
 
 
 def triplet_target_os_arch(
     triplet: str | None, *, host_os: str, host_arch: str
 ) -> tuple[str, str]:
-    """(target_os, target_arch) a build of this triplet must record.
+    """The (target_os, target_arch) a build of this triplet records.
 
-    Android triplets say android/arm64/android/x86...; anything else is a
-    host build and keeps the host-derived pair the caller passed.
+    An Android triplet names its own target (``arm64-android`` ->
+    android/arm64); any other triplet is a host build and keeps the host pair.
     """
-    if triplet:
-        target = _TRIPLET_TARGETS.get(triplet.removesuffix("-dynamic"))
-        if target:
-            return target
+    if is_android_triplet(triplet):
+        return "android", _base_triplet(triplet).split("-", 1)[0]
     return host_os, host_arch
 
 
 def read_ndk_revision(ndk_home: str | os.PathLike | None) -> str | None:
-    """The NDK revision from ``<ndk>/source.properties`` (``Pkg.Revision``).
-
-    None when the NDK location is not set or carries no readable
-    source.properties - recorded as unknown, never guessed.
-    """
+    """``Pkg.Revision`` from ``<ndk>/source.properties``; None when unreadable."""
     if not ndk_home:
         return None
-    properties = Path(ndk_home) / "source.properties"
     try:
-        content = properties.read_text(encoding="utf-8")
+        content = (Path(ndk_home) / "source.properties").read_text(encoding="utf-8")
     except OSError:
         return None
     match = _NDK_REVISION_RE.search(content)
@@ -92,27 +71,39 @@ def read_triplet_api_level(
     vcpkg_location: str | os.PathLike | None,
     overlay_triplets: str | os.PathLike | None = None,
 ) -> int | None:
-    """The Android API level a triplet builds for.
+    """The triplet's ``VCPKG_CMAKE_SYSTEM_VERSION``, the API level the NDK
+    toolchain builds for.
 
-    Read from the triplet's ``VCPKG_CMAKE_SYSTEM_VERSION`` - the NDK
-    toolchain's ANDROID_PLATFORM comes from it - searching the overlay
-    directory first, then triplets/ and triplets/community/. None when the
-    triplet cannot be found or states no version.
+    The overlay directory is searched first, then triplets/ and
+    triplets/community/, which is the order vcpkg resolves them in.
     """
     if not triplet or not vcpkg_location:
         return None
-    roots: list[Path] = []
-    if overlay_triplets:
-        roots.append(Path(overlay_triplets))
-    roots.append(Path(vcpkg_location) / "triplets")
-    roots.append(Path(vcpkg_location) / "triplets" / "community")
+    roots = [Path(overlay_triplets)] if overlay_triplets else []
+    roots += [Path(vcpkg_location) / "triplets", Path(vcpkg_location) / "triplets" / "community"]
     for root in roots:
-        candidate = root / f"{triplet}.cmake"
         try:
-            content = candidate.read_text(encoding="utf-8")
+            content = (root / f"{triplet}.cmake").read_text(encoding="utf-8")
         except OSError:
             continue
-        match = _SYSTEM_VERSION_RE.search(content)
-        if match:
+        if match := _SYSTEM_VERSION_RE.search(content):
             return int(match.group(1))
     return None
+
+
+def android_build_facts(
+    triplet: str | None,
+    ndk_home: str | os.PathLike | None,
+    vcpkg_location: str | os.PathLike | None,
+    overlay_triplets: str | os.PathLike | None = None,
+) -> dict | None:
+    """The NDK and ABI facts an Android build records, or None for host builds."""
+    abi = android_triplet_abi(triplet)
+    if abi is None:
+        return None
+    return {
+        "abi": abi,
+        "api_level": read_triplet_api_level(triplet, vcpkg_location, overlay_triplets),
+        "ndk_home": str(ndk_home) if ndk_home else None,
+        "ndk_revision": read_ndk_revision(ndk_home),
+    }

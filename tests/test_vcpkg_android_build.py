@@ -67,7 +67,7 @@ def test_android_build_rows_carry_target_and_ndk_facts(tmp_path, monkeypatch):
         assert kwargs["target_triplet"] == "arm64-android-dynamic"
         android = kwargs["build_metadata"]["android"]
         assert android["ndk_revision"] == "28.2.13676358"
-        assert android["abi"] == "arm64-android"
+        assert android["abi"] == "arm64-v8a"
         assert android["ndk_home"] == str(ndk)
     # The member ingest receives the same target fields as the whole-file
     # ingest, so member rows describe the build they came from.

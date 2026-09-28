@@ -1,16 +1,16 @@
-port,abi,triplet,reason
-zstd,arm64-v8a,arm64-android-dynamic,compression library bundled by zstd-jni (AppManager census)
-sqlite3,arm64-v8a,arm64-android-dynamic,database bundled by VLC's libmla and OsmAnd-core
-opus,arm64-v8a,arm64-android-dynamic,audio codec bundled by element's libopuscodec and libgkcodecs
-libffi,arm64-v8a,arm64-android-dynamic,foreign function interface bundled by jna's libjnidispatch and mozilla's libxul
-ffmpeg,arm64-v8a,arm64-android-dynamic,codec suite bundled by libmozavcodec and VLC's libvlc (default features)
-freetype,arm64-v8a,arm64-android-dynamic,font rendering bundled by pdfium, libxul, OsmAnd-core and libvlc
-libvpx,arm64-v8a,arm64-android-dynamic,VP8/9 codec bundled by libgkcodecs and libvlc
-aom,arm64-v8a,arm64-android-dynamic,AV1 codec bundled by libgkcodecs and libvlc
-libvorbis,arm64-v8a,arm64-android-dynamic,audio codec bundled by libgkcodecs and libvlc
-openssl,arm64-v8a,arm64-android-dynamic,TLS stack statically linked by realm-core inside librealm-jni
-proj,arm64-v8a,arm64-android-dynamic,coordinate library bundled by OsmAnd-core (via GDAL)
-zlib,arm64-v8a,arm64-android-dynamic,compression bundled platform-wide (libz.so oracle row)
-libpng,arm64-v8a,arm64-android-dynamic,PNG codec bundled by libvlc and OsmAnd-core (GDAL)
-curl,arm64-v8a,arm64-android-dynamic,transfer library (platform libcurl.so oracle row)
-sentry-native,arm64-v8a,arm64-android-dynamic,crash reporting SDK bundled by element's libsentry
+port,reason
+zstd,compression library bundled by zstd-jni (AppManager census)
+sqlite3,database bundled by VLC's libmla and OsmAnd-core
+opus,audio codec bundled by element's libopuscodec and libgkcodecs
+libffi,foreign function interface bundled by jna's libjnidispatch and mozilla's libxul
+ffmpeg,codec suite bundled by libmozavcodec and VLC's libvlc (default features)
+freetype,font rendering bundled by pdfium
+libvpx,VP8/9 codec bundled by libgkcodecs and libvlc
+aom,AV1 codec bundled by libgkcodecs and libvlc
+libvorbis,audio codec bundled by libgkcodecs and libvlc
+openssl,TLS stack statically linked by realm-core inside librealm-jni
+proj,coordinate library bundled by OsmAnd-core (via GDAL)
+zlib,compression bundled platform-wide (libz.so oracle row)
+libpng,PNG codec bundled by libvlc and OsmAnd-core (GDAL)
+curl,transfer library (platform libcurl.so oracle row)
+sentry-native,crash reporting SDK bundled by element's libsentry

@@ -9,9 +9,9 @@ from sqlite3 import OperationalError
 
 from blint_db import (
     ANDROID_NDK_HOME,
+    ARCH,
     DEBUG_MODE,
     SYSTEM,
-    ARCH,
     VCPKG_COMMIT_HASH,
     VCPKG_DEFAULT_TRIPLET,
     VCPKG_LOCATION,
@@ -25,12 +25,7 @@ from blint_db.handlers.language_handlers.vcpkg_handler import (
     vcpkg_build,
 )
 from blint_db.ingest import ingest_archive_members, ingest_binary_file
-from blint_db.utils.android import (
-    is_android_triplet,
-    read_ndk_revision,
-    read_triplet_api_level,
-    triplet_target_os_arch,
-)
+from blint_db.utils.android import android_build_facts, triplet_target_os_arch
 from blint_db.utils.provenance import build_failure_record, build_project_outcome
 
 
@@ -126,26 +121,17 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
     build_result = vcpkg_build(project_name)
     if getattr(build_result, "returncode", 1) != 0:
         raise RuntimeError(f"vcpkg build failed for {project_name}")
-    # Android cross builds: the Builds rows must describe the *target*, not
-    # the machine that compiled it, and carry the NDK revision (from
-    # ANDROID_NDK_HOME/source.properties) and the API level the triplet's
-    # VCPKG_CMAKE_SYSTEM_VERSION selects. Host triplets keep host-derived
-    # target fields, as before.
+    # A cross build's rows describe the target, not the compiling host.
     target_os, target_arch = triplet_target_os_arch(
         VCPKG_DEFAULT_TRIPLET, host_os=SYSTEM, host_arch=ARCH
     )
     build_metadata: dict = {}
     if vcpkg_json:
         build_metadata["vcpkg_json"] = str(vcpkg_json)
-    if is_android_triplet(VCPKG_DEFAULT_TRIPLET):
-        build_metadata["android"] = {
-            "ndk_home": str(ANDROID_NDK_HOME) if ANDROID_NDK_HOME else None,
-            "ndk_revision": read_ndk_revision(ANDROID_NDK_HOME),
-            "api_level": read_triplet_api_level(
-                VCPKG_DEFAULT_TRIPLET, VCPKG_LOCATION, VCPKG_OVERLAY_TRIPLETS
-            ),
-            "abi": VCPKG_DEFAULT_TRIPLET.removesuffix("-dynamic"),
-        }
+    if android := android_build_facts(
+        VCPKG_DEFAULT_TRIPLET, ANDROID_NDK_HOME, VCPKG_LOCATION, VCPKG_OVERLAY_TRIPLETS
+    ):
+        build_metadata["android"] = android
     execs = find_vcpkg_executables(project_name)
     for files in execs:
         try:
@@ -166,12 +152,8 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
                 relative_to=VCPKG_LOCATION / "installed" / VCPKG_DEFAULT_TRIPLET,
                 disassemble=disassemble,
             )
-            # Static archives (the default for vcpkg's Android triplets, and
-            # common for cross builds generally) parse to nothing as a whole:
-            # lief does not read the ar container, so the whole-file row
-            # carries no symbols. The object members are the queryable unit
-            # (P4.3 member rows), so each archive is also ingested member by
-            # member.
+            # An archive parses to nothing as a whole (lief does not read the
+            # ar container), so its object members are ingested as rows too.
             if str(files).lower().endswith((".a", ".lib")):
                 member_results = ingest_archive_members(
                     files,

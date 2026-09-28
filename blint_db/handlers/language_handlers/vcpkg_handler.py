@@ -37,10 +37,8 @@ class VcpkgHandler(BaseHandler):
         return vcpkg_build(project_name)
 
     def find_executables(self, project_name):
-        # The packages directory is suffixed with the *target* triplet
-        # (BLINT_DB_VCPKG_TRIPLET), not the host arch-os: a cross build
-        # (arm64-android on an arm64-osx host) lands in
-        # packages/<port>_arm64-android and must be found there.
+        # Packages are named for the target triplet, not the host: a cross
+        # build lands in packages/<port>_arm64-android.
         project_path = f"{project_name}_{VCPKG_DEFAULT_TRIPLET}"
         target_directory = VCPKG_LOCATION / "packages" / project_path
         return get_executables(target_directory)
@@ -77,8 +75,7 @@ def vcpkg_install_command(project_name: str) -> list[str]:
         f"--x-install-root={VCPKG_LOCATION / 'installed'}",
         f"--x-builtin-ports-root={VCPKG_LOCATION / 'ports'}",
     ]
-    # Overlay triplets resolve a name the builtin set does not carry - the
-    # Android dynamic-linkage triplets (contrib/vcpkg-overlay-triplets).
+    # Resolves triplets vcpkg does not ship (contrib/vcpkg-overlay-triplets).
     if VCPKG_OVERLAY_TRIPLETS:
         command.append(f"--overlay-triplets={VCPKG_OVERLAY_TRIPLETS}")
     command.append(project_name)
@@ -191,9 +188,6 @@ def vcpkg_build(project_name):
 
 
 def find_vcpkg_executables(project_name):
-    # Cross-triplet builds (BLINT_DB_VCPKG_TRIPLET=arm64-android on an
-    # arm64-osx host) place the artifacts under the target triplet's
-    # package directory; VCPKG_ARCH_OS names the host and finds nothing.
     project_path = f"{project_name}_{VCPKG_DEFAULT_TRIPLET}"
     target_directory = VCPKG_LOCATION / "packages" / project_path
     exes = [

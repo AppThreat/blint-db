@@ -1,29 +1,22 @@
 #!/usr/bin/env bash
-# Build the Android NDK corpus database (I2, wave A6.2).
+# Build the Android NDK corpus: every port in
+# blint_db/inputs/vcpkg-android-corpus.csv, for each triplet given, into one
+# v3 database.
 #
-# Builds every port of blint_db/inputs/vcpkg-android-corpus.csv with vcpkg's
-# Android triplets and the dynamic-linkage overlay triplets committed under
-# contrib/vcpkg-overlay-triplets, then ingests the artifacts into one v3
-# database per ABI. The linkage decision (I1) chose dynamic: a static .a
-# stores its symbols under symtab_sources a stripped app library never
-# offers, and never matches (measured on zstd and sqlite3); a dynamic .so
-# computes the same llvm_target_tuple as the app libraries, so the strict
-# first-pass filter admits it.
+# The triplets are the dynamic-linkage overlays in
+# contrib/vcpkg-overlay-triplets. A static archive's members store their
+# names as symtab symbols, which a stripped app library's dynamic-symbol
+# query never meets, so only shared libraries match.
 #
 # Usage: scripts/build_android_corpus.sh <db-file> [triplet ...]
-#   triplet defaults to arm64-android-dynamic. Build arm64 first; the other
-#   ABIs (arm-android-dynamic, x64-android-dynamic, x86-android-dynamic)
-#   only after the arm64 database has been measured (wave A6.3's J0).
+#   triplet defaults to arm64-android-dynamic; the others are
+#   arm-android-dynamic, x64-android-dynamic and x86-android-dynamic.
 #
 # Environment:
-#   ANDROID_NDK_HOME  the NDK vcpkg compiles with (required by vcpkg's
-#                      android toolchain); its source.properties revision
-#                      lands in provenance and the Builds rows
-#   BLINT_DB_BOOTSTRAP_PATH  where the vcpkg checkout lives (default ./temp)
+#   ANDROID_NDK_HOME  the NDK vcpkg's Android toolchain compiles with
 #
-# The database is NOT committed; its path, size, row counts and sha256 are
-# recorded in the I2 commit's gate block, and the run metadata sidecar
-# (<db>.metadata.json) carries the per-port build status.
+# Each triplet writes <db-file>.<triplet>.metadata.json with the NDK
+# revision, API level and per-port build outcomes.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,7 +25,7 @@ shift || true
 TRIPLETS=("${@:-arm64-android-dynamic}")
 
 export BLINT_DB_VCPKG_OVERLAY_TRIPLETS="${REPO_ROOT}/contrib/vcpkg-overlay-triplets"
-: "${ANDROID_NDK_HOME:?ANDROID_NDK_HOME must point at the NDK (vcpkg's android toolchain requires it)}"
+: "${ANDROID_NDK_HOME:?ANDROID_NDK_HOME must point at the NDK}"
 
 PORTS="$(python3 -c '
 import csv, sys
@@ -42,11 +35,9 @@ with open(sys.argv[1], encoding="utf-8") as fh:
 
 for triplet in "${TRIPLETS[@]}"; do
   echo "=== triplet ${triplet} $(date -u +%H:%M:%S)"
+  # shellcheck disable=SC2086 # PORTS is a word list
   BLINT_DB_VCPKG_TRIPLET="${triplet}" blint-db --db-file "${DB_FILE}" \
     --run-metadata-file "${DB_FILE}.${triplet}.metadata.json" build-vcpkg \
     --retain-build-artifacts -s ${PORTS}
-  # build-vcpkg compacts the database; the per-triplet metadata sidecar
-  # carries the per-port outcomes, so a port that fails to build is
-  # recorded there with its stage and message, not dropped.
 done
 echo "done: ${DB_FILE}"
