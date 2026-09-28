@@ -8,12 +8,14 @@ import traceback
 from sqlite3 import OperationalError
 
 from blint_db import (
-    ARCH,
+    ANDROID_NDK_HOME,
     DEBUG_MODE,
     SYSTEM,
+    ARCH,
     VCPKG_COMMIT_HASH,
     VCPKG_DEFAULT_TRIPLET,
     VCPKG_LOCATION,
+    VCPKG_OVERLAY_TRIPLETS,
     VCPKG_URL,
     logger,
 )
@@ -23,6 +25,12 @@ from blint_db.handlers.language_handlers.vcpkg_handler import (
     vcpkg_build,
 )
 from blint_db.ingest import ingest_archive_members, ingest_binary_file
+from blint_db.utils.android import (
+    is_android_triplet,
+    read_ndk_revision,
+    read_triplet_api_level,
+    triplet_target_os_arch,
+)
 from blint_db.utils.provenance import build_failure_record, build_project_outcome
 
 
@@ -104,6 +112,26 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
     build_result = vcpkg_build(project_name)
     if getattr(build_result, "returncode", 1) != 0:
         raise RuntimeError(f"vcpkg build failed for {project_name}")
+    # Android cross builds: the Builds rows must describe the *target*, not
+    # the machine that compiled it, and carry the NDK revision (from
+    # ANDROID_NDK_HOME/source.properties) and the API level the triplet's
+    # VCPKG_CMAKE_SYSTEM_VERSION selects. Host triplets keep host-derived
+    # target fields, as before.
+    target_os, target_arch = triplet_target_os_arch(
+        VCPKG_DEFAULT_TRIPLET, host_os=SYSTEM, host_arch=ARCH
+    )
+    build_metadata: dict = {}
+    if vcpkg_json:
+        build_metadata["vcpkg_json"] = str(vcpkg_json)
+    if is_android_triplet(VCPKG_DEFAULT_TRIPLET):
+        build_metadata["android"] = {
+            "ndk_home": str(ANDROID_NDK_HOME) if ANDROID_NDK_HOME else None,
+            "ndk_revision": read_ndk_revision(ANDROID_NDK_HOME),
+            "api_level": read_triplet_api_level(
+                VCPKG_DEFAULT_TRIPLET, VCPKG_LOCATION, VCPKG_OVERLAY_TRIPLETS
+            ),
+            "abi": VCPKG_DEFAULT_TRIPLET.removesuffix("-dynamic"),
+        }
     execs = find_vcpkg_executables(project_name)
     for files in execs:
         try:
@@ -115,12 +143,12 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
                 ecosystem="vcpkg",
                 project_metadata=metadata,
                 build_system="vcpkg",
-                target_os=SYSTEM,
-                target_arch=ARCH,
+                target_os=target_os,
+                target_arch=target_arch,
                 target_triplet=VCPKG_DEFAULT_TRIPLET,
                 build_mode="debug+release",
                 strip_status="unstripped",
-                build_metadata={"vcpkg_json": str(vcpkg_json)} if vcpkg_json else None,
+                build_metadata=dict(build_metadata) or None,
                 relative_to=VCPKG_LOCATION / "installed" / VCPKG_DEFAULT_TRIPLET,
                 disassemble=disassemble,
             )
@@ -138,7 +166,12 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
                     project_purl=purl,
                     ecosystem="vcpkg",
                     build_system="vcpkg",
+                    target_os=target_os,
+                    target_arch=target_arch,
+                    target_triplet=VCPKG_DEFAULT_TRIPLET,
+                    build_mode="debug+release",
                     strip_status="unstripped",
+                    build_metadata=dict(build_metadata) or None,
                     disassemble=disassemble,
                     archive_name=os.path.basename(files),
                 )

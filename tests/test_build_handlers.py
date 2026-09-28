@@ -84,6 +84,19 @@ def test_vcpkg_install_command_uses_clean_build_roots(monkeypatch):
     assert command[-2:] == ["openssl", "--head"]
 
 
+def test_vcpkg_install_command_passes_overlay_triplets_when_configured(monkeypatch):
+    monkeypatch.setattr(vcpkg_handler, "VCPKG_DEFAULT_TRIPLET", "arm64-android-dynamic")
+    monkeypatch.setattr(
+        vcpkg_handler, "VCPKG_OVERLAY_TRIPLETS", "/contrib/vcpkg-overlay-triplets"
+    )
+    monkeypatch.setattr(vcpkg_handler, "VCPKG_EXTRA_INSTALL_ARGS", ())
+
+    command = vcpkg_handler.vcpkg_install_command("zstd")
+
+    assert "--overlay-triplets=/contrib/vcpkg-overlay-triplets" in command
+    assert command[-1] == "zstd"
+
+
 def test_vcpkg_build_sets_parallelism(monkeypatch):
     captured = {}
 

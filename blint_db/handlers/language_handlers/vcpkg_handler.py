@@ -16,6 +16,7 @@ from blint_db import (
     VCPKG_EXTRA_INSTALL_ARGS,
     VCPKG_KEEP_GOING,
     VCPKG_LOCATION,
+    VCPKG_OVERLAY_TRIPLETS,
     VCPKG_URL,
     logger,
 )
@@ -75,8 +76,12 @@ def vcpkg_install_command(project_name: str) -> list[str]:
         f"--x-packages-root={VCPKG_LOCATION / 'packages'}",
         f"--x-install-root={VCPKG_LOCATION / 'installed'}",
         f"--x-builtin-ports-root={VCPKG_LOCATION / 'ports'}",
-        project_name,
     ]
+    # Overlay triplets resolve a name the builtin set does not carry - the
+    # Android dynamic-linkage triplets (contrib/vcpkg-overlay-triplets).
+    if VCPKG_OVERLAY_TRIPLETS:
+        command.append(f"--overlay-triplets={VCPKG_OVERLAY_TRIPLETS}")
+    command.append(project_name)
     command.extend(VCPKG_EXTRA_INSTALL_ARGS)
     return command
 

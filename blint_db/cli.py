@@ -671,6 +671,10 @@ def _run_ingest(args):
                 project_purl=args.project_purl,
                 ecosystem=args.ecosystem,
                 build_system=args.build_system,
+                target_os=args.target_os,
+                target_arch=args.target_arch,
+                target_triplet=args.target_triplet,
+                build_mode=args.build_mode,
                 strip_status=args.strip_status,
                 disassemble=args.disassemble,
             )
