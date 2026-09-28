@@ -155,6 +155,11 @@ VCPKG_HOST_TRIPLET = os.getenv("BLINT_DB_VCPKG_HOST_TRIPLET")
 VCPKG_KEEP_GOING = _env_bool("BLINT_DB_VCPKG_KEEP_GOING", True)
 VCPKG_CLEAN_AFTER_BUILD = _env_bool("BLINT_DB_VCPKG_CLEAN_AFTER_BUILD", True)
 VCPKG_DISABLE_METRICS = _env_bool("VCPKG_DISABLE_METRICS", True)
+# Android cross builds: the NDK vcpkg's Android toolchain compiles with, and
+# the directory holding the dynamic-linkage Android triplets
+# (contrib/vcpkg-overlay-triplets).
+ANDROID_NDK_HOME = os.getenv("ANDROID_NDK_HOME") or os.getenv("NDK_HOME")
+VCPKG_OVERLAY_TRIPLETS = os.getenv("BLINT_DB_VCPKG_OVERLAY_TRIPLETS")
 VCPKG_FEATURE_FLAGS = tuple(
     part.strip()
     for part in os.getenv("BLINT_DB_VCPKG_FEATURE_FLAGS", "").split(",")

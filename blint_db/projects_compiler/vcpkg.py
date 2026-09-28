@@ -8,12 +8,14 @@ import traceback
 from sqlite3 import OperationalError
 
 from blint_db import (
+    ANDROID_NDK_HOME,
     ARCH,
     DEBUG_MODE,
     SYSTEM,
     VCPKG_COMMIT_HASH,
     VCPKG_DEFAULT_TRIPLET,
     VCPKG_LOCATION,
+    VCPKG_OVERLAY_TRIPLETS,
     VCPKG_URL,
     logger,
 )
@@ -22,7 +24,8 @@ from blint_db.handlers.language_handlers.vcpkg_handler import (
     find_vcpkg_executables,
     vcpkg_build,
 )
-from blint_db.ingest import ingest_binary_file
+from blint_db.ingest import ingest_archive_members, ingest_binary_file
+from blint_db.utils.android import android_build_facts, triplet_target_os_arch
 from blint_db.utils.provenance import build_failure_record, build_project_outcome
 
 
@@ -82,6 +85,19 @@ def exec_explorer(directory):
     return executables
 
 
+def _port_version(vcpkg_metadata: dict) -> str | None:
+    """The port's own version string, whichever schema field declares it.
+
+    vcpkg ports carry their version as ``version``, ``version-string``,
+    ``version-semver`` or ``version-date``; reading only the first lost the
+    purl version for ports like aom that use ``version-semver``.
+    """
+    for key in ("version", "version-string", "version-semver", "version-date"):
+        if vcpkg_metadata.get(key):
+            return str(vcpkg_metadata[key])
+    return None
+
+
 def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=False):
     purl = None
     metadata = None
@@ -89,9 +105,10 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
         with open(vcpkg_json, encoding="utf-8") as fp:
             try:
                 vcpkg_metadata = json.load(fp)
+                version = _port_version(vcpkg_metadata)
                 purl = (
-                    f"pkg:generic/{vcpkg_metadata['name']}@{vcpkg_metadata['version']}"
-                    if vcpkg_metadata.get("version")
+                    f"pkg:generic/{vcpkg_metadata['name']}@{version}"
+                    if version
                     else f"pkg:generic/{vcpkg_metadata['name']}"
                 )
                 description = vcpkg_metadata.get("description")
@@ -104,6 +121,17 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
     build_result = vcpkg_build(project_name)
     if getattr(build_result, "returncode", 1) != 0:
         raise RuntimeError(f"vcpkg build failed for {project_name}")
+    # A cross build's rows describe the target, not the compiling host.
+    target_os, target_arch = triplet_target_os_arch(
+        VCPKG_DEFAULT_TRIPLET, host_os=SYSTEM, host_arch=ARCH
+    )
+    build_metadata: dict = {}
+    if vcpkg_json:
+        build_metadata["vcpkg_json"] = str(vcpkg_json)
+    if android := android_build_facts(
+        VCPKG_DEFAULT_TRIPLET, ANDROID_NDK_HOME, VCPKG_LOCATION, VCPKG_OVERLAY_TRIPLETS
+    ):
+        build_metadata["android"] = android
     execs = find_vcpkg_executables(project_name)
     for files in execs:
         try:
@@ -115,15 +143,37 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
                 ecosystem="vcpkg",
                 project_metadata=metadata,
                 build_system="vcpkg",
-                target_os=SYSTEM,
-                target_arch=ARCH,
+                target_os=target_os,
+                target_arch=target_arch,
                 target_triplet=VCPKG_DEFAULT_TRIPLET,
                 build_mode="debug+release",
                 strip_status="unstripped",
-                build_metadata={"vcpkg_json": str(vcpkg_json)} if vcpkg_json else None,
+                build_metadata=dict(build_metadata) or None,
                 relative_to=VCPKG_LOCATION / "installed" / VCPKG_DEFAULT_TRIPLET,
                 disassemble=disassemble,
             )
+            # An archive parses to nothing as a whole (lief does not read the
+            # ar container), so its object members are ingested as rows too.
+            if str(files).lower().endswith((".a", ".lib")):
+                member_results = ingest_archive_members(
+                    files,
+                    db_file=db_file,
+                    project_name=project_name,
+                    project_purl=purl,
+                    ecosystem="vcpkg",
+                    build_system="vcpkg",
+                    target_os=target_os,
+                    target_arch=target_arch,
+                    target_triplet=VCPKG_DEFAULT_TRIPLET,
+                    build_mode="debug+release",
+                    strip_status="unstripped",
+                    build_metadata=dict(build_metadata) or None,
+                    disassemble=disassemble,
+                    archive_name=os.path.basename(files),
+                )
+                logger.debug(
+                    "Ingested %d archive members for %s", len(member_results), files
+                )
         except (RuntimeError, FileNotFoundError) as e:
             logger.info(f"error encountered with {project_name}")
             logger.error(e)

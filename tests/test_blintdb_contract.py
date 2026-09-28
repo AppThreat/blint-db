@@ -159,17 +159,45 @@ def test_blint_symbol_queries_resolve_each_sample_project(
         ), f"{other['project_purl']} matched as strongly as {expected_purl}"
 
 
-def test_blint_binary_filter_mismatch_falls_back_to_unfiltered_query(
+def test_blint_tuple_mismatch_falls_back_to_format_only_query(
     sample_db: Path, connection: sqlite3.Connection
 ):
     """A target tuple the sample does not carry still resolves via the retry.
 
-    blint runs the symbol query with binary filters first and retries
-    unfiltered when that finds nothing; the contract is that a filtered miss
-    on tuple grounds never turns into "no matches". If blint drops the
-    retry, this test fails and the change is deliberate.
+    blint runs the symbol query with binary filters first and retries with a
+    relaxed filter when that finds nothing; the contract is that a filtered
+    miss on tuple grounds never turns into "no matches". Since F2b.1
+    (aabbafd..4b64114) the retry keeps the binary_type predicate and relaxes
+    only the target tuple: a binary cannot change format between build and
+    query, and the fully unfiltered retry is what matched a static ELF Rust
+    binary against the Mach-O ripgrep build on shared Rust-std symbols.
     """
     expected_purl = _project_purl(connection, "zlib")
+    source_map = _project_symbol_source_map(connection, "zlib")
+    matches = lookup_project_matches(
+        source_map,
+        binary_metadata={
+            "binary_type": "MachO",
+            "llvm_target_tuple": "x86_64-pc-linux-gnu",
+            "name": "libz.so.1",
+        },
+        db_file=str(sample_db),
+    )
+    assert matches, "format-only retry after a tuple miss returned no matches"
+    assert matches[0]["project_purl"] == expected_purl
+
+
+def test_blint_format_mismatch_never_matches_across_binary_type(
+    sample_db: Path, connection: sqlite3.Connection
+):
+    """An ELF query against the Mach-O sample resolves to nothing.
+
+    The other half of the F2b.1 fallback contract: the retry keeps the
+    binary_type predicate, so a format the database does not carry is a
+    legitimate empty answer — never a cross-format match on shared symbol
+    names. This is the query shape an Android ELF corpus relies on: it must
+    not be scored against a host-format database.
+    """
     source_map = _project_symbol_source_map(connection, "zlib")
     matches = lookup_project_matches(
         source_map,
@@ -180,8 +208,7 @@ def test_blint_binary_filter_mismatch_falls_back_to_unfiltered_query(
         },
         db_file=str(sample_db),
     )
-    assert matches, "unfiltered retry after a tuple miss returned no matches"
-    assert matches[0]["project_purl"] == expected_purl
+    assert matches == []
 
 
 def test_blint_detect_binaries_utilized_reports_zlib_evidence(

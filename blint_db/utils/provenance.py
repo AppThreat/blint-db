@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from blint_db import (
+    ANDROID_NDK_HOME,
     BLINT_DB_SCHEMA_FAMILY,
     BLINT_DB_SCHEMA_VERSION,
     BUILD_JOBS,
@@ -42,12 +43,14 @@ from blint_db import (
     VCPKG_DEFAULT_TRIPLET,
     VCPKG_KEEP_GOING,
     VCPKG_LOCATION,
+    VCPKG_OVERLAY_TRIPLETS,
     VCPKG_URL,
     WRAPDB_COMMIT_HASH,
     WRAPDB_LOCATION,
     WRAPDB_URL,
 )
 from blint_db.handlers.sqlite_handler import collect_database_stats, execute_statement
+from blint_db.utils.android import android_build_facts
 from blint_db.utils.json import dump_json_file
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -307,6 +310,9 @@ def build_run_metadata(
     metadata_path = Path(metadata_file)
     projects = summarize_project_outcomes(project_outcomes)
     projects["selected_count"] = len(selected_projects or [])
+    android = android_build_facts(
+        VCPKG_DEFAULT_TRIPLET, ANDROID_NDK_HOME, VCPKG_LOCATION, VCPKG_OVERLAY_TRIPLETS
+    )
     return {
         "generated_at": _utc_now(),
         "schema": {
@@ -355,6 +361,9 @@ def build_run_metadata(
             "meson_strip": MESON_STRIP,
             "vcpkg_default_triplet": VCPKG_DEFAULT_TRIPLET,
             "vcpkg_keep_going": VCPKG_KEEP_GOING,
+            "vcpkg_overlay_triplets": (
+                str(VCPKG_OVERLAY_TRIPLETS) if VCPKG_OVERLAY_TRIPLETS else None
+            ),
         },
         "tool_versions": _tool_versions(),
         "packages": {
@@ -402,6 +411,7 @@ def build_run_metadata(
                 "expected_commit": VCPKG_COMMIT_HASH,
                 "triplet": VCPKG_DEFAULT_TRIPLET,
                 "path": str(VCPKG_LOCATION),
+                **({"android": android} if android else {}),
             }
             if command == "build-vcpkg"
             else None,

@@ -1,0 +1,16 @@
+port,reason
+zstd,compression library bundled by zstd-jni (AppManager census)
+sqlite3,database bundled by VLC's libmla and OsmAnd-core
+opus,audio codec bundled by element's libopuscodec and libgkcodecs
+libffi,foreign function interface bundled by jna's libjnidispatch and mozilla's libxul
+ffmpeg,codec suite bundled by libmozavcodec and VLC's libvlc (default features)
+freetype,font rendering bundled by pdfium
+libvpx,VP8/9 codec bundled by libgkcodecs and libvlc
+aom,AV1 codec bundled by libgkcodecs and libvlc
+libvorbis,audio codec bundled by libgkcodecs and libvlc
+openssl,TLS stack statically linked by realm-core inside librealm-jni
+proj,coordinate library bundled by OsmAnd-core (via GDAL)
+zlib,compression bundled platform-wide (libz.so oracle row)
+libpng,PNG codec bundled by libvlc and OsmAnd-core (GDAL)
+curl,transfer library (platform libcurl.so oracle row)
+sentry-native,crash reporting SDK bundled by element's libsentry
