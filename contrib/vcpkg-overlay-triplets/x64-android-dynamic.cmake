@@ -9,8 +9,5 @@ set(VCPKG_CMAKE_SYSTEM_VERSION 28)
 set(VCPKG_MAKE_BUILD_TRIPLET "--host=x86_64-linux-android")
 set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DANDROID_ABI=x86_64)
 
-# A8 N1: NDK r28's clang defaults to C23, where nettle's bundled gnulib
-# getopt redeclares (`extern int getopt ();`, now "(void)"-typed) conflict
-# with the sysroot's prototype. gnu17 is what the port was written against.
+# nettle's bundled gnulib getopt does not compile as C23, clang's default.
 set(VCPKG_C_FLAGS "-std=gnu17")
-set(VCPKG_CXX_FLAGS "-std=gnu++17")
