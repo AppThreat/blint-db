@@ -78,8 +78,11 @@ def vcpkg_install_command(project_name: str) -> list[str]:
     # Resolves triplets vcpkg does not ship (contrib/vcpkg-overlay-triplets).
     if VCPKG_OVERLAY_TRIPLETS:
         command.append(f"--overlay-triplets={VCPKG_OVERLAY_TRIPLETS}")
-    command.append(project_name)
+    # Flags must precede the package name: vcpkg parses anything after it
+    # as further package specs, so an --overlay-ports trailer fails with a
+    # triplet-listing error instead of building.
     command.extend(VCPKG_EXTRA_INSTALL_ARGS)
+    command.append(project_name)
     return command
 
 

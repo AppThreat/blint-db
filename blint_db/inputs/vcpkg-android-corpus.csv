@@ -14,3 +14,4 @@ zlib,compression bundled platform-wide (libz.so oracle row)
 libpng,PNG codec bundled by libvlc and OsmAnd-core (GDAL)
 curl,transfer library (platform libcurl.so oracle row)
 sentry-native,crash reporting SDK bundled by element's libsentry
+libgnutls,TLS stack bundled by VLC's libvlc (1748 gnutls_* exported on armeabi-v7a; J3 recall-gap entry 3; brings nettle)
