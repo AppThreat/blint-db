@@ -81,7 +81,10 @@ def test_vcpkg_install_command_uses_clean_build_roots(monkeypatch):
     assert any(part.startswith("--x-buildtrees-root=") for part in command)
     assert any(part.startswith("--x-packages-root=") for part in command)
     assert any(part.startswith("--x-install-root=") for part in command)
-    assert command[-2:] == ["openssl", "--head"]
+    # Flags precede the package name: vcpkg parses anything after it as
+    # further package specs, so a trailing --overlay-ports failed with a
+    # triplet-listing error instead of building (A8 N1).
+    assert command[-2:] == ["--head", "openssl"]
 
 
 def test_vcpkg_install_command_passes_overlay_triplets_when_configured(monkeypatch):

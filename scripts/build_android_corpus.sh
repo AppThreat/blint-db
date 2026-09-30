@@ -15,6 +15,14 @@
 # Environment:
 #   ANDROID_NDK_HOME  the NDK vcpkg's Android toolchain compiles with
 #
+# Host prerequisites (A8 N1, measured): autoconf-archive and gnu-sed from
+# Homebrew (libidn2/libtasn1 autoreconf; libunistring's declared.sh
+# rejects BSD sed), and the gnu-sed libexec/gnubin directory on PATH.
+# The gmp overlay port (contrib/vcpkg-overlay-ports) drops --enable-cxx
+# and names the compiler target on CC for the Android x86 triplet; the
+# overlay triplets pin -std=gnu17 (NDK r28's clang defaults to C23,
+# where nettle's bundled gnulib getopt redeclares conflict).
+#
 # Each triplet writes <db-file>.<triplet>.metadata.json with the NDK
 # revision, API level and per-port build outcomes.
 set -euo pipefail
@@ -25,7 +33,14 @@ shift || true
 TRIPLETS=("${@:-arm64-android-dynamic}")
 
 export BLINT_DB_VCPKG_OVERLAY_TRIPLETS="${REPO_ROOT}/contrib/vcpkg-overlay-triplets"
+export BLINT_DB_VCPKG_INSTALL_ARGS="--overlay-ports=${REPO_ROOT}/contrib/vcpkg-overlay-ports"
 : "${ANDROID_NDK_HOME:?ANDROID_NDK_HOME must point at the NDK}"
+
+# libunistring's declared.sh insists on GNU sed.
+if [ -x /opt/homebrew/opt/gnu-sed/libexec/gnubin/sed ]; then
+  PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:${PATH}"
+  export PATH
+fi
 
 PORTS="$(python3 -c '
 import csv, sys
