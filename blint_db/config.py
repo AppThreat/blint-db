@@ -169,6 +169,22 @@ VCPKG_EXTRA_INSTALL_ARGS = split_shell_args(
     os.getenv("BLINT_DB_VCPKG_INSTALL_ARGS", "")
 )
 
+# F-Droid corpus: APKs are downloaded from the repo mirror first and the
+# archive (which keeps versions the repo dropped) second. The API resolves
+# the suggested versionCode for apps pinned without one.
+FDROID_REPO_URL = os.getenv("BLINT_DB_FDROID_REPO", "https://f-droid.org/repo")
+FDROID_ARCHIVE_URL = os.getenv(
+    "BLINT_DB_FDROID_ARCHIVE", "https://f-droid.org/archive"
+)
+FDROID_API_URL = os.getenv("BLINT_DB_FDROID_API", "https://f-droid.org/api/v1")
+FDROID_HTTP_TIMEOUT = max(5, int(os.getenv("BLINT_DB_FDROID_HTTP_TIMEOUT", "120")))
+FDROID_CURATED_APPS_FILE = Path(
+    os.getenv(
+        "BLINT_DB_FDROID_APPS_FILE",
+        str(_default_curated_input_file("fdroid-apps.csv")),
+    )
+)
+
 for log_name, log_obj in logging.Logger.manager.loggerDict.items():
     if log_name != __name__:
         log_obj.disabled = True

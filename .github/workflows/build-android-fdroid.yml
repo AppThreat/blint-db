@@ -1,0 +1,115 @@
+name: Build and Upload F-Droid android blint-db
+
+# Example workflow: build a blint-db corpus from open-source Android APKs
+# published by the F-Droid store (https://f-droid.org), including the
+# F-Droid client itself. The curated app list lives in
+# blint_db/inputs/fdroid-apps.csv and scripts/build_fdroid_corpus.py does
+# the work: download each pinned APK, extract the lib/<abi>/*.so members,
+# deduplicate them by sha256, and ingest every unique library under a
+# project named after the app.
+#
+# End users can copy this workflow into a private repository and delete the
+# ORAS publish step: the resulting blint.db is used by pointing blint at it
+# (BLINTDB_HOME=<dir containing blint.db>, then `blint sbom --use-blintdb`).
+on:
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: "Space-separated F-Droid package ids to restrict the build to (empty = whole curated list)"
+        default: ""
+      disassemble:
+        description: "Collect disassembly fingerprints (slower, needs LLVM)"
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: appthreat/blintdb
+
+jobs:
+  builder-android-fdroid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+      - name: Install LLVM 18 toolchain
+        if: ${{ inputs.disassemble }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev llvm-18-tools clang-18
+          echo "NYXSTONE_LLVM_PREFIX=/usr/lib/llvm-18" >> $GITHUB_ENV
+          echo "LLVM_CONFIG=/usr/lib/llvm-18/bin/llvm-config" >> $GITHUB_ENV
+          echo "CC=/usr/lib/llvm-18/bin/clang" >> $GITHUB_ENV
+          echo "CXX=/usr/lib/llvm-18/bin/clang++" >> $GITHUB_ENV
+          echo "CXXFLAGS=-std=c++17" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: |
+          if [ "${{ inputs.disassemble }}" = "true" ]; then
+            uv sync --all-extras --all-groups --all-packages -p 3.13
+            uv run python -c "import nyxstone; print('nyxstone ready')"
+          else
+            uv sync --frozen -p 3.13
+          fi
+      - name: Build the F-Droid corpus database
+        env:
+          BLINT_DB_BOOTSTRAP_PATH: ${{ runner.temp }}/blint-db-temp
+          APPS: ${{ inputs.apps }}
+        run: |
+          APP_ARGS=""
+          if [ -n "$APPS" ]; then
+            # shellcheck disable=SC2086 # APPS is a word list by contract
+            APP_ARGS="--only $APPS"
+          fi
+          DISASS_ARGS=""
+          if [ "${{ inputs.disassemble }}" = "true" ]; then
+            DISASS_ARGS="--disassemble"
+          fi
+          # shellcheck disable=SC2086 # APP_ARGS/DISASS_ARGS are word lists
+          uv run --no-sync python scripts/build_fdroid_corpus.py \
+            --db-file ./blint.db \
+            --run-metadata-file ./blint.metadata.json \
+            ${DISASS_ARGS} ${APP_ARGS}
+      - name: Assert schema and non-empty corpus
+        run: |
+          uv run --no-sync python - ./blint.db <<'PY'
+          import sqlite3
+          import sys
+
+          connection = sqlite3.connect(sys.argv[1])
+          meta = dict(connection.execute("SELECT key, value FROM SchemaMeta"))
+          assert meta.get("schema_family") == "blint-db", meta
+          counts = {
+              table: connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+              for table in ("Projects", "Binaries", "Symbols")
+          }
+          print(f"table counts: {counts}")
+          assert counts["Projects"] > 0, counts
+          assert counts["Binaries"] > 0, counts
+          assert counts["Symbols"] > 0, counts
+          projects = connection.execute(
+              "SELECT name, ecosystem FROM Projects ORDER BY name"
+          ).fetchall()
+          print(f"projects: {projects}")
+          connection.close()
+          PY
+      - uses: actions/upload-artifact@330a01c3eac917fd66d9229f1babb30f8668fbfd  # v5.0.0
+        with:
+          name: blintdb-android-fdroid
+          path: |
+            blint.db
+            blint.metadata.json
+          retention-days: 14
+      - name: Publish to ghcr.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          BLINT_DB_VERSION: android-fdroid
+        run: |
+          uv run --no-sync python .oras/orasclient.py -p android-fdroid

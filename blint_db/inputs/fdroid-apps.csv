@@ -1,0 +1,26 @@
+package,version_code,version_name,reason,notes
+org.fdroid.fdroid,2000050,2.0.0,the F-Droid store client itself; thin androidx.graphics.path native layer,ground truth app for the f-droid ecosystem; pinned versionCode 2000050 matches the blint A0.2 tier-2 seed
+org.videolan.vlc,13070105,3.7.1,libvlc bundles ffmpeg codecs and a full native stack,per-ABI APK 1 of 4; the sweep identified the vendored libvlc 3.0.23 Vetinari inside this 3.7.1 app
+org.videolan.vlc,13070106,3.7.1,libvlc bundles ffmpeg codecs and a full native stack,per-ABI APK 2 of 4
+org.videolan.vlc,13070107,3.7.1,libvlc bundles ffmpeg codecs and a full native stack,per-ABI APK 3 of 4
+org.videolan.vlc,13070108,3.7.1,libvlc bundles ffmpeg codecs and a full native stack,per-ABI APK 4 of 4
+net.osmand.plus,540401,5.4.4,Qt-based maps app shipping libQt5Core and friends,per-ABI APK 1 of 3; OsmAnd-core is the reason sqlite3 and opus are in the vcpkg android corpus
+net.osmand.plus,540402,5.4.4,Qt-based maps app shipping libQt5Core and friends,per-ABI APK 2 of 3
+net.osmand.plus,540403,5.4.4,Qt-based maps app shipping libQt5Core and friends,per-ABI APK 3 of 3
+im.vector.app,40106621,1.6.62,react-native app shipping hermes and libc++_shared,per-ABI APK 1 of 4; WebRTC libjingle statically links BoringSSL; classic vendored-copy shape
+im.vector.app,40106622,1.6.62,react-native app shipping hermes and libc++_shared,per-ABI APK 2 of 4
+im.vector.app,40106623,1.6.62,react-native app shipping hermes and libc++_shared,per-ABI APK 3 of 4
+im.vector.app,40106624,1.6.62,react-native app shipping hermes and libc++_shared,per-ABI APK 4 of 4
+org.mozilla.fennec_fdroid,1560000,156.0.0,firefox build shipping nss and its own toolchain runtime,per-ABI APK 1 of 3; fennec identified nss 3.128 via NSS_VersionCheck in the blint sweep
+org.mozilla.fennec_fdroid,1560010,156.0.0,firefox build shipping nss and its own toolchain runtime,per-ABI APK 2 of 3
+org.mozilla.fennec_fdroid,1560020,156.0.0,firefox build shipping nss and its own toolchain runtime,per-ABI APK 3 of 3
+com.termux,1022,0.119.0-beta.3,terminal that unpacks a bootstrap of native binaries at runtime,thin native layer in the APK itself; single multi-ABI APK
+org.schabi.newpipe,1015,0.29.1,very popular app whose native layer is minimal,correct no-match control from the blint sweep; a corpus needs those too
+app.organicmaps,26082718,2026.08.27-18-FDroid,maps app with a large native core,organicmaps native core; no-match control in the blint sweep
+io.github.muntashirakon.AppManager,451,4.1.1,app inspector that bundles zstd-jni and other native helpers,the census behind several ports in vcpkg-android-corpus.csv
+com.adilhanney.saber,1360101,1.36.1,flutter app shipping the flutter engine and a dart snapshot,per-ABI APK 1 of 3; flutter-engine identification case from the blint sweep
+com.adilhanney.saber,1360102,1.36.1,flutter app shipping the flutter engine and a dart snapshot,per-ABI APK 2 of 3
+com.adilhanney.saber,1360103,1.36.1,flutter app shipping the flutter engine and a dart snapshot,per-ABI APK 3 of 3; the x86_64-only build
+org.localsend.localsend_app,641,1.18.2,flutter app with nested dart-sdk and boringssl copies,per-ABI APK 1 of 3; nested static-copy identification case from the blint sweep
+org.localsend.localsend_app,642,1.18.2,flutter app with nested dart-sdk and boringssl copies,per-ABI APK 2 of 3
+org.localsend.localsend_app,643,1.18.2,flutter app with nested dart-sdk and boringssl copies,per-ABI APK 3 of 3
