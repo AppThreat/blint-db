@@ -9,8 +9,8 @@ name: Build and Upload F-Droid android blint-db
 # project named after the app.
 #
 # End users can copy this workflow into a private repository and delete the
-# ORAS publish step: the resulting blint.db is used by pointing blint at it
-# (BLINTDB_HOME=<dir containing blint.db>, then `blint sbom --use-blintdb`).
+# ORAS publish step: the resulting blint-v4.db is used by pointing blint at it
+# (BLINTDB_HOME=<dir containing blint-v4.db>, then `blint sbom --use-blintdb`).
 on:
   workflow_dispatch:
     inputs:
@@ -73,12 +73,12 @@ jobs:
           fi
           # shellcheck disable=SC2086 # APP_ARGS/DISASS_ARGS are word lists
           uv run --no-sync python scripts/build_fdroid_corpus.py \
-            --db-file ./blint.db \
-            --run-metadata-file ./blint.metadata.json \
+            --db-file ./blint-v4.db \
+            --run-metadata-file ./blint-v4.metadata.json \
             ${DISASS_ARGS} ${APP_ARGS}
       - name: Assert schema and non-empty corpus
         run: |
-          uv run --no-sync python - ./blint.db <<'PY'
+          uv run --no-sync python - ./blint-v4.db <<'PY'
           import sqlite3
           import sys
 
@@ -103,13 +103,13 @@ jobs:
         with:
           name: blintdb-android-fdroid
           path: |
-            blint.db
-            blint.metadata.json
+            blint-v4.db
+            blint-v4.metadata.json
           retention-days: 14
       - name: Publish to ghcr.io
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
-          BLINT_DB_VERSION: android-fdroid
+          BLINT_DB_VERSION: v4
         run: |
           uv run --no-sync python .oras/orasclient.py -p android-fdroid

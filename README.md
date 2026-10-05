@@ -375,7 +375,7 @@ For the smaller curated Conan subset used by smoke workflows:
 blint-db --db-file blint-v4.db --clean-start -f build-conan
 ```
 
-Each ecosystem build also emits a provenance sidecar JSON next to the database by default (for example `blint.metadata.json` when the database is `blint.db`).
+Each ecosystem build also emits a provenance sidecar JSON next to the database by default (for example `blint-v4.metadata.json` when the database is `blint-v4.db`).
 That sidecar includes final table counts and SQLite size statistics after compaction.
 Its `projects` block also records `selected_count`, `attempted_count`, `success_count`, `failure_count`, `status_counts`, and `build_failures`. Each `projects.build_failures[]` entry is a flattened per-project failure record derived from `projects.outcomes[].failure`, with stable keys such as `selector`, `project_name`, `ecosystem`, `build_system`, `status`, `stage`, and `message`, plus optional fields like `returncode` and `exception_type` when available.
 
@@ -518,7 +518,7 @@ from blint_db.utils.provenance import write_run_metadata
 
 write_run_metadata(
     command="build-meson",
-    db_file="blint.db",
+    db_file="blint-v4.db",
     disassemble=True,
     selected_projects=["zlib", "bzip2"],
 )
@@ -561,7 +561,7 @@ Homebrew corpus runs use `brew` directly and can optionally force source builds 
 ```bash
 export BLINT_DB_HOMEBREW_BUILD_FROM_SOURCE=1
 export BLINT_DB_HOMEBREW_REINSTALL_EXISTING=1
-uv run blint-db --clean-start --db-file ./blint.db build-homebrew -s fmt ripgrep xcbeautify
+uv run blint-db --clean-start --db-file ./blint-v4.db build-homebrew -s fmt ripgrep xcbeautify
 ```
 
 Cargo corpus runs fetch exact crates from crates.io, verify the published crate checksum, and build them in isolated Cargo home/target directories under `BLINT_DB_BOOTSTRAP_PATH`:
@@ -569,7 +569,7 @@ Cargo corpus runs fetch exact crates from crates.io, verify the published crate 
 ```bash
 export BLINT_DB_CARGO_CRATES_FILE=./blint_db/inputs/cargo-crates.csv
 export BLINT_DB_CARGO_PROFILE=release
-uv run blint-db --clean-start --db-file ./blint.db build-cargo -s choose@1.3.7 b3sum@1.8.5
+uv run blint-db --clean-start --db-file ./blint-v4.db build-cargo -s choose@1.3.7 b3sum@1.8.5
 ```
 
 If you want to relocate all curated manifests together, set `BLINT_DB_INPUTS_DIR` to a directory that contains `cargo-crates.csv` and/or `homebrew-formulas.csv`.
@@ -581,7 +581,7 @@ Conan corpus runs create an isolated `CONAN_HOME`, resolve the selected package 
 export BLINT_DB_CONAN_PACKAGES_FILE=./blint_db/inputs/conan-center-packages.csv
 export BLINT_DB_CONAN_REMOTE=conancenter
 export BLINT_DB_CONAN_BUILD_TYPE=Release
-uv run blint-db --clean-start --db-file ./blint.db build-conan -s fmt/11.2.0#shared-release libcurl/8.14.1#shared-release
+uv run blint-db --clean-start --db-file ./blint-v4.db build-conan -s fmt/11.2.0#shared-release libcurl/8.14.1#shared-release
 ```
 
 ## Regenerating curated manifests

@@ -211,7 +211,7 @@ Conventions that pay off later:
 
 ## Using your database with blint 4
 
-blint looks for a file named exactly `blint.db` inside `BLINTDB_HOME`:
+blint looks for a file named `blint.db` inside `BLINTDB_HOME` (falling back to `blint-v4.db`):
 
 ```bash
 mkdir -p ~/.blintdb-home && cp my.db ~/.blintdb-home/blint.db

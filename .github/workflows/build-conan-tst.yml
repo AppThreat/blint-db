@@ -49,7 +49,7 @@ jobs:
     - name: Build and upload Linux conan test db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-conan
+        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db -f build-conan
         uv run python .oras/orasclient.py -p conan-linux-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -94,7 +94,7 @@ jobs:
     - name: Build and upload macOS conan test db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-conan
+        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db -f build-conan
         uv run python .oras/orasclient.py -p conan-macos-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

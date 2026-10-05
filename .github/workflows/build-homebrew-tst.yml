@@ -43,7 +43,7 @@ jobs:
     - name: Build and upload darwin arm64 test db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-homebrew
+        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db -f build-homebrew
         uv run python .oras/orasclient.py -p homebrew-darwin-arm64-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

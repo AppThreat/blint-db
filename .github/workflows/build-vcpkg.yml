@@ -54,10 +54,10 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-vcpkg
+        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db build-vcpkg
         uv run python .oras/orasclient.py -p vcpkg
-        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-vcpkg/blint.db
-        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-vcpkg/blint.metadata.json
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint-v4.db blintdb-vcpkg/blint-v4.db
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint-v4.metadata.json blintdb-vcpkg/blint-v4.metadata.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
@@ -108,10 +108,10 @@ jobs:
     - name: Build and upload arm64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-vcpkg
+        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db build-vcpkg
         uv run python .oras/orasclient.py -p vcpkg-arm64
-        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-vcpkg-arm64/blint.db
-        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-vcpkg-arm64/blint.metadata.json
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint-v4.db blintdb-vcpkg-arm64/blint-v4.db
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint-v4.metadata.json blintdb-vcpkg-arm64/blint-v4.metadata.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}

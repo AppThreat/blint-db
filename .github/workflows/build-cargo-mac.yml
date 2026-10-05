@@ -51,10 +51,10 @@ jobs:
     - name: Build and upload darwin arm64 cargo db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-cargo
+        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db build-cargo
         uv run python .oras/orasclient.py -p cargo-darwin-arm64
-        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.db blintdb-cargo-darwin-arm64/blint.db
-        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint.metadata.json blintdb-cargo-darwin-arm64/blint.metadata.json
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint-v4.db blintdb-cargo-darwin-arm64/blint-v4.db
+        uv run hf upload --quiet --repo-type dataset AppThreat/blint-db ./blint-v4.metadata.json blintdb-cargo-darwin-arm64/blint-v4.metadata.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
