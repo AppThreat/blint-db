@@ -156,7 +156,7 @@ def main() -> int:
         description="Build a blint-db corpus from curated F-Droid APKs."
     )
     parser.add_argument("--manifest", type=Path, default=FDROID_CURATED_APPS_FILE)
-    parser.add_argument("--db-file", default="blint-v4.db")
+    parser.add_argument("--db-file", default="blint.db")
     parser.add_argument(
         "--run-metadata-file",
         default=None,

@@ -44,7 +44,7 @@ jobs:
     - name: Build and upload darwin arm64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db build-vcpkg
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-vcpkg
         uv run python .oras/orasclient.py -p vcpkg-darwin-arm64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

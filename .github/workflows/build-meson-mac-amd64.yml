@@ -44,7 +44,7 @@ jobs:
     - name: Build and upload darwin amd64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db build-meson
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db build-meson
         uv run python .oras/orasclient.py -p meson-darwin-amd64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

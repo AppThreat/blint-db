@@ -49,7 +49,7 @@ jobs:
     - name: Build and upload db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db -f build-vcpkg
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-vcpkg
         uv run python .oras/orasclient.py -p vcpkg-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,7 +99,7 @@ jobs:
     - name: Build and upload arm64 db
       run: |
         mkdir -p ${BLINT_DB_BOOTSTRAP_PATH}
-        uv run blint-db --clean-start --disassemble --db-file ./blint-v4.db -f build-vcpkg
+        uv run blint-db --clean-start --disassemble --db-file ./blint.db -f build-vcpkg
         uv run python .oras/orasclient.py -p vcpkg-arm64-tst
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

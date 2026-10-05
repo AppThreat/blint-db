@@ -55,7 +55,7 @@ _BINARY = {
 
 
 def test_schema_includes_callgraph_corpus_tables(tmp_path):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     create_database(str(db_file))
     tables = {
         row["name"]
@@ -68,7 +68,7 @@ def test_schema_includes_callgraph_corpus_tables(tmp_path):
 
 
 def test_ingest_persists_binary_callgraph_nodes_and_edges(tmp_path):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     result = ingest_metadata(
         metadata=_BINARY,
         db_file=str(db_file),
@@ -96,7 +96,7 @@ def test_ingest_persists_binary_callgraph_nodes_and_edges(tmp_path):
 
 
 def test_source_ingest_and_binary_corpus_match(tmp_path):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     ingest_source_callgraph(
         source_callgraph=_SOURCE,
         source_key="app@1.0.0",
@@ -121,7 +121,7 @@ def test_source_ingest_and_binary_corpus_match(tmp_path):
 
 
 def test_match_canon_names_against_corpus_without_ingesting_binary(tmp_path):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     ingest_source_callgraph(
         source_callgraph=_SOURCE,
         source_key="app@1.0.0",
@@ -155,7 +155,7 @@ def test_match_canon_names_against_corpus_without_ingesting_binary(tmp_path):
 
 
 def test_match_canon_names_empty_input_returns_no_matches(tmp_path):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     create_database(str(db_file))
     assert match_canon_names_against_source_corpus([], db_file=str(db_file)) == []
     assert (
@@ -164,7 +164,7 @@ def test_match_canon_names_empty_input_returns_no_matches(tmp_path):
 
 
 def test_source_ingest_is_idempotent_on_source_key(tmp_path):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     first = ingest_source_callgraph(
         source_callgraph=_SOURCE, source_key="app@1.0.0", db_file=str(db_file)
     )

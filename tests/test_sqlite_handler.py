@@ -17,7 +17,7 @@ from blint_db.ingest import ingest_metadata, ingest_metadata_file
 
 
 def test_create_database_initializes_current_schema(tmp_path):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
 
     create_database(str(db_file))
 
@@ -48,7 +48,7 @@ def test_create_database_initializes_current_schema(tmp_path):
 def test_ingest_metadata_stores_symbols_dependencies_and_hashes(
     tmp_path, isolated_metadata
 ):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
 
     result = ingest_metadata(
         metadata=isolated_metadata,
@@ -106,7 +106,7 @@ def test_ingest_metadata_stores_symbols_dependencies_and_hashes(
 
 
 def test_lookup_helpers_rank_symbol_and_hash_matches(tmp_path, isolated_metadata):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     ingest_metadata(
         metadata=isolated_metadata,
         db_file=str(db_file),
@@ -131,7 +131,7 @@ def test_lookup_helpers_rank_symbol_and_hash_matches(tmp_path, isolated_metadata
 def test_project_lookup_helpers_roll_up_matches_across_binaries(
     tmp_path, isolated_metadata
 ):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     metadata_one = deepcopy(isolated_metadata)
     metadata_two = deepcopy(isolated_metadata)
     metadata_three = deepcopy(isolated_metadata)
@@ -262,7 +262,7 @@ def test_project_lookup_helpers_roll_up_matches_across_binaries(
 def test_ingest_metadata_file_supports_precomputed_blint_json(
     tmp_path, sample_metadata_file
 ):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
 
     result = ingest_metadata_file(
         str(sample_metadata_file),
@@ -282,7 +282,7 @@ def test_ingest_metadata_file_supports_precomputed_blint_json(
 
 
 def test_compact_database_truncates_freelist_after_deletes(tmp_path, isolated_metadata):
-    db_file = tmp_path / "blint-v4.db"
+    db_file = tmp_path / "blint.db"
     ingest_metadata(
         metadata=isolated_metadata,
         db_file=str(db_file),
