@@ -10,8 +10,8 @@ def test_default_run_metadata_path_uses_metadata_json_suffix(tmp_path):
         == tmp_path / "blint.metadata.json"
     )
     assert (
-        provenance.default_run_metadata_path(tmp_path / "blint-v2")
-        == tmp_path / "blint-v2.metadata.json"
+        provenance.default_run_metadata_path(tmp_path / "blint-v4")
+        == tmp_path / "blint-v4.metadata.json"
     )
 
 

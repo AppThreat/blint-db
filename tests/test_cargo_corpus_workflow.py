@@ -175,7 +175,7 @@ def test_run_rusi_callgraph_handles_failing_command(tmp_path):
 
 
 def test_cargo_pipeline_ingests_source_callgraph_and_matches(monkeypatch, tmp_path):
-    db_file = str(tmp_path / "blint-v2.db")
+    db_file = str(tmp_path / "blint-v4.db")
     source_root = tmp_path / "crate-src"
     source_root.mkdir()
 

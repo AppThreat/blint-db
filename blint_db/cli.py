@@ -73,7 +73,7 @@ from blint_db.utils.provenance import write_run_metadata
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="blint-db",
-        description="Build and ingest blint v3 metadata into the blint-db v2 SQLite schema.",
+        description="Build and ingest blint v4 metadata into the blint-db v4 SQLite database.",
     )
     parser.add_argument(
         "--db-file",

@@ -36,11 +36,11 @@ WRAPDB_URL = "https://github.com/mesonbuild/wrapdb.git"
 VCPKG_URL = "https://github.com/microsoft/vcpkg.git"
 HOMEBREW_CORE_TAP = os.getenv("BLINT_DB_HOMEBREW_CORE_TAP", "homebrew/core")
 
-WRAPDB_COMMIT_HASH = "e74bfb6078dd4805d346d1fc38d0f6ad198443ad"
-VCPKG_COMMIT_HASH = "63bb8e44c140791580201d29c0c16985a88969cf"
+WRAPDB_COMMIT_HASH = "0e8ea68ff10940f61a6b4f3e9ab674dada58557e"
+VCPKG_COMMIT_HASH = "19780d9cdf84d0944cf9a318666703b89ab6629c"
 
 BOM_LOCATION = BLINT_DB_BOOTSTRAP_PATH / "BOM"
-BLINT_DB_FILE = os.getenv("BLINT_DB_FILE", "blint-v2.db")
+BLINT_DB_FILE = os.getenv("BLINT_DB_FILE", "blint-v4.db")
 BLINT_DB_SCHEMA_VERSION = 3
 BLINT_DB_SCHEMA_FAMILY = "blint-db"
 CWD = Path(os.getcwd())
