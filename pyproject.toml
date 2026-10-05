@@ -67,4 +67,4 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [tool.uv.sources]
-blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "29c8d6497bbc8154f638a872a2e689a77f61ee08" }
+blint = { git = "https://github.com/owasp-dep-scan/blint", rev = "fc39d1202f550d701a9f6564230488aa96e8cc26" }
