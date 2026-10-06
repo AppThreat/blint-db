@@ -432,6 +432,12 @@ def compact_database(db_file: str | None = None) -> dict[str, dict[str, int | st
         }
     before = collect_database_stats(database_file)
     with get_connection(database_file) as connection:
+        # VACUUM rebuilds the database through the temp store; with the
+        # connection default temp_store=MEMORY a multi-GB corpus would be
+        # rebuilt entirely in RAM and OOM the host (a 58GB database held
+        # 58GB resident). Force the file-backed temp store for the
+        # compaction only.
+        connection.execute("PRAGMA temp_store = FILE")
         connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         connection.execute("PRAGMA optimize")
         connection.execute("VACUUM")
