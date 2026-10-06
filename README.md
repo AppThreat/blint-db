@@ -341,6 +341,44 @@ Conan Center / C and C++:
 blint-db --db-file blint.db --clean-start build-conan
 ```
 
+#### Corpus build prerequisites and environment
+
+Every `build-*` command needs `git`, a C/C++ compiler (`gcc`/`g++`), `cmake`,
+`ninja` and `pkg-config` (`ninja` and `meson` come with the `blint-db` install;
+`--disassemble` additionally needs the `extended` extra with LLVM 18 — see
+[Disassembly requirements](#disassembly-requirements)). Per ecosystem:
+
+- **meson / wrapdb** — the wraps are developed and CI-tested with GCC, so
+  `blint-db` pins `gcc`/`g++` for its Meson invocations regardless of the
+  ambient `CC`/`CXX` (override with `BLINT_DB_MESON_CC` / `BLINT_DB_MESON_CXX`).
+  On Debian/Ubuntu the corpus additionally needs:
+  `nasm yasm flex bison doxygen gcc-avr avr-libc libxi-dev libudev-dev
+  libssl-dev libzmq3-dev libboost-dev libgmock-dev libdbus-1-dev libproxy-dev
+  libglu1-mesa-dev libegl1-mesa-dev libgles-dev libgles1 libgtk2.0-dev
+  qtbase5-dev libavfilter-dev`. A few wraps are Windows-only
+  (`dlfcn-win32`, `win-iconv`) or disabled upstream (`buildable: NO` in their
+  wrap) and always skip.
+- **vcpkg** — bootstraps its own toolchain; needs `curl`, `zip`, `unzip`,
+  `tar` and the system compiler. Android triplets additionally need the NDK
+  (`ANDROID_NDK_HOME`) with `contrib/vcpkg-overlay-triplets`.
+- **conan** — self-contained via conancenter; a system compiler for recipes
+  that build from source. Pins live in `blint_db/inputs/conan-center-packages.csv`.
+- **cargo** — `cargo`/`rustc` on `PATH`; corpus defined by
+  `blint_db/inputs/cargo-crates.csv`.
+- **homebrew** — macOS with Homebrew; formulas come from
+  `blint_db/inputs/homebrew-formulas.csv`.
+
+Two environment flags matter for large runs:
+
+- `BLINT_DB_ISOLATED_INGEST` (default `1`) — ingest each meson project in a
+  short-lived worker process. Parsing with disassembly peaks at hundreds of MB
+  per large binary and the process allocator retains those arenas, so a
+  whole-corpus run in one process ratchets resident memory until the OOM
+  killer strikes; the worker's exit returns the memory to the OS. Set `0` only
+  when debugging the ingest path in-process.
+- `BLINT_DB_BUILD_JOBS` — parallel compile jobs per project (defaults to all
+  cores).
+
 The default Cargo corpus is a curated, version-pinned manifest in `blint_db/inputs/cargo-crates.csv`.
 Rows can repeat the same `crate@version` under different named `feature_profile` values when you want to capture multiple native build shapes for one release.
 Use `-s/--select-project` **after** the `build-cargo` subcommand when you want to build exact crates manually:
