@@ -2,8 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 import configparser
+import json
 import os
 import shutil
+import subprocess
+import sys
 import traceback
 from sqlite3 import OperationalError
 
@@ -30,6 +33,94 @@ from blint_db.utils.provenance import build_failure_record, build_project_outcom
 def _record_outcome(project_outcomes, **kwargs):
     if project_outcomes is not None:
         project_outcomes.append(build_project_outcome(**kwargs))
+
+
+def _isolated_ingest_enabled() -> bool:
+    return os.getenv("BLINT_DB_ISOLATED_INGEST", "1") != "0"
+
+
+def _ingest_files_isolated(
+    files,
+    *,
+    db_file,
+    project_name,
+    project_purl,
+    ecosystem,
+    project_metadata,
+    build_system,
+    target_os,
+    target_arch,
+    build_mode,
+    strip_status,
+    build_metadata,
+    relative_to,
+    disassemble,
+):
+    """Ingest files in a worker subprocess and log per-file errors.
+
+    Parsing (with disassembly) peaks at hundreds of MB per large binary and
+    the allocator retains those arenas, so a whole-corpus run ratchets RSS up
+    until the OOM killer strikes. A worker per project bounds that peak to a
+    single project; its exit returns the memory to the OS.
+    """
+    command = [
+        sys.executable,
+        "-m",
+        "blint_db.projects_compiler.ingest_worker",
+        "--project-name",
+        project_name,
+        "--build-system",
+        build_system,
+    ]
+    if db_file:
+        command += ["--db-file", str(db_file)]
+    if project_purl:
+        command += ["--project-purl", project_purl]
+    if ecosystem:
+        command += ["--ecosystem", ecosystem]
+    if project_metadata:
+        command += ["--project-metadata-json", json.dumps(project_metadata)]
+    if target_os:
+        command += ["--target-os", target_os]
+    if target_arch:
+        command += ["--target-arch", target_arch]
+    if build_mode:
+        command += ["--build-mode", build_mode]
+    if strip_status:
+        command += ["--strip-status", strip_status]
+    if build_metadata:
+        command += ["--build-metadata-json", json.dumps(build_metadata)]
+    if relative_to:
+        command += ["--relative-to", str(relative_to)]
+    if disassemble:
+        command.append("--disassemble")
+    command += [str(f) for f in files]
+    try:
+        proc = subprocess.run(
+            command, capture_output=True, text=True, check=False
+        )
+    except OSError as exc:
+        raise RuntimeError(
+            f"Failed to start isolated ingest worker for {project_name}: {exc}"
+        ) from exc
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"Isolated ingest worker failed for {project_name} with return code "
+            f"{proc.returncode}: {proc.stderr.strip()[-2000:]}"
+        )
+    try:
+        results = json.loads(proc.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"Isolated ingest worker for {project_name} produced no parseable "
+            f"result: {exc}"
+        ) from exc
+    for entry in results:
+        if entry.get("status") == "error":
+            logger.error(
+                "error encountered with %s", f'{project_name}:{entry.get("file")}'
+            )
+            logger.error(entry.get("error"))
 
 
 def git_clone_wrapdb():
@@ -78,28 +169,46 @@ def add_project_meson_db(project_name, wrap_file, db_file=None, disassemble=Fals
             f"Meson build failed for {project_name} with return code {build_result.returncode}"
         )
     execs = find_meson_executables(project_name)
-    for files in execs:
-        try:
-            ingest_binary_file(
-                files,
-                db_file=db_file,
-                project_name=project_name,
-                project_purl=purl,
-                ecosystem="wrapdb",
-                project_metadata=metadata,
-                build_system="meson",
-                target_os=SYSTEM,
-                target_arch=ARCH,
-                build_mode=MESON_BUILD_TYPE,
-                strip_status="stripped" if MESON_STRIP else "unstripped",
-                build_metadata={"wrap_file": str(wrap_file)} if wrap_file else None,
-                relative_to=WRAPDB_LOCATION / "build" / project_name,
-                disassemble=disassemble,
-            )
-        except (RuntimeError, FileNotFoundError) as e:
-            logger.info(f"error encountered with {project_name}")
-            logger.error(e)
-            logger.error(traceback.format_exc())
+    if execs and _isolated_ingest_enabled():
+        _ingest_files_isolated(
+            execs,
+            db_file=db_file,
+            project_name=project_name,
+            project_purl=purl,
+            ecosystem="wrapdb",
+            project_metadata=metadata,
+            build_system="meson",
+            target_os=SYSTEM,
+            target_arch=ARCH,
+            build_mode=MESON_BUILD_TYPE,
+            strip_status="stripped" if MESON_STRIP else "unstripped",
+            build_metadata={"wrap_file": str(wrap_file)} if wrap_file else None,
+            relative_to=WRAPDB_LOCATION / "build" / project_name,
+            disassemble=disassemble,
+        )
+    else:
+        for files in execs:
+            try:
+                ingest_binary_file(
+                    files,
+                    db_file=db_file,
+                    project_name=project_name,
+                    project_purl=purl,
+                    ecosystem="wrapdb",
+                    project_metadata=metadata,
+                    build_system="meson",
+                    target_os=SYSTEM,
+                    target_arch=ARCH,
+                    build_mode=MESON_BUILD_TYPE,
+                    strip_status="stripped" if MESON_STRIP else "unstripped",
+                    build_metadata={"wrap_file": str(wrap_file)} if wrap_file else None,
+                    relative_to=WRAPDB_LOCATION / "build" / project_name,
+                    disassemble=disassemble,
+                )
+            except (RuntimeError, FileNotFoundError) as e:
+                logger.info(f"error encountered with {project_name}")
+                logger.error(e)
+                logger.error(traceback.format_exc())
     return execs
 
 
