@@ -11,6 +11,8 @@ from pathlib import Path
 from blint_db import (
     BUILD_JOBS,
     MESON_BUILD_TYPE,
+    MESON_CC,
+    MESON_CXX,
     MESON_DEFAULT_LIBRARY,
     MESON_EXTRA_COMPILE_ARGS,
     MESON_EXTRA_SETUP_ARGS,
@@ -103,18 +105,34 @@ def _is_supported_meson_artifact(file_path: str | Path) -> bool:
     return os.access(path_obj, os.X_OK)
 
 
+def meson_build_env() -> dict:
+    """Environment for wrapdb builds: GCC compilers, independent of CC/CXX.
+
+    The ambient CC/CXX is typically clang (needed to build nyxstone), but the
+    wrapdb projects are GCC-first: several use GCC-only flags that make
+    clang's meson dependency probes fail outright.
+    """
+    env = os.environ.copy()
+    env["CC"] = MESON_CC
+    env["CXX"] = MESON_CXX
+    return env
+
+
 def meson_build(project_name):
     logger.info(f"Building {project_name}")
     build_dir = build_dir_for(project_name)
     shutil.rmtree(build_dir, ignore_errors=True)
+    env = meson_build_env()
     setup_command = meson_setup_command(project_name)
     meson_setup = run_command(
-        setup_command, cwd=WRAPDB_LOCATION, project_name=project_name
+        setup_command, cwd=WRAPDB_LOCATION, project_name=project_name, env=env
     )
     if meson_setup.returncode != 0:
         return meson_setup
     compile_command = meson_compile_command(project_name)
-    return run_command(compile_command, cwd=WRAPDB_LOCATION, project_name=project_name)
+    return run_command(
+        compile_command, cwd=WRAPDB_LOCATION, project_name=project_name, env=env
+    )
 
 
 def find_meson_executables(project_name):

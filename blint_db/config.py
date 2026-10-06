@@ -48,6 +48,13 @@ CWD = Path(os.getcwd())
 SQLITE_TIMEOUT = 20.0
 BUILD_JOBS = max(1, int(os.getenv("BLINT_DB_BUILD_JOBS", os.cpu_count() or 1)))
 MESON_BUILD_TYPE = os.getenv("BLINT_DB_MESON_BUILDTYPE", "debug")
+# The wrapdb corpus is developed and CI-tested with GCC; projects routinely
+# use GCC-only flags (-fpermissive, -Wmaybe-uninitialized) that break clang's
+# meson probes. The clang toolchain in the environment exists for building
+# nyxstone, so the Meson corpus builds pin their own compilers unless
+# explicitly overridden.
+MESON_CC = os.getenv("BLINT_DB_MESON_CC", "gcc")
+MESON_CXX = os.getenv("BLINT_DB_MESON_CXX", "g++")
 MESON_DEFAULT_LIBRARY = os.getenv("BLINT_DB_MESON_DEFAULT_LIBRARY", "shared")
 MESON_STRIP = _env_bool("BLINT_DB_MESON_STRIP", True)
 MESON_WARN_LEVEL = os.getenv("BLINT_DB_MESON_WARN_LEVEL", "0")

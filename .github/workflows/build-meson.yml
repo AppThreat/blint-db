@@ -22,7 +22,7 @@ jobs:
     - name: Install LLVM 18 toolchain
       run: |
         sudo apt-get update
-        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config
+        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config nasm yasm flex bison doxygen gcc-avr avr-libc libxi-dev libudev-dev libssl-dev libzmq3-dev libboost-dev libgmock-dev libdbus-1-dev libproxy-dev libglu1-mesa-dev libegl1-mesa-dev libgles-dev libgles1 libgtk2.0-dev qtbase5-dev libavfilter-dev
         LLVM_CONFIG_BIN="$(command -v llvm-config || command -v llvm-config-18 || true)"
         if [ -z "$LLVM_CONFIG_BIN" ] && [ -x /usr/lib/llvm-18/bin/llvm-config ]; then
           LLVM_CONFIG_BIN=/usr/lib/llvm-18/bin/llvm-config
@@ -79,7 +79,7 @@ jobs:
     - name: Install LLVM 18 toolchain
       run: |
         sudo apt-get update
-        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config
+        sudo apt-get install -y llvm-18 llvm-18-dev clang-18 lld-18 g++ pkg-config nasm yasm flex bison doxygen gcc-avr avr-libc libxi-dev libudev-dev libssl-dev libzmq3-dev libboost-dev libgmock-dev libdbus-1-dev libproxy-dev libglu1-mesa-dev libegl1-mesa-dev libgles-dev libgles1 libgtk2.0-dev qtbase5-dev libavfilter-dev
         LLVM_CONFIG_BIN="$(command -v llvm-config || command -v llvm-config-18 || true)"
         if [ -z "$LLVM_CONFIG_BIN" ] && [ -x /usr/lib/llvm-18/bin/llvm-config ]; then
           LLVM_CONFIG_BIN=/usr/lib/llvm-18/bin/llvm-config
