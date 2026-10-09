@@ -431,6 +431,16 @@ def compact_database(db_file: str | None = None) -> dict[str, dict[str, int | st
             "after": collect_database_stats(database_file),
         }
     before = collect_database_stats(database_file)
+    if before.get("freelist_count") == 0:
+        # VACUUM only reclaims free pages; with none, it rewrites the
+        # whole database through the temp store for no size gain, and
+        # needs temporary space of the same order as the database. Skip
+        # it and keep the optimize pass for statistics refresh.
+        with get_connection(database_file) as connection:
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            connection.execute("PRAGMA optimize")
+        after = collect_database_stats(database_file)
+        return {"before": before, "after": after}
     with get_connection(database_file) as connection:
         # VACUUM rebuilds the database through the temp store; with the
         # connection default temp_store=MEMORY a multi-GB corpus would be
