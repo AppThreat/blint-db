@@ -14,6 +14,7 @@
 FROM alpine:3.21
 
 ENV LANG=C.UTF-8 \
+    PATH=/usr/lib/llvm18/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin \
     NYXSTONE_LLVM_PREFIX=/usr/lib/llvm18 \
     LLVM_CONFIG=/usr/lib/llvm18/bin/llvm-config \
     CC=/usr/lib/llvm18/bin/clang \
