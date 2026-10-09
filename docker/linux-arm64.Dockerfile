@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 #
-# Toolchain image for building the blint-db meson (wrapdb) corpus on
-# linux/arm64 with glibc. Mirrors .github/workflows/build-meson.yml.
+# Toolchain image for building blint-db corpora (meson/wrapdb, conan,
+# vcpkg) on linux/arm64 with glibc. Mirrors the apt dependencies used by
+# the build-meson, build-conan and build-vcpkg workflows.
 #
-#   docker build -f docker/meson-arm64.Dockerfile -t blintdb-builder-meson-arm64:latest .
-#   docker run -d --name meson-arm64 blintdb-builder-meson-arm64:latest
-#   docker exec meson-arm64 bash -c "git clone --depth 1 https://github.com/AppThreat/blint-db /app/blint-db && cd /app/blint-db && uv sync --all-extras --all-groups --all-packages -p 3.13"
+#   docker build -f docker/linux-arm64.Dockerfile -t blintdb-builder-linux-arm64:latest .
+#   docker run -d --name linux-arm64 blintdb-builder-linux-arm64:latest
+#   docker exec linux-arm64 bash -c "git clone --depth 1 https://github.com/AppThreat/blint-db /app/blint-db && cd /app/blint-db && uv sync --all-extras --all-groups --all-packages -p 3.13"
 
 FROM ubuntu:24.04
 

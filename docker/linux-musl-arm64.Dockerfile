@@ -2,14 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 #
-# Toolchain image for building the blint-db meson (wrapdb) corpus on
-# linux/arm64 with musl. The wrapdb corpus is developed against glibc, so
-# expect more build_failed outcomes here; the successful subset is still
-# valuable for symbol matching on musl systems.
+# Toolchain image for building blint-db corpora (meson/wrapdb, conan,
+# vcpkg) on linux/arm64 with musl. Upstream corpora are developed against
+# glibc, so expect more build_failed outcomes here; the successful subset
+# is still valuable for symbol matching on musl systems.
 #
-#   docker build -f docker/meson-musl-arm64.Dockerfile -t blintdb-builder-meson-musl:latest .
-#   docker run -d --name meson-musl blintdb-builder-meson-musl:latest
-#   docker exec meson-musl sh -c "git clone --depth 1 https://github.com/AppThreat/blint-db /app/blint-db && cd /app/blint-db && uv sync --all-extras --all-groups --all-packages -p 3.13"
+#   docker build -f docker/linux-musl-arm64.Dockerfile -t blintdb-builder-linux-musl-arm64:latest .
+#   docker run -d --name linux-musl-arm64 blintdb-builder-linux-musl-arm64:latest
+#   docker exec linux-musl-arm64 sh -c "git clone --depth 1 https://github.com/AppThreat/blint-db /app/blint-db && cd /app/blint-db && uv sync --all-extras --all-groups --all-packages -p 3.13"
 
 FROM alpine:3.21
 
