@@ -32,6 +32,12 @@ RUN apk add --no-cache \
         util-linux-dev zlib-dev libffi-dev pcre2-dev \
         unzip zip tar xz
 
+# Alpine 3.21's compiler-rt package installs under the llvm19 resource dir
+# while clang18 looks in its own; bridge it so nyxstone links.
+RUN mkdir -p /usr/lib/llvm18/lib/clang/18/lib/linux \
+    && ln -sf /usr/lib/llvm19/lib/clang/19/lib/aarch64-alpine-linux-musl/libclang_rt.builtins-aarch64.a \
+        /usr/lib/llvm18/lib/clang/18/lib/linux/libclang_rt.builtins-aarch64.a
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 WORKDIR /app
