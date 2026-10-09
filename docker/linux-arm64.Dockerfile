@@ -35,6 +35,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
+# The Go oras CLI streams layer files with constant memory; the Python
+# oras client buffers the whole layer and gets OOM-killed on multi-GB
+# corpora inside memory-capped environments. Install it for pushing
+# large blint.db artifacts.
+RUN curl -sL -o /tmp/oras.tgz \
+        https://github.com/oras-project/oras/releases/download/v1.2.2/oras_1.2.2_linux_arm64.tar.gz \
+    && tar -xzf /tmp/oras.tgz -C /usr/local/bin oras && rm /tmp/oras.tgz
+
 WORKDIR /app
 
 CMD ["sleep", "infinity"]
