@@ -25,6 +25,7 @@ RUN apk add --no-cache \
         clang18 llvm18-dev lld18 \
         build-base gcc g++ pkgconf ninja samurai \
         nasm yasm flex bison doxygen \
+        cmake zip unzip \
         linux-headers libtool autoconf automake gettext \
         eudev-dev openssl-dev zeromq-dev boost-dev gtest-dev \
         dbus-dev libproxy-dev mesa-dev glu-dev \

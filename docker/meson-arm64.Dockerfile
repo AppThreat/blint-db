@@ -22,13 +22,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl git openssh-client \
         llvm-18 llvm-18-dev clang-18 lld-18 \
-        gcc g++ pkg-config \
+        build-essential gcc g++ pkg-config cmake ninja-build \
         nasm yasm flex bison doxygen \
         gcc-avr avr-libc \
         libxi-dev libudev-dev libssl-dev libzmq3-dev libboost-dev libgmock-dev \
         libdbus-1-dev libproxy-dev libglu1-mesa-dev libegl1-mesa-dev libgles-dev libgles1 \
         libgtk2.0-dev qtbase5-dev libavfilter-dev \
-        unzip zip xz-utils \
+        unzip zip xz-utils autoconf automake libtool \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
