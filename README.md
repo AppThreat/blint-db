@@ -45,6 +45,27 @@ Use `blint-db` v4 to:
 - support ML or heuristic matching experiments on binary metadata
 - filter a corpus by the runtime it requires, for example every binary that cannot run on a given glibc version
 
+## Available v4 databases
+
+All published databases live on ghcr under `ghcr.io/appthreat/blintdb-<ecosystem>:v4` and are pulled automatically by `blint db --download` (or selected with `blint sbom --use-blintdb --image-url ...`).
+
+| Image | Ecosystem | Projects | Binaries | Symbols | Size |
+|---|---|---|---|---|---|
+| `blintdb-vcpkg:v4` | vcpkg (linux amd64) | | | | |
+| `blintdb-vcpkg-arm64:v4` | vcpkg (linux arm64) | 589 | 66,649 | 27.9M | 53.1 GB |
+| `blintdb-vcpkg-darwin-arm64:v4` | vcpkg (macos arm64) | | | | |
+| `blintdb-vcpkg-musl:v4` | vcpkg (musl amd64) | | | | |
+| `blintdb-meson:v4` | Meson wrapdb (linux amd64) | 249 | 2,123 | 9.2M | 56.6 GB || `blintdb-meson-arm64:v4` | Meson wrapdb (linux arm64) | 246 | 2,024 | 9.0M | 58.2 GB |
+| `blintdb-meson-darwin-arm64:v4` | Meson wrapdb (macos arm64) | 229 | 1,270 | 4.1M | 30.2 GB |
+| `blintdb-meson-musl:v4` | Meson wrapdb (musl amd64) | | | | |
+| `blintdb-meson-musl-arm64:v4` | Meson wrapdb (musl arm64) | 244 | 1,934 | 8.6M | 55.9 GB |
+| `blintdb-conan-linux-amd64:v4` | Conan Center (linux amd64) | 35 | 802 | 1.5M | 6.0 GB |
+| `blintdb-conan-darwin-arm64:v4` | Conan Center (macos arm64) | 35 | 809 | 1.7M | 10.6 GB |
+| `blintdb-conan-linux-arm64:v4` | Conan Center (linux arm64) | 35 | 803 | 1.5M | 5.7 GB |
+| `blintdb-homebrew-darwin-arm64:v4` | Homebrew top-100 (macos arm64) | 102 | 6,173 | 16.2M | 77.8 GB |
+
+Sizes are the compressed layer size on ghcr. Empty cells mark images that have not been rebuilt for v4 yet.
+
 ## Sourcing binaries and building your own database
 
 The published ecosystem databases cover build-from-source corpora (Meson, vcpkg, Homebrew, Conan Center, crates.io). blint 4 can also identify the binaries people actually ship — the `.so` inside an Android APK, the `.dll` inside a Windows portable archive, the `.dylib` inside a macOS app bundle — and for those you build your own database from the container members. `blint-db` ingests one binary file per row, so the container is unpacked first; everything else (where to get PE, Mach-O and Android native binaries you may redistribute, how to group them into projects, how to point `blint sbom --use-blintdb` at the result) is documented in [docs/SOURCING.md](docs/SOURCING.md).
