@@ -34,6 +34,11 @@ fi
 sed -i "s/\"version\": \"4.4.3\"/\"version\": \"${SYSTEM_CMAKE}\"/g" \
     "$VCPKG_DIR/scripts/vcpkg-tools.json"
 
+# Archives written by an interrupted vcpkg run can be truncated; a
+# restore from such an archive leaves installed/ without list files and
+# every subsequent port fails while validating. Start from a clean cache.
+rm -rf /root/.cache/vcpkg/archives/* 2>/dev/null || true
+
 echo "vcpkg at $VCPKG_DIR pinned to $VCPKG_COMMIT"
 echo "linux cmake requirement lowered to system cmake $SYSTEM_CMAKE"
 echo "remember to export VCPKG_FORCE_SYSTEM_BINARIES=1 for the build"
