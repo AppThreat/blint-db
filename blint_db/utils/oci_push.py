@@ -31,6 +31,7 @@ import time
 from pathlib import Path
 
 import requests
+from urllib.parse import urlsplit
 
 CHUNK_SIZE = 8 * 1024 * 1024
 UPLOAD_ATTEMPTS = 3
@@ -137,6 +138,9 @@ class RegistryClient:
         self.scheme = "http" if insecure else "https"
         self._token: str | None = None
         self._session = requests.Session()
+        self._session.headers["User-Agent"] = (
+            "blint-db-oci-push/1.0 (+https://github.com/AppThreat/blint-db)"
+        )
 
     def _api_url(self, path: str) -> str:
         return f"{self.scheme}://{self.registry}{path}"
@@ -190,7 +194,31 @@ class RegistryClient:
         location = response.headers.get("Location")
         if not location:
             raise UploadFailedError("Upload session response had no Location header")
+        self._validate_upload_location(location)
         return location if location.startswith("http") else self._api_url(location)
+
+    def _validate_upload_location(self, location: str) -> None:
+        """
+        Refuse upload sessions that move off the registry host or downgrade
+        the scheme, so the bearer token is never forwarded anywhere else
+        (mirrors oras-go's fix for GHSA-jxpm-75mh-9fp7; also covers
+        registries that hand out pre-signed cross-host URLs).
+        """
+        parsed = urlsplit(location if "//" in location else f"{self.scheme}://{self.registry}{location}")
+        registry_parsed = urlsplit(f"{self.scheme}://{self.registry}")
+        default_ports = {"https": 443, "http": 80}
+
+        def effective_port(split):
+            return split.port or default_ports.get(split.scheme)
+
+        if parsed.hostname != registry_parsed.hostname or effective_port(parsed) != effective_port(
+            registry_parsed
+        ):
+            raise UploadFailedError(
+                f"Upload location moved to a different host ({parsed.netloc}); refusing to continue"
+            )
+        if self.scheme == "https" and parsed.scheme == "http":
+            raise UploadFailedError("Upload location downgraded https to http; refusing to continue")
 
     def _put_blob(self, blob_url: str, body, size: int, label: str) -> None:
         started = time.monotonic()
