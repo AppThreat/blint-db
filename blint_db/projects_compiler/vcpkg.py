@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 import traceback
-from sqlite3 import OperationalError
+from sqlite3 import DataError, OperationalError
 
 from blint_db import (
     ANDROID_NDK_HOME,
@@ -174,7 +174,10 @@ def add_project_vcpkg_db(project_name, vcpkg_json, db_file=None, disassemble=Fal
                 logger.debug(
                     "Ingested %d archive members for %s", len(member_results), files
                 )
-        except (RuntimeError, FileNotFoundError) as e:
+        except (RuntimeError, FileNotFoundError, DataError, OperationalError) as e:
+            # DataError covers artifacts whose single row would exceed the
+            # 1GB SQLITE_MAX_LENGTH (llvm's static archives, for example);
+            # one oversized artifact must not end the whole corpus run.
             logger.info(f"error encountered with {project_name}")
             logger.error(e)
     return execs
@@ -215,7 +218,7 @@ def mt_vcpkg_blint_db_build(
             details={"vcpkg_json": str(vcpkg_json)} if vcpkg_json else None,
         )
         return execs
-    except (OperationalError, RuntimeError) as e:
+    except (OperationalError, RuntimeError, DataError) as e:
         logger.info(f"error encountered with {project_name}")
         logger.error(e)
         _record_outcome(
