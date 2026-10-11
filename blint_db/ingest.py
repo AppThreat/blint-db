@@ -212,15 +212,22 @@ def extract_archive_members(
     import ar
 
     members: list[dict[str, Any]] = []
-    with open(archive_file_path, "rb") as handle:
-        archive = ar.Archive(handle)
-        for member in archive:
-            name = os.path.basename(str(member.name).replace("\\", "/"))
-            if not name or not name.lower().endswith((".o", ".obj")):
-                continue
-            data = member.get_stream(handle).read(member.size)
-            if data:
-                members.append({"name": name, "data": data})
+    try:
+        with open(archive_file_path, "rb") as handle:
+            archive = ar.Archive(handle)
+            for member in archive:
+                name = os.path.basename(str(member.name).replace("\\", "/"))
+                if not name or not name.lower().endswith((".o", ".obj")):
+                    continue
+                data = member.get_stream(handle).read(member.size)
+                if data:
+                    members.append({"name": name, "data": data})
+    except ar.archive.ArchiveError as e:
+        # Not every archive-named file is an ar container: vcpkg's macOS
+        # corpora ship Mach-O fat binaries with .a-style names, which the
+        # parser rejects on magic. A non-archive file simply has no
+        # members; the caller still ingests the file itself.
+        logger.debug("Skipping non-archive file %s: %s", archive_file_path, e)
     return members
 
 
