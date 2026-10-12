@@ -68,6 +68,7 @@ def vcpkg_install_command(project_name: str) -> list[str]:
         _vcpkg_executable(),
         "install",
         *(["--keep-going"] if VCPKG_KEEP_GOING else []),
+        "--recurse",
         "--clean-after-build",
         f"--triplet={VCPKG_DEFAULT_TRIPLET}",
         f"--x-buildtrees-root={VCPKG_LOCATION / 'buildtrees'}",
