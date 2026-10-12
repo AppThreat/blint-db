@@ -53,7 +53,7 @@ All published databases live on ghcr under `ghcr.io/appthreat/blintdb-<ecosystem
 |---|---|---|---|---|---|
 | `blintdb-vcpkg:v4` | vcpkg (linux amd64) | | | | |
 | `blintdb-vcpkg-arm64:v4` | vcpkg (linux arm64) | 589 | 66,649 | 27.9M | 53.1 GB |
-| `blintdb-vcpkg-darwin-arm64:v4` | vcpkg (macos arm64) | | | | |
+| `blintdb-vcpkg-darwin-arm64:v4` | vcpkg (macos arm64, top 100 ports) | 70 | 31,482 | 13.2M | 60.2 GB |
 | `blintdb-vcpkg-musl:v4` | vcpkg (musl amd64) | | | | |
 | `blintdb-meson:v4` | Meson wrapdb (linux amd64) | 249 | 2,123 | 9.2M | 56.6 GB || `blintdb-meson-arm64:v4` | Meson wrapdb (linux arm64) | 246 | 2,024 | 9.0M | 58.2 GB |
 | `blintdb-meson-darwin-arm64:v4` | Meson wrapdb (macos arm64) | 229 | 1,270 | 4.1M | 30.2 GB |
