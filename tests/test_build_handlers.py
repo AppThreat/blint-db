@@ -76,7 +76,12 @@ def test_vcpkg_install_command_uses_clean_build_roots(monkeypatch):
     command = vcpkg_handler.vcpkg_install_command("openssl")
 
     assert command[0] == "./vcpkg"
-    assert command[1:4] == ["install", "--keep-going", "--clean-after-build"]
+    assert command[1:5] == [
+        "install",
+        "--keep-going",
+        "--recurse",
+        "--clean-after-build",
+    ]
     assert "--triplet=arm64-osx" in command
     assert any(part.startswith("--x-buildtrees-root=") for part in command)
     assert any(part.startswith("--x-packages-root=") for part in command)
