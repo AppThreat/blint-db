@@ -1,0 +1,16 @@
+pyproject.toml
+  h_6a4cc5cdf68def 70
+uv.lock
+  h_6a4cc5cdf68def 203,251,538,941,943,945-1008
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "348bd13985d153ad9f97ba714b3f2176046146b0",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
