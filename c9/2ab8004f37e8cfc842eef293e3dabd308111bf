@@ -1,0 +1,22 @@
+scripts/build_sample_db.sh
+  h_6a4cc5cdf68def 1-73
+tests/data/blintdb-sample.db.license
+  h_6a4cc5cdf68def 1-3
+tests/data/blintdb-sample.metadata.json
+  h_6a4cc5cdf68def 1-196
+tests/data/blintdb-sample.metadata.json.license
+  h_6a4cc5cdf68def 1-3
+tests/test_blintdb_contract.py
+  h_6a4cc5cdf68def 1-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c92ab8004f37e8cfc842eef293e3dabd308111bf",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
