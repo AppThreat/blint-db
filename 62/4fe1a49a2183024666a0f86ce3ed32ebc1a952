@@ -1,0 +1,14 @@
+.github/workflows/tests.yml
+  h_6a4cc5cdf68def 1-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "624fe1a49a2183024666a0f86ce3ed32ebc1a952",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
