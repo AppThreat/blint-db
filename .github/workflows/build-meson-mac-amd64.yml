@@ -8,7 +8,7 @@ env:
 
 jobs:
   builder-darwin-amd64-meson:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 7200
     permissions:
       contents: write
