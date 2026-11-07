@@ -1,0 +1,23 @@
+.github/workflows/build-meson-mac-amd64.yml
+  s_9ad0d06e599d77::t_f54c5a8d02623c 11
+.github/workflows/build-conan-tst.yml
+  s_9ad0d06e599d77::t_0e70eb0324ee39 62
+.github/workflows/build-meson-tst.yml
+  s_9ad0d06e599d77::t_8d7b12aa1c42e3 61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1a0ab2e6b5299eb182576d0d667c809f81f15bd",
+  "prompts": {},
+  "sessions": {
+    "s_9ad0d06e599d77": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "sess_f1e77082-4039-41f1-ba3e-5456ebe13eb4",
+        "model": "GLM-5.3-Flash"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
