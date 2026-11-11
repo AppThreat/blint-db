@@ -26,7 +26,7 @@ provision:
   script: |
     #!/bin/bash
     set -e -o pipefail
-    npm install -g node-gyp @cyclonedx/cdxgen --omit=dev
+    npm install -g node-gyp @cdxgen/cdxgen --omit=dev
     npx node-gyp install
     node -v
     npm -v
