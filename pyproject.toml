@@ -2,7 +2,8 @@
 name = "blint-db"
 version = "2.1.0"
 description = "Symbols database for OWASP blint"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
   {name= "Team AppThreat", email = "cloud@appthreat.com"},
 ]
@@ -52,7 +53,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
