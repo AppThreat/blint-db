@@ -1,0 +1,21 @@
+contrib/blintdb-alpine-lima.yaml
+  s_866a1aa64ce7cf::t_ad8d83fbc646ab 29
+contrib/blintdb-ubuntu-lima.yaml
+  s_866a1aa64ce7cf::t_94098b50adea9d 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e007275e0df2d3daf30afec60fc596c1ddff0864",
+  "prompts": {},
+  "sessions": {
+    "s_866a1aa64ce7cf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bdc4aa31-7d82-41d4-b4e8-e95071da2a4e",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
