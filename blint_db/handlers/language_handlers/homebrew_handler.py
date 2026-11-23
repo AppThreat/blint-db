@@ -218,7 +218,7 @@ def ensure_homebrew_formula(formula_name: str) -> dict:
     return homebrew_info(formula_name)
 
 
-def _keg_path_for_version(formula_name: str, version: str) -> Path | None:
+def _keg_path_for_version(formula_name: str | None, version: str) -> Path | None:
     cellar = homebrew_cellar(formula_name)
     if not cellar:
         return None

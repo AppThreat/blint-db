@@ -9,7 +9,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import PurePath
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, TypedDict
 
 from blint_db import (
     BLINT_DB_FILE,
@@ -294,7 +294,7 @@ def _display_name(binary_file_path: str, metadata: dict | None = None) -> str:
 
 
 @contextmanager
-def get_connection(db_file: str | None = None):
+def get_connection(db_file: str | os.PathLike | None = None):
     database_file = db_file or BLINT_DB_FILE
     connection = sqlite3.connect(database_file, timeout=SQLITE_TIMEOUT)
     connection.row_factory = sqlite3.Row
@@ -391,7 +391,21 @@ def ensure_database(db_file: str | None = None):
     _validate_schema_contract(database_file)
 
 
-def collect_database_stats(db_file: str | None = None) -> dict[str, int | str]:
+class DatabaseStats(TypedDict):
+    """Per-key types for the mapping returned by collect_database_stats."""
+
+    database_file: str
+    size_bytes: int
+    page_count: int
+    freelist_count: int
+    page_size: int
+    wal_size_bytes: int
+    shm_size_bytes: int
+
+
+def collect_database_stats(
+    db_file: str | os.PathLike | None = None,
+) -> DatabaseStats:
     database_file = db_file or BLINT_DB_FILE
     if not os.path.exists(database_file):
         return {
@@ -422,7 +436,7 @@ def collect_database_stats(db_file: str | None = None) -> dict[str, int | str]:
     }
 
 
-def compact_database(db_file: str | None = None) -> dict[str, dict[str, int | str]]:
+def compact_database(db_file: str | None = None) -> dict[str, DatabaseStats]:
     """Checkpoint and vacuum the database to reduce final artifact size."""
     database_file = db_file or BLINT_DB_FILE
     if not os.path.exists(database_file):
@@ -981,9 +995,11 @@ def _function_hash_predicates(
     *,
     instruction_hashes: Sequence[str] | None = None,
     assembly_hashes: Sequence[str] | None = None,
-) -> tuple[list[str], list[str]]:
-    predicates = []
-    params: list[str] = []
+) -> tuple[list[str], list[str | int]]:
+    # The hash values are strings, and callers append the integer LIMIT bound
+    # before executing, so the parameter list carries both.
+    predicates: list[str] = []
+    params: list[str | int] = []
     cleaned_instruction_hashes = _clean_nonempty_values(instruction_hashes)
     if cleaned_instruction_hashes:
         predicates.append(

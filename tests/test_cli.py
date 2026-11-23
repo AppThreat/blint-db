@@ -374,7 +374,7 @@ def test_cargo_add_blint_bom_process_resolves_selected_projects(monkeypatch):
     )
     monkeypatch.setattr(
         "blint_db.cli.resolve_cargo_project_spec",
-        lambda selector, curated_projects=None: curated_projects[0]
+        lambda selector, curated_projects=None: (curated_projects or [])[0]
         if selector == "choose"
         else (_ for _ in ()).throw(ValueError("missing")),
     )
@@ -434,7 +434,7 @@ def test_conan_add_blint_bom_process_resolves_selected_projects(monkeypatch):
     )
     monkeypatch.setattr(
         "blint_db.cli.resolve_conan_project_spec",
-        lambda selector, curated_projects=None: curated_projects[0]
+        lambda selector, curated_projects=None: (curated_projects or [])[0]
         if selector == "fmt"
         else (_ for _ in ()).throw(ValueError("missing")),
     )

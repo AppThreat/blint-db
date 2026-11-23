@@ -81,7 +81,9 @@ class ConanProjectSpec:
 
     @property
     def name(self) -> str:
-        return parse_conan_reference(self.reference)["name"]
+        # parse_conan_reference types every value as optional, but the name
+        # key is always populated with a stripped string.
+        return str(parse_conan_reference(self.reference)["name"])
 
     @property
     def version(self) -> str | None:

@@ -76,6 +76,7 @@ def test_seed_object_file_functions_requires_macho_object(tmp_path):
 @pytest.mark.skipif(_clang() is None, reason="clang not available")
 def test_seed_recovers_macho_object_functions(tmp_path):
     clang = _clang()
+    assert clang is not None
     source = tmp_path / "two_fns.c"
     source.write_text(
         "int add(int a, int b) { return a + b; }\n"
@@ -118,6 +119,7 @@ def test_re_ingesting_an_archive_updates_its_members_rather_than_duplicating(tmp
     import sqlite3
 
     clang = _clang()
+    assert clang is not None
     source = tmp_path / "alpha.c"
     source.write_text("int alpha(int x) { return x + 1; }\n")
     obj = tmp_path / "alpha.o"

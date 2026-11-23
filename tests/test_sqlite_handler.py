@@ -64,6 +64,7 @@ def test_ingest_metadata_stores_symbols_dependencies_and_hashes(
     )
 
     binary_row = fetch_binary(result["binary_id"], db_file=str(db_file))
+    assert binary_row is not None
     assert binary_row["project_name"] == "demo"
     assert binary_row["binary_name"] == "libdemo.so"
 
@@ -277,6 +278,7 @@ def test_ingest_metadata_file_supports_precomputed_blint_json(
     )
 
     binary_row = fetch_binary(result["binary_id"], db_file=str(db_file))
+    assert binary_row is not None
     assert binary_row["project_name"] == "demo-json"
     assert binary_row["project_purl"] == "pkg:generic/demo-json@1.0.0"
 

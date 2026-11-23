@@ -71,7 +71,7 @@ def ingest_metadata(
     is_stripped=None,
     build_metadata=None,
     binary_file_path: str | None = None,
-    relative_to: str | None = None,
+    relative_to: str | os.PathLike | None = None,
     archive_name: str | None = None,
 ) -> dict[str, Any]:
     create_database(db_file)
@@ -173,7 +173,7 @@ def ingest_binary_file(
     optimization: str | None = None,
     strip_status: str | None = None,
     build_metadata=None,
-    relative_to: str | None = None,
+    relative_to: str | os.PathLike | None = None,
     disassemble: bool = False,
 ) -> dict[str, Any]:
     metadata = collect_blint_metadata(binary_file_path, disassemble=disassemble)
@@ -237,7 +237,11 @@ def _is_macho_object_file(member_path: str) -> bool:
 
     try:
         parsed = lief.MachO.parse(member_path)
+        if parsed is None:
+            return False
         binary = parsed.at(0)
+        if binary is None:
+            return False
         return binary.header.file_type == lief.MachO.Header.FILE_TYPE.OBJECT
     except Exception:  # pylint: disable=broad-exception-caught
         return False
@@ -249,7 +253,11 @@ def _macho_text_range(member_path: str) -> tuple[int, int] | None:
 
     try:
         parsed = lief.MachO.parse(member_path)
+        if parsed is None:
+            return None
         binary = parsed.at(0)
+        if binary is None:
+            return None
         for section in binary.sections:
             if (
                 str(getattr(section, "segment_name", "")) == "__TEXT"
@@ -303,7 +311,10 @@ def _seed_object_file_functions(
     ]
     if not in_text:
         return False
-    in_text.sort(key=_sym_addr)
+    # Every symbol in the list passed the address filter above, so the key
+    # always receives a non-None address; the fallback only gives the key an
+    # int type and never changes the ordering.
+    in_text.sort(key=lambda symbol: _sym_addr(symbol) or 0)
     functions = []
     for index, symbol in enumerate(in_text):
         start = _sym_addr(symbol) or 0
@@ -342,10 +353,13 @@ def _disassemble_member_metadata(metadata: dict[str, Any], member_path: str) -> 
     binary_type = str(metadata.get("binary_type"))
     try:
         if binary_type == "ELF":
-            parsed = lief.ELF.parse(member_path)
-            parsed_obj = parsed.at(0) if len(parsed) else None
+            # lief.ELF.parse already returns the single Binary or None; it is
+            # the Mach-O fat binary wrapper that needs at(0), and the ELF
+            # Binary carries neither at nor __len__.
+            parsed_obj = lief.ELF.parse(member_path)
         elif binary_type == "MachO":
-            parsed_obj = lief.MachO.parse(member_path).at(0)
+            parsed = lief.MachO.parse(member_path)
+            parsed_obj = parsed.at(0) if parsed is not None else None
         elif binary_type == "PE":
             parsed_obj = lief.PE.parse(member_path)
         else:
