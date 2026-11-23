@@ -201,7 +201,7 @@ def test_cargo_pipeline_ingests_source_callgraph_and_matches(monkeypatch, tmp_pa
         cargo_compiler, "run_rusi_callgraph", lambda *a, **k: _SOURCE_CALLGRAPH
     )
 
-    spec = SimpleNamespace(crate="demo", selector="demo@1.0.0")
+    spec = cargo_handler.CargoProjectSpec(crate="demo", version="1.0.0")
     cargo_compiler.add_project_cargo_db(
         spec,
         db_file=db_file,

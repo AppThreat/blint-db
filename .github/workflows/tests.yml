@@ -42,6 +42,24 @@ jobs:
           # that make a module unimportable or a name undefined.
           uv run --no-sync flake8 blint_db tests --count --select=E9,F63,F7,F82
 
+  typecheck:
+    name: pyrefly check .
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+      - name: Install dependencies
+        # pyrefly lives in the dev extra alongside pytest and flake8, and it
+        # reads the installed packages for inference, so the sync needs the
+        # same extra the tests job uses.
+        run: uv sync --frozen -p 3.13 --extra dev
+      - name: Run pyrefly
+        run: uv run --no-sync pyrefly check .
+
   tiny-meson-corpus:
     name: tiny meson corpus (zlib, symbol-only)
     runs-on: ubuntu-latest

@@ -215,7 +215,9 @@ def build_failure_record(
     exception: BaseException | None = None,
     **details,
 ) -> dict[str, Any]:
-    failure = {
+    # The record grows keys of mixed value types (returncode int, details
+    # mappings), so it is an Any-valued dict from the start.
+    failure: dict[str, Any] = {
         "stage": stage,
         "message": message,
     }
@@ -244,7 +246,9 @@ def build_project_outcome(
     failure: Mapping[str, Any] | None = None,
     details: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    outcome = {
+    # The outcome gains nested failure and details mappings, so it is an
+    # Any-valued dict from the start.
+    outcome: dict[str, Any] = {
         "selector": selector,
         "project_name": project_name,
         "ecosystem": ecosystem,

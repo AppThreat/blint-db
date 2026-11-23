@@ -29,6 +29,7 @@ import os
 import re
 import time
 from pathlib import Path
+from typing import Any
 
 import requests
 from urllib.parse import urlsplit
@@ -151,7 +152,9 @@ class RegistryClient:
         params = {"scope": scope}
         if service:
             params["service"] = service
-        auth = (self.username, self.password) if self.username else None
+        # requests expects a str,str tuple; a missing password is sent as the
+        # conventional empty one rather than letting requests stringify None.
+        auth = (self.username, self.password or "") if self.username else None
         response = self._session.get(realm, params=params, auth=auth, timeout=(15, 60))
         response.raise_for_status()
         payload = response.json()
@@ -177,6 +180,8 @@ class RegistryClient:
             if response.status_code != 401:
                 return response
             self._fetch_token(f"repository:{self.repository}:{scope}")
+        # The retry loop runs at least once, so a response always exists here.
+        assert response is not None
         return response
 
     def blob_exists(self, digest: str) -> bool:
@@ -294,7 +299,9 @@ class RegistryClient:
 def _descriptor(
     digest: str, size: int, media_type: str, annotations: dict | None = None
 ) -> dict:
-    descriptor = {"mediaType": media_type, "digest": digest, "size": size}
+    # The value types mix strings, the int size and the optional annotations
+    # mapping, so the descriptor is deliberately an Any-valued dict.
+    descriptor: dict[str, Any] = {"mediaType": media_type, "digest": digest, "size": size}
     if annotations:
         descriptor["annotations"] = annotations
     return descriptor

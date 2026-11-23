@@ -182,7 +182,13 @@ def extract_dependencies(metadata: dict[str, Any]) -> list[dict]:
     seen = set()
 
     def add_dependency(
-        source: str, name: str, *, version=None, tag=None, purl=None, metadata_obj=None
+        source: str,
+        name: str | None,
+        *,
+        version=None,
+        tag=None,
+        purl=None,
+        metadata_obj=None,
     ):
         dep_name = str(name).strip() if name else ""
         if not dep_name:

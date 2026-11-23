@@ -193,7 +193,9 @@ FDROID_CURATED_APPS_FILE = Path(
 )
 
 for log_name, log_obj in logging.Logger.manager.loggerDict.items():
-    if log_name != __name__:
+    # loggerDict also holds PlaceHolder entries for child loggers, which have
+    # no disabled flag to set.
+    if log_name != __name__ and isinstance(log_obj, logging.Logger):
         log_obj.disabled = True
 
 IGNORE_DIRECTORIES = [
